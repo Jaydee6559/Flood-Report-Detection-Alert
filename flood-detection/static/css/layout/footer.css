@@ -1,0 +1,21 @@
+/* ==========================================================================
+   Site footer
+   ========================================================================== */
+
+.site-footer {
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+@media (max-width: 899px) {
+  .site-footer { padding-bottom: calc(var(--bottom-nav-height) + var(--space-5)); }
+}

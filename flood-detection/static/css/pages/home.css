@@ -1,0 +1,186 @@
+/* ==========================================================================
+   Homepage
+   ========================================================================== */
+
+/* ---------- Hero ---------- */
+.hero {
+  padding: var(--space-10) 0;
+  background: var(--color-bg);
+}
+
+.hero__inner {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: var(--space-10);
+  align-items: center;
+}
+
+.hero__title {
+  margin-top: var(--space-4);
+  font-size: clamp(1.75rem, 3.4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.hero__text {
+  max-width: 480px;
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* ---------- Saved-route status card ---------- */
+.route-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 480px;
+  margin-top: var(--space-6);
+  padding: 12px 14px;
+  border: 1px solid #efb3ad;
+  border-left: 4px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.route-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-light);
+  color: var(--color-danger-text);
+}
+
+.route-card__body { flex: 1; min-width: 0; }
+
+.route-card__title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.route-card__status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger-text);
+}
+
+/* ---------- Example result card ---------- */
+.result-card { padding: var(--space-5); }
+
+.result-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.result-card__time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.result-card__image {
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.result-card__status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.result-card__probability {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.result-card__location {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.result-card .callout { margin-top: var(--space-3); }
+
+/* ---------- How it works ---------- */
+.how-it-works {
+  padding: var(--space-8) 0 var(--space-10);
+  background: var(--color-surface);
+}
+
+.how-it-works__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.step-card { padding: var(--space-4); }
+
+.step-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.step-card__title .icon { color: var(--color-primary); }
+
+.step-card__text {
+  margin-top: 6px;
+  font-size: var(--font-size-xs);
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.how-it-works .emergency-strip { margin-top: var(--space-5); }
+
+/* ---------- Tablet ---------- */
+@media (max-width: 899px) {
+  .hero { padding: var(--space-6) 0; }
+  .hero__inner { grid-template-columns: 1fr; gap: var(--space-6); }
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .how-it-works { padding: var(--space-6) 0 var(--space-8); }
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 600px) {
+  .hero__actions .btn { width: 100%; }
+  .route-card { max-width: none; }
+  .steps-grid { grid-template-columns: 1fr; gap: var(--space-3); }
+  .how-it-works__note { display: none; }
+}

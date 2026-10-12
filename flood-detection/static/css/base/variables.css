@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Design tokens
+   Colors, type, spacing and sizes shared by every page.
+   Change a value here and it updates across the whole site.
+   ========================================================================== */
+
+:root {
+  /* Brand and text */
+  --color-primary: #0b5d98;
+  --color-primary-dark: #084a7a;
+  --color-primary-light: #e6f0f8;
+  --color-primary-lighter: #f1f6fb;
+  --color-navy: #173248;
+  --color-text: #1d3349;
+  --color-text-muted: #5f7385;
+  --color-text-faint: #8a9aa8;
+
+  /* Surfaces and lines */
+  --color-bg: #f4f7fa;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f1f6fb;
+  --color-border: #e1e8ed;
+  --color-border-strong: #d3dde5;
+
+  /* Status colors (always paired with an icon and text label) */
+  --color-danger: #b8291f;
+  --color-danger-light: #fde9e7;
+  --color-danger-text: #a3231a;
+  --color-warning: #9a5b00;
+  --color-warning-light: #fdf1dc;
+  --color-success: #1d6b3a;
+  --color-success-light: #e3f3e8;
+  --color-neutral-text: #4d5f6e;
+  --color-neutral-light: #e9eef2;
+  --color-sample: #8a4b00;
+  --color-sample-border: #f0c98a;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.8125rem; /* 13px */
+  --font-size-md: 0.9375rem; /* 15px */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.5rem;    /* 24px */
+  --font-size-2xl: 2rem;     /* 32px */
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Shapes */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(23, 50, 72, 0.05);
+  --shadow-raised: 0 8px 24px rgba(23, 50, 72, 0.1);
+  --focus-ring: 0 0 0 3px rgba(11, 93, 152, 0.25);
+
+  /* Layout sizes */
+  --container-width: 1120px;
+  --header-height: 64px;
+  --bottom-nav-height: 64px;
+  --control-height: 44px;
+}

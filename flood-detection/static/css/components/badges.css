@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Badges
+   Agent statuses always show an icon + text + color, so they can be
+   read without relying on color alone.
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge--flood-warning  { background: var(--color-danger-light);  color: var(--color-danger-text); }
+.badge--possible-flood { background: var(--color-warning-light); color: var(--color-warning); }
+.badge--unclear-photo  { background: var(--color-neutral-light); color: var(--color-neutral-text); }
+.badge--no-flood       { background: var(--color-success-light); color: var(--color-success); }
+
+/* Neutral label, e.g. "PHOTO-BASED FLOOD CHECK" */
+.badge--tag {
+  background: #e6edf3;
+  color: var(--color-neutral-text);
+  letter-spacing: 0.04em;
+}
+
+/* Marks fictional demo content */
+.badge--sample {
+  padding: 2px 7px;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-sample-border);
+  color: var(--color-sample);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}

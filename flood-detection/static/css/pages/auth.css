@@ -1,0 +1,220 @@
+/* ==========================================================================
+   Sign in and Create account pages
+   Desktop: blue side panel on the left, form card on the right.
+   Phone: side panel is hidden; the logo sits above the form.
+   No navigation bar on these pages.
+   ========================================================================== */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(360px, 40%) 1fr;
+  min-height: 100vh;
+}
+
+/* ---------- Blue side panel ---------- */
+.auth__panel {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-10) 48px;
+  background: linear-gradient(160deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+}
+
+.auth__panel .brand { color: #fff; }
+
+.auth__panel-title {
+  margin-top: 56px;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.auth__panel-text {
+  max-width: 380px;
+  margin-top: var(--space-3);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.auth__benefits {
+  margin-top: var(--space-8);
+  display: grid;
+  gap: var(--space-5);
+}
+
+.auth__benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.auth__benefit-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.auth__benefit-title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.auth__benefit-text {
+  margin-top: 2px;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+.auth__panel-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
+}
+
+/* ---------- Form side ---------- */
+.auth__main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-6);
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-8);
+}
+
+.auth__card--wide { max-width: 580px; }
+
+/* Logo shown above the form on phones only */
+.auth__mobile-brand {
+  display: none;
+}
+
+.auth__subtitle {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.auth__form { margin-top: var(--space-6); }
+
+.auth__options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.auth__submit { margin-top: var(--space-5); }
+
+.auth__switch {
+  margin-top: var(--space-5);
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
+
+.auth__fine-print {
+  margin-top: var(--space-3);
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.auth__terms { margin-top: var(--space-5); }
+
+/* ---------- Password strength (static example) ---------- */
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-3);
+}
+
+.password-strength__bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border);
+}
+
+.password-strength__bar--filled { background: var(--color-success); }
+
+.password-strength__label {
+  margin-left: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+.password-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.password-rules li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.password-rules .is-met { color: var(--color-success); }
+
+.password-rules + .form-row { margin-top: var(--space-5); }
+
+/* ---------- Phone layout ---------- */
+@media (max-width: 899px) {
+  .auth {
+    grid-template-columns: 1fr;
+    background: var(--color-surface);
+  }
+
+  .auth__panel { display: none; }
+
+  .auth__main {
+    align-items: flex-start;
+    padding: var(--space-8) var(--space-4) var(--space-10);
+  }
+
+  .auth__card {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .auth__mobile-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+
+  .auth__mobile-brand img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .auth__header { text-align: center; }
+}

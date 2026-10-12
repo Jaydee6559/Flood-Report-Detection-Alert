@@ -1,0 +1,109 @@
+/* ==========================================================================
+   Buttons
+   .btn is used on both <a> links (page changes) and <button> elements.
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-5);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Main action, e.g. "Sign in", "Report a flood" */
+.btn--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.btn--primary:hover { background: var(--color-primary-dark); border-color: var(--color-primary-dark); }
+
+/* Second action, e.g. "See recent reports" */
+.btn--outline {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.btn--outline:hover { background: var(--color-primary-lighter); }
+
+/* Quiet action, e.g. "Continue without an account" */
+.btn--ghost {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-navy);
+  font-weight: 600;
+}
+.btn--ghost:hover { background: var(--color-bg); }
+
+/* Soft blue, e.g. "Use my current location" */
+.btn--soft {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.btn--sm { min-height: 34px; padding: 0 var(--space-3); font-size: var(--font-size-sm); }
+.btn--lg { min-height: 48px; padding: 0 var(--space-6); }
+.btn--block { width: 100%; }
+
+/* Text-only button that looks like a link, e.g. "Forgot password?" */
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: inherit;
+}
+.link-button:hover,
+.link:hover { text-decoration: underline; }
+
+.link {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* Round icon-only button, e.g. notifications bell */
+.icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-navy);
+}
+.icon-button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.icon-button__count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}

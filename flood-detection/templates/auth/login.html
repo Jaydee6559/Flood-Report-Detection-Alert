@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../../static/css/base/variables.css">
+  <link rel="stylesheet" href="../../static/css/base/reset.css">
+  <link rel="stylesheet" href="../../static/css/base/typography.css">
+  <link rel="stylesheet" href="../../static/css/components/icons.css">
+  <link rel="stylesheet" href="../../static/css/components/brand.css">
+  <link rel="stylesheet" href="../../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../../static/css/components/forms.css">
+  <link rel="stylesheet" href="../../static/css/components/cards.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../../static/css/pages/auth.css">
+</head>
+<body>
+  <div class="auth">
+
+    <!-- Blue side panel (desktop only) -->
+    <aside class="auth__panel" aria-label="About Flood Detection &amp; Alert">
+      <div class="brand">
+        <img class="brand__logo" src="../../static/img/logo-white.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </div>
+
+      <h2 class="auth__panel-title">Welcome back.</h2>
+      <p class="auth__panel-text">Sign in to keep your routes, travel schedules and reports in one place.</p>
+
+      <ul class="auth__benefits">
+        <li class="auth__benefit">
+          <span class="auth__benefit-icon">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+          </span>
+          <div>
+            <p class="auth__benefit-title">Save routes</p>
+            <p class="auth__benefit-text">Get alerts when a flood report appears along your usual route.</p>
+          </div>
+        </li>
+        <li class="auth__benefit">
+          <span class="auth__benefit-icon">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>
+          </span>
+          <div>
+            <p class="auth__benefit-title">Travel schedules</p>
+            <p class="auth__benefit-text">Check recent reports before you leave.</p>
+          </div>
+        </li>
+        <li class="auth__benefit">
+          <span class="auth__benefit-icon">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          </span>
+          <div>
+            <p class="auth__benefit-title">Follow your reports</p>
+            <p class="auth__benefit-text">See confirmations, comments and moderator updates.</p>
+          </div>
+        </li>
+      </ul>
+
+      <p class="auth__panel-note">
+        <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.3"/></svg>
+        You can check photos and read reports without an account.
+      </p>
+    </aside>
+
+    <!-- Sign-in form -->
+    <main class="auth__main">
+      <div class="auth__card card">
+
+        <!-- Logo above the form (phones only) -->
+        <div class="auth__mobile-brand">
+          <img src="../../static/img/logo.svg" alt="">
+          <span>Flood Detection &amp; Alert</span>
+        </div>
+
+        <header class="auth__header">
+          <h1 class="heading-lg">Sign in</h1>
+          <p class="auth__subtitle">Use the email or mobile number you registered with.</p>
+        </header>
+
+        <!--
+          Prototype: the button only opens the homepage.
+          Fields have no name attributes, so nothing is sent.
+          When connecting to Flask: add name="email" / name="password",
+          method="post" and point action to the login route.
+        -->
+        <form class="auth__form" action="../home.html">
+          <div class="form-field">
+            <label class="form-label" for="email">Email or mobile number</label>
+            <div class="input-group">
+              <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-4 3.4-6 7-6s6.2 2 7 6"/></svg>
+              <input class="form-input form-input--with-icon" id="email" type="text" autocomplete="username" placeholder="name@email.com">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="password">Password</label>
+            <div class="input-group">
+              <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="11" width="13" height="9" rx="1.8"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>
+              <input class="form-input form-input--with-icon form-input--with-action" id="password" type="password" autocomplete="current-password" placeholder="Enter your password">
+              <button class="password-toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Show password">
+                <svg class="icon icon--md icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="icon icon--md icon-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="auth__options">
+            <label class="checkbox">
+              <input type="checkbox" checked>
+              Keep me signed in
+            </label>
+            <!-- Static in this prototype -->
+            <button class="link-button" type="button">Forgot password?</button>
+          </div>
+
+          <button class="btn btn--primary btn--block auth__submit" type="submit">Sign in</button>
+        </form>
+
+        <div class="form-divider">or</div>
+
+        <a class="btn btn--ghost btn--block" href="../home.html">Continue without an account</a>
+
+        <p class="auth__switch">New here? <a class="link" href="register.html">Create an account</a></p>
+        <p class="auth__fine-print">Moderator accounts are created by an administrator.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../static/js/password-toggle.js"></script>
+</body>
+</html>
