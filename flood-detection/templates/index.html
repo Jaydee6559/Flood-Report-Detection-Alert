@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/alerts.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/home.css">
+</head>
+<body>
+
+  <!-- ===== Header (same on every signed-in page) ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <!-- Desktop navigation. Only Home works in this prototype. -->
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link site-nav__link--active" href="home.html" aria-current="page">Home</a>
+        <a class="site-nav__link">Reports</a>
+        <a class="site-nav__link">Flood map</a>
+        <a class="site-nav__link">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+        <button class="icon-button" type="button" aria-label="Notifications, 3 unread">
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          <span class="icon-button__count">3</span>
+        </button>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Warning banner ===== -->
+  <div class="alert-banner" role="status">
+    <div class="container alert-banner__inner">
+      <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+      <span>4 flood warnings reported in Metro Manila today <span class="alert-banner__note">· sample data</span></span>
+      <button class="alert-banner__action" type="button">See reports →</button>
+    </div>
+  </div>
+
+  <main>
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+      <div class="container hero__inner">
+        <div>
+          <span class="badge badge--tag">PHOTO-BASED FLOOD CHECK</span>
+          <h1 class="hero__title">Is the street flooded?<br>Send a photo and find out.</h1>
+          <p class="hero__text">Upload a photo of the street. A trained model estimates the chance of flooding, and the agent checks nearby reports to suggest what to do next.</p>
+
+          <div class="hero__actions">
+            <a class="btn btn--primary btn--lg" href="report.html">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+              Report a flood
+            </a>
+            <button class="btn btn--outline btn--lg" type="button">See recent reports</button>
+          </div>
+
+          <!-- Saved-route status (signed-in users) -->
+          <div class="route-card">
+            <span class="route-card__icon">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+            </span>
+            <div class="route-card__body">
+              <p class="route-card__title">My route · Home → School</p>
+              <p class="route-card__status">
+                <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+                1 flood warning on your route · 6 min ago
+              </p>
+            </div>
+            <button class="link-button text-small" type="button">View →</button>
+          </div>
+        </div>
+
+        <!-- Example result -->
+        <article class="card result-card" aria-label="Example result">
+          <div class="result-card__header">
+            <span class="eyebrow">Example result</span>
+            <span class="result-card__time">9:46 PM <span class="badge badge--sample">SAMPLE DATA</span></span>
+          </div>
+          <img class="result-card__image" src="../static/img/sample-street-flooded.svg" alt="Sample illustration of a flooded street" width="400" height="220">
+          <div class="result-card__status">
+            <span class="badge badge--flood-warning">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+              Flood warning
+            </span>
+            <span class="result-card__probability">93% flood probability</span>
+          </div>
+          <p class="result-card__location">España Blvd., Brgy. 463, Sampaloc, Manila<br>2 recent reports from the same area</p>
+          <p class="callout callout--danger">Avoid this street. Do not walk or drive through floodwater.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===== How it works ===== -->
+    <section class="how-it-works" aria-labelledby="how-title">
+      <div class="container">
+        <div class="how-it-works__header">
+          <h2 class="heading-md" id="how-title">How it works</h2>
+          <p class="how-it-works__note text-xs text-muted">Results are estimates, not official warnings</p>
+        </div>
+
+        <ol class="steps-grid">
+          <li class="card card--soft step-card">
+            <p class="step-card__title">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+              1. Send a photo
+            </p>
+            <p class="step-card__text">Take or upload a street photo and add the location.</p>
+          </li>
+          <li class="card card--soft step-card">
+            <p class="step-card__title">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M9.5 3.5v3M14.5 3.5v3M9.5 17.5v3M14.5 17.5v3M3.5 9.5h3M3.5 14.5h3M17.5 9.5h3M17.5 14.5h3"/></svg>
+              2. The model checks it
+            </p>
+            <p class="step-card__text">An image classifier labels it Flood or No Flood with a probability.</p>
+          </li>
+          <li class="card card--soft step-card">
+            <p class="step-card__title">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14c2.5.2 4 1.7 4.5 4.5"/></svg>
+              3. The agent reviews
+            </p>
+            <p class="step-card__text">It compares the result with recent reports from the same area.</p>
+          </li>
+          <li class="card card--soft step-card">
+            <p class="step-card__title">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+              4. You get guidance
+            </p>
+            <p class="step-card__text">See a status and what to do next. The report is saved.</p>
+          </li>
+        </ol>
+
+        <div class="emergency-strip">
+          <p class="emergency-strip__main">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+            <span><strong>Emergency? Call 911.</strong> This tool does not replace PAGASA or LGU warnings.</span>
+          </p>
+          <p class="text-xs text-muted">Never enter floodwater to take a photo.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports and results are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only). Home and Report work. ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item bottom-nav__item--active" href="index.html" aria-current="page">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>

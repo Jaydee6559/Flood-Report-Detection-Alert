@@ -1,0 +1,74 @@
+/* ==========================================================================
+   Site header
+   Desktop: logo + top navigation + bell + "Report a flood".
+   Phone (under 900px): logo + bell only; navigation moves to the bottom bar.
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: var(--header-height);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.site-nav__link {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.site-nav__link:hover { color: var(--color-navy); background: var(--color-bg); }
+
+.site-nav__link--active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Small initials circle; links back to the sign-in page */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #d9e7f2;
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+.avatar:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ---------- Phone layout ---------- */
+@media (max-width: 899px) {
+  .site-header__inner { height: 56px; }
+  .site-nav,
+  .site-header__report { display: none; }
+  .avatar { width: 32px; height: 32px; }
+  .site-header__actions { margin-left: auto; }
+}

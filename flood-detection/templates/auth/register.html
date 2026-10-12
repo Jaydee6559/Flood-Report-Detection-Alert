@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../../static/css/base/variables.css">
+  <link rel="stylesheet" href="../../static/css/base/reset.css">
+  <link rel="stylesheet" href="../../static/css/base/typography.css">
+  <link rel="stylesheet" href="../../static/css/components/icons.css">
+  <link rel="stylesheet" href="../../static/css/components/brand.css">
+  <link rel="stylesheet" href="../../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../../static/css/components/forms.css">
+  <link rel="stylesheet" href="../../static/css/components/cards.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../../static/css/pages/auth.css">
+</head>
+<body>
+  <div class="auth">
+
+    <!-- Blue side panel (desktop only) -->
+    <aside class="auth__panel" aria-label="About Flood Detection &amp; Alert">
+      <div class="brand">
+        <img class="brand__logo" src="../../static/img/logo-white.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </div>
+
+      <h2 class="auth__panel-title">Create your account.</h2>
+      <p class="auth__panel-text">It takes a minute. Your saved routes and home location stay private to you.</p>
+
+      <ul class="auth__benefits">
+        <li class="auth__benefit">
+          <span class="auth__benefit-icon">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+          </span>
+          <div>
+            <p class="auth__benefit-title">Save routes</p>
+            <p class="auth__benefit-text">Get alerts when a flood report appears along your usual route.</p>
+          </div>
+        </li>
+        <li class="auth__benefit">
+          <span class="auth__benefit-icon">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>
+          </span>
+          <div>
+            <p class="auth__benefit-title">Travel schedules</p>
+            <p class="auth__benefit-text">Check recent reports before you leave.</p>
+          </div>
+        </li>
+        <li class="auth__benefit">
+          <span class="auth__benefit-icon">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          </span>
+          <div>
+            <p class="auth__benefit-title">Follow your reports</p>
+            <p class="auth__benefit-text">See confirmations, comments and moderator updates.</p>
+          </div>
+        </li>
+      </ul>
+
+      <p class="auth__panel-note">
+        <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.3"/></svg>
+        You can check photos and read reports without an account.
+      </p>
+    </aside>
+
+    <!-- Create-account form -->
+    <main class="auth__main">
+      <div class="auth__card auth__card--wide card">
+
+        <!-- Logo above the form (phones only) -->
+        <div class="auth__mobile-brand">
+          <img src="../../static/img/logo.svg" alt="">
+          <span>Flood Detection &amp; Alert</span>
+        </div>
+
+        <header class="auth__header">
+          <h1 class="heading-lg">Create account</h1>
+          <p class="auth__subtitle">Only the details the features need.</p>
+        </header>
+
+        <!--
+          Prototype: the button only opens the homepage.
+          Fields have no name attributes, so nothing is sent.
+          When connecting to Flask: add name attributes, method="post"
+          and point action to the register route.
+        -->
+        <form class="auth__form" action="../index.html">
+          <div class="form-row">
+            <div>
+              <label class="form-label" for="full-name">Full name</label>
+              <input class="form-input" id="full-name" type="text" autocomplete="name" placeholder="Juan Dela Cruz">
+            </div>
+            <div>
+              <label class="form-label" for="email">Email or mobile number</label>
+              <input class="form-input" id="email" type="text" autocomplete="username" placeholder="name@email.com">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label class="form-label" for="password">Password</label>
+              <div class="input-group">
+                <input class="form-input form-input--with-action" id="password" type="password" autocomplete="new-password" placeholder="Create a password">
+                <button class="password-toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Show password">
+                  <svg class="icon icon--md icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon icon--md icon-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="form-label" for="confirm-password">Confirm password</label>
+              <div class="input-group">
+                <input class="form-input form-input--with-action" id="confirm-password" type="password" autocomplete="new-password" placeholder="Type it again">
+                <button class="password-toggle" type="button" data-password-toggle aria-controls="confirm-password" aria-pressed="false" aria-label="Show password">
+                  <svg class="icon icon--md icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon icon--md icon-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Static example of the strength meter and rules -->
+          <div class="password-strength" aria-hidden="true">
+            <span class="password-strength__bar password-strength__bar--filled"></span>
+            <span class="password-strength__bar password-strength__bar--filled"></span>
+            <span class="password-strength__bar"></span>
+            <span class="password-strength__label">Good</span>
+          </div>
+          <ul class="password-rules">
+            <li class="is-met">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>
+              At least 8 characters
+            </li>
+            <li class="is-met">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>
+              A number
+            </li>
+            <li>
+              <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/></svg>
+              Upper and lower case
+            </li>
+          </ul>
+
+          <div class="form-row">
+            <div>
+              <label class="form-label" for="home-city">Home city <span class="form-label__optional">(optional)</span></label>
+              <select class="form-select" id="home-city">
+                <option value="">Select city</option>
+                <option>Caloocan</option>
+                <option>Manila</option>
+                <option>Marikina</option>
+                <option>Pasig</option>
+                <option>Quezon City</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="home-barangay">Barangay <span class="form-label__optional">(optional)</span></label>
+              <select class="form-select" id="home-barangay">
+                <option value="">Select barangay</option>
+                <option>Brgy. 463, Sampaloc</option>
+                <option>Brgy. Doña Imelda</option>
+                <option>Brgy. San Roque</option>
+              </select>
+            </div>
+          </div>
+          <p class="form-hint">Used only to show reports near you first. Not shown to other users.</p>
+
+          <label class="checkbox auth__terms">
+            <input type="checkbox">
+            <span>I agree to the <span class="link">Terms of Use</span> and <span class="link">Privacy Notice</span>, in line with the Data Privacy Act of 2012 (RA 10173).</span>
+          </label>
+
+          <button class="btn btn--primary btn--block auth__submit" type="submit">Create account</button>
+        </form>
+
+        <p class="auth__switch">Already registered? <a class="link" href="login.html">Sign in</a></p>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../static/js/password-toggle.js"></script>
+</body>
+</html>

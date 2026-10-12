@@ -1,0 +1,21 @@
+/* ==========================================================================
+   Page container
+   Centers content and keeps it from getting too wide on big screens.
+   ========================================================================== */
+
+.container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.page-main {
+  padding: var(--space-8) 0 var(--space-10);
+}
+
+/* On phones: smaller side padding (the footer leaves room for the bottom navigation) */
+@media (max-width: 899px) {
+  .container { padding: 0 var(--space-4); }
+  .page-main { padding: var(--space-5) 0 var(--space-8); }
+}

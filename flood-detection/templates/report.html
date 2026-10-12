@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report a flood · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/report.css">
+</head>
+<body>
+
+  <!-- ===== Header (same on every signed-in page) ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <!-- Desktop navigation. Only Home works in this prototype. -->
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link">Reports</a>
+        <a class="site-nav__link">Flood map</a>
+        <a class="site-nav__link">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+        <button class="icon-button" type="button" aria-label="Notifications, 3 unread">
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          <span class="icon-button__count">3</span>
+        </button>
+        <a class="btn btn--primary site-header__report" href="report.html" aria-current="page">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="container">
+
+      <a class="back-link" href="index.html">
+        <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+        Back to home
+      </a>
+      <h1 class="heading-xl page-title">Report a flood</h1>
+      <p class="page-subtitle">Send a clear photo of the street and tell us where it is.</p>
+
+      <!-- Step indicator (static) -->
+      <ol class="stepper" aria-label="Report steps">
+        <li class="stepper__item stepper__item--current" aria-current="step"><span class="stepper__number">1</span>Photo</li>
+        <li class="stepper__separator" aria-hidden="true">›</li>
+        <li class="stepper__item"><span class="stepper__number">2</span>Location</li>
+        <li class="stepper__separator" aria-hidden="true">›</li>
+        <li class="stepper__item"><span class="stepper__number">3</span>Details</li>
+        <li class="stepper__separator" aria-hidden="true">›</li>
+        <li class="stepper__item"><span class="stepper__number">4</span>Check</li>
+      </ol>
+
+      <div class="report-layout">
+
+        <!--
+          Prototype: nothing is uploaded or submitted yet.
+          When connecting to Flask: add enctype="multipart/form-data",
+          method="post", name attributes and a file input.
+        -->
+        <form class="report-form">
+
+          <!-- 1 · Photo -->
+          <section class="card form-section" aria-labelledby="photo-title">
+            <div class="form-section__header">
+              <h2 class="form-section__title" id="photo-title">1 · Photo of the street</h2>
+            </div>
+            <div class="dropzone">
+              <span class="dropzone__icon">
+                <svg class="icon icon--lg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m4 17.5 5-4.5 4 3.5 3-2.5 4 3.5"/></svg>
+              </span>
+              <p class="dropzone__title">Add a photo of the street</p>
+              <p class="dropzone__hint">JPG or PNG · show the ground and the water</p>
+              <div class="dropzone__actions">
+                <button class="btn btn--outline btn--sm" type="button">
+                  <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v5h16v-5"/></svg>
+                  Choose photo
+                </button>
+                <button class="btn btn--outline btn--sm" type="button">
+                  <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+                  Take photo
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2 · Location -->
+          <section class="card form-section" aria-labelledby="location-title">
+            <div class="form-section__header">
+              <h2 class="form-section__title" id="location-title">2 · Where is this?</h2>
+              <button class="btn btn--soft btn--sm" type="button">
+                <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>
+                Use my current location
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label class="form-label" for="city">City or municipality <span class="form-label__required">*</span></label>
+                <select class="form-select" id="city">
+                  <option value="">Select a city</option>
+                  <option>Caloocan</option>
+                  <option>Manila</option>
+                  <option>Marikina</option>
+                  <option>Pasig</option>
+                  <option>Quezon City</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" for="barangay">Barangay <span class="form-label__required">*</span></label>
+                <select class="form-select" id="barangay">
+                  <option value="">Select a barangay</option>
+                  <option>Brgy. 463, Sampaloc</option>
+                  <option>Brgy. 699, Malate</option>
+                  <option>Brgy. Doña Imelda</option>
+                  <option>Brgy. San Roque</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="street">Street or landmark</label>
+              <input class="form-input" id="street" type="text" placeholder="e.g. España Blvd., near the jeepney stop">
+            </div>
+          </section>
+
+          <!-- 3 · Details -->
+          <section class="card form-section" aria-labelledby="details-title">
+            <div class="form-section__header">
+              <h2 class="form-section__title" id="details-title">3 · Anything else? <span class="form-section__title-note">(optional)</span></h2>
+            </div>
+            <label class="visually-hidden" for="description">Description</label>
+            <textarea class="form-textarea" id="description" placeholder="e.g. Water is visible near the jeepney stop."></textarea>
+          </section>
+
+          <!-- Submit (static) -->
+          <div class="form-actions">
+            <p class="form-actions__note">Your photo, location and result will be saved to Reports.</p>
+            <button class="btn btn--primary btn--lg" type="button">
+              Check this photo
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+            </button>
+          </div>
+        </form>
+
+        <!-- Tips and safety -->
+        <aside class="report-aside" aria-label="Tips">
+          <div class="card card--soft card--padded">
+            <h2 class="card__title">Tips for a good photo</h2>
+            <ul class="check-list">
+              <li><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Show the ground and the water.</li>
+              <li><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Include a familiar object for scale.</li>
+              <li><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Take it in good light.</li>
+              <li><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Hold the camera steady.</li>
+            </ul>
+          </div>
+
+          <div class="card card--danger card--padded">
+            <h2 class="card__title card__title--danger">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+              Stay safe
+            </h2>
+            <p class="card__text card__text--danger">Do not walk into floodwater to take a photo. Take it from a safe, dry place.</p>
+          </div>
+
+          <div class="card card--padded">
+            <h2 class="card__title">Before you submit</h2>
+            <p class="card__text">The result is an estimate, not an official warning. Always follow PAGASA, NDRRMC and LGU guidance.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports and results are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only). Home and Report work. ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" href="report.html" aria-current="page">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* ==========================================================================
+   Icons
+   All icons are inline SVGs drawn with lines (stroke), so they take the
+   color of the text around them.
+   ========================================================================== */
+
+.icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon--sm { width: 14px; height: 14px; }
+.icon--md { width: 18px; height: 18px; }
+.icon--lg { width: 22px; height: 22px; }

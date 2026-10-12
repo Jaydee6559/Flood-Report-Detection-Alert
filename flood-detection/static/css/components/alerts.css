@@ -1,0 +1,75 @@
+/* ==========================================================================
+   Alerts and notices
+   ========================================================================== */
+
+/* Full-width red bar under the header */
+.alert-banner {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.alert-banner__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 42px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.alert-banner__note {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.alert-banner__action {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Short red message inside a card, e.g. a recommendation */
+.callout {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.callout--danger {
+  background: var(--color-danger-light);
+  color: var(--color-danger-text);
+}
+
+/* Emergency reminder strip */
+.emergency-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 12px 16px;
+  border: 1px solid #f1c9c4;
+  border-radius: var(--radius-md);
+  background: #fff7f6;
+  font-size: var(--font-size-sm);
+}
+
+.emergency-strip__main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-danger-text);
+}
+
+@media (max-width: 600px) {
+  .emergency-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+}

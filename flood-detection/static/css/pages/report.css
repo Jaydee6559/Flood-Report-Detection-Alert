@@ -1,0 +1,171 @@
+/* ==========================================================================
+   Report a Flood page
+   Desktop: form on the left, tips on the right.
+   Phone: one column; tips move below the form.
+   ========================================================================== */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.back-link:hover { text-decoration: underline; }
+
+.page-title { margin-top: var(--space-3); }
+
+.page-subtitle {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+/* ---------- Step indicator ---------- */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-5);
+  font-size: var(--font-size-sm);
+}
+
+.stepper__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.stepper__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #c3cfd9;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stepper__item--current {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.stepper__item--current .stepper__number { background: var(--color-primary); }
+
+.stepper__separator { color: var(--color-text-faint); }
+
+/* ---------- Layout ---------- */
+.report-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-6);
+  align-items: start;
+  margin-top: var(--space-5);
+}
+
+.report-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.form-section { padding: var(--space-5); }
+
+.form-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.form-section__title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.form-section__title-note {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Photo drop zone (static in this prototype) ---------- */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6) var(--space-4);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  text-align: center;
+}
+
+.dropzone__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.dropzone__title {
+  margin-top: var(--space-3);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.dropzone__hint {
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.dropzone__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* ---------- Submit area ---------- */
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.form-actions__note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* ---------- Side column ---------- */
+.report-aside {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 899px) {
+  .report-layout { grid-template-columns: 1fr; }
+  .form-section { padding: var(--space-4); }
+}
+
+@media (max-width: 600px) {
+  .form-section__header { flex-direction: column; align-items: flex-start; }
+  .form-actions { flex-direction: column-reverse; align-items: stretch; text-align: center; }
+  .form-actions .btn { width: 100%; }
+  .stepper__separator { display: none; }
+}

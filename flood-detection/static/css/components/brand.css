@@ -1,0 +1,26 @@
+/* ==========================================================================
+   Brand (logo + app name)
+   Used in the site header and on the sign-in / create-account panel.
+   ========================================================================== */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: 700;
+  color: var(--color-navy);
+  white-space: nowrap;
+}
+
+.brand__logo {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.brand__name { font-size: var(--font-size-md); }
+
+@media (max-width: 899px) {
+  .brand__logo { width: 28px; height: 28px; }
+  .brand__name { font-size: var(--font-size-sm); }
+}
