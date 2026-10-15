@@ -34,10 +34,10 @@
         <span class="brand__name">Flood Detection &amp; Alert</span>
       </a>
 
-      <!-- Desktop navigation. Only Home works in this prototype. -->
+      <!-- Desktop navigation. Flood map and My routes are not built yet. -->
       <nav class="site-nav" aria-label="Main">
-        <a class="site-nav__link site-nav__link--active" href="home.html" aria-current="page">Home</a>
-        <a class="site-nav__link">Reports</a>
+        <a class="site-nav__link site-nav__link--active" href="index.html" aria-current="page">Home</a>
+        <a class="site-nav__link" href="reports.html">Reports</a>
         <a class="site-nav__link">Flood map</a>
         <a class="site-nav__link">My routes</a>
       </nav>
@@ -58,7 +58,7 @@
     <div class="container alert-banner__inner">
       <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
       <span>4 flood warnings reported in Metro Manila today <span class="alert-banner__note">· sample data</span></span>
-      <button class="alert-banner__action" type="button">See reports →</button>
+      <a class="alert-banner__action" href="reports.html">See reports →</a>
     </div>
   </div>
 
@@ -76,7 +76,7 @@
               <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
               Report a flood
             </a>
-            <button class="btn btn--outline btn--lg" type="button">See recent reports</button>
+            <a class="btn btn--outline btn--lg" href="reports.html">See recent reports</a>
           </div>
 
           <!-- Saved-route status (signed-in users) -->
@@ -173,13 +173,13 @@
     </div>
   </footer>
 
-  <!-- ===== Bottom navigation (phones only). Home and Report work. ===== -->
+  <!-- ===== Bottom navigation (phones only). Map and Routes are not built yet. ===== -->
   <nav class="bottom-nav" aria-label="Main">
     <a class="bottom-nav__item bottom-nav__item--active" href="index.html" aria-current="page">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
       Home
     </a>
-    <a class="bottom-nav__item">
+    <a class="bottom-nav__item" href="reports.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
       Reports
     </a>

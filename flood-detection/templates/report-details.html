@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report #1042 · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/progress.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/report-details.css">
+</head>
+<body>
+
+  <!-- ===== Header (same on every signed-in page) ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <!-- Desktop navigation. Flood map and My routes are not built yet. -->
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link site-nav__link--active" href="reports.html" aria-current="page">Reports</a>
+        <a class="site-nav__link">Flood map</a>
+        <a class="site-nav__link">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+        <button class="icon-button" type="button" aria-label="Notifications, 3 unread">
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          <span class="icon-button__count">3</span>
+        </button>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="container">
+
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="reports.html">Flood reports</a>
+        <span class="breadcrumb__separator" aria-hidden="true">›</span>
+        <span aria-current="page">#1042</span>
+      </nav>
+
+      <div class="page-heading">
+        <h1 class="heading-xl page-title">España Blvd., Brgy. 463, Sampaloc</h1>
+        <div class="page-heading__aside"><span class="badge badge--sample">SAMPLE DATA</span></div>
+      </div>
+
+      <!-- Status and report indicators -->
+      <div class="details-indicators">
+        <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+        <span class="badge badge--fresh"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Submitted 9:46 PM · 6 min ago</span>
+        <span class="badge badge--confirmed"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14c2.5.2 4 1.7 4.5 4.5"/></svg>5 say still flooded</span>
+      </div>
+
+      <div class="details-layout">
+        <div class="details-main">
+
+          <!-- Photo and results -->
+          <section class="card details-summary" aria-label="Report summary">
+            <img class="details-summary__photo" src="../static/img/sample-street-flooded.svg" alt="Submitted street photo for report #1042 (sample)" width="400" height="220">
+            <div>
+              <div class="detail-item">
+                <p class="detail-item__label">Model result</p>
+                <p class="detail-item__value detail-item__value--strong">Flood · 93%</p>
+                <span class="probability probability--flood-warning probability--wide"><span class="probability__value">93%</span><span class="probability__bar" style="--value: 93%" aria-hidden="true"></span></span>
+              </div>
+              <div class="detail-item">
+                <p class="detail-item__label">Agent note</p>
+                <p class="detail-item__value">Avoid the area. 2 recent reports from Brgy. 463 also show flooding.</p>
+              </div>
+              <div class="detail-item">
+                <p class="detail-item__label">Reporter's note</p>
+                <p class="detail-item__value">“Water is visible near the jeepney stop.”</p>
+              </div>
+              <div class="detail-item">
+                <p class="detail-item__label">Location</p>
+                <p class="detail-item__value">España Blvd., Brgy. 463, Sampaloc, Manila · Report #1042</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Possible duplicates -->
+          <section class="card duplicates" aria-labelledby="dup-title">
+            <div class="duplicates__header">
+              <h2 class="duplicates__title" id="dup-title">
+                <span class="badge badge--duplicate"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>Possible duplicates</span>
+                2 nearby reports may describe the same flood
+              </h2>
+              <button class="link-button text-small" type="button">Compare →</button>
+            </div>
+            <ul class="duplicates__list">
+              <li class="duplicate-item">
+                <img class="duplicate-item__thumb" src="../static/img/sample-street-flooded.svg" alt="" width="52" height="38">
+                <div>
+                  <strong>#1043 · España cor. Lacson</strong>
+                  <span class="duplicate-item__meta">9:48 PM · about 150 m away <span class="badge badge--flood-warning badge--sm"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span></span>
+                </div>
+              </li>
+              <li class="duplicate-item">
+                <img class="duplicate-item__thumb" src="../static/img/sample-street-flooded.svg" alt="" width="52" height="38">
+                <div>
+                  <strong>#1031 · España Blvd.</strong>
+                  <span class="duplicate-item__meta">8:41 PM <span class="badge badge--outdated badge--sm"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>May be outdated</span></span>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <p class="safety-note"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.3"/></svg> Community reports and AI estimates are an aid to awareness. Follow official PAGASA, NDRRMC and LGU guidance.</p>
+        </div>
+
+        <!-- Community input -->
+        <aside class="details-aside" aria-label="Community input">
+          <section class="card card--padded" aria-labelledby="confirm-title">
+            <h2 class="card__title" id="confirm-title">Is this still accurate?</h2>
+            <p class="confirm-card__hint">Only confirm if you can see this street now.</p>
+            <div class="confirm-card__buttons">
+              <button class="btn btn--primary btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg> Still flooded · 5</button>
+              <button class="btn btn--ghost btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg> Not flooded · 1</button>
+            </div>
+            <p class="confirm-card__last"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg> Last confirmed 2 min ago</p>
+          </section>
+
+          <section class="card card--padded" aria-labelledby="comments-title">
+            <div class="comments__header">
+              <h2 class="card__title" id="comments-title">Comments (3)</h2>
+              <span class="text-xs text-muted">Newest first</span>
+            </div>
+
+            <!-- Comment box (static) -->
+            <form class="comment-form">
+              <label class="visually-hidden" for="comment">Add a comment</label>
+              <input class="form-input" id="comment" type="text" maxlength="200" placeholder="Add a short comment…">
+              <button class="btn btn--primary btn--sm" type="button">Post</button>
+            </form>
+
+            <ul class="comment-list">
+            <li class="comment">
+              <span class="comment__avatar" aria-hidden="true">JR</span>
+              <div class="comment__meta">
+                <span class="comment__author">Jun R.</span>
+                <span>9:50 PM</span>
+                <button class="comment__report" type="button" aria-label="Report comment by Jun R."><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 21V4M5.5 4.5h12l-2.5 4 2.5 4h-12"/></svg> Report</button>
+              </div>
+              <p class="comment__text">Still knee-deep near the jeepney stop. Jeepneys are turning back.</p>
+            </li>
+            <li class="comment">
+              <span class="comment__avatar" aria-hidden="true">MA</span>
+              <div class="comment__meta">
+                <span class="comment__author">Mara A.</span>
+                <span>9:48 PM</span>
+                <button class="comment__report" type="button" aria-label="Report comment by Mara A."><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 21V4M5.5 4.5h12l-2.5 4 2.5 4h-12"/></svg> Report</button>
+              </div>
+              <p class="comment__text">Water is entering the side streets near Dapitan.</p>
+            </li>
+            <li class="comment">
+              <span class="comment__avatar" aria-hidden="true">RB</span>
+              <div class="comment__meta">
+                <span class="comment__author">Ronnie B.</span>
+                <span>9:47 PM</span>
+                <button class="comment__report" type="button" aria-label="Report comment by Ronnie B."><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 21V4M5.5 4.5h12l-2.5 4 2.5 4h-12"/></svg> Report</button>
+              </div>
+              <p class="comment__text">Avoid España going to Quiapo.</p>
+            </li>
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports and results are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only). Map and Routes are not built yet. ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>

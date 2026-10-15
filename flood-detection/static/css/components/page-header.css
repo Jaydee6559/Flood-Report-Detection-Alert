@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Page header
+   Back link, breadcrumb, page title and subtitle at the top of inner pages.
+   ========================================================================== */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.back-link:hover { text-decoration: underline; }
+
+/* "Flood reports › #1042" */
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.breadcrumb a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+
+.breadcrumb__separator { color: var(--color-text-faint); }
+
+.page-title { margin-top: var(--space-3); }
+
+.page-subtitle {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+/* Title on the left, extra items (badges, toggles) on the right */
+.page-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.page-heading__aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}

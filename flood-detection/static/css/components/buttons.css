@@ -67,7 +67,6 @@
   background: none;
   color: var(--color-primary);
   font-weight: 700;
-  font-size: inherit;
 }
 .link-button:hover,
 .link:hover { text-decoration: underline; }

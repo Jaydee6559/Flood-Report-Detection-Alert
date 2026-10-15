@@ -4,23 +4,6 @@
    Phone: one column; tips move below the form.
    ========================================================================== */
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-primary);
-}
-.back-link:hover { text-decoration: underline; }
-
-.page-title { margin-top: var(--space-3); }
-
-.page-subtitle {
-  margin-top: var(--space-1);
-  color: var(--color-text-muted);
-}
-
 /* ---------- Step indicator ---------- */
 .stepper {
   display: flex;
