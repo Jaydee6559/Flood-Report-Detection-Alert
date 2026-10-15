@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Check result page (after "Check this photo")
+   Desktop: result on the left, other example outcomes on the right.
+   Phone: one column; examples move below.
+   ========================================================================== */
+
+.result-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--space-6);
+  align-items: start;
+  margin-top: var(--space-5);
+}
+
+/* ---------- Main result panel ---------- */
+.result-panel {
+  overflow: hidden;
+  border-color: #efb3ad;
+}
+
+/* Status bar at the top: icon + text, readable without color */
+.result-panel__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 12px var(--space-5);
+  background: var(--color-danger);
+  color: #fff;
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.result-panel__body {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+
+.result-panel__photo {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.result-section + .result-section { margin-top: var(--space-4); }
+
+.result-label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.result-model {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.result-model__label {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.result-model__value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.result-section .probability { margin-top: var(--space-2); }
+
+.result-facts {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.result-facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.result-facts .icon {
+  margin-top: 2px;
+  color: var(--color-text-muted);
+}
+
+.result-panel .callout { margin: 0 var(--space-5) var(--space-5); }
+
+/* ---------- Actions under the panel ---------- */
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.result-actions__saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+}
+
+/* ---------- "What gets recorded" ---------- */
+.recorded {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+}
+
+.recorded__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-navy);
+}
+
+.recorded__list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recorded__list .icon { color: var(--color-primary); }
+
+/* ---------- Example outcomes (side column) ---------- */
+.outcomes {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.outcome { padding: var(--space-4); }
+
+.outcome__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.outcome__value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.outcome__place {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.outcome__text {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.outcomes-note {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 899px) {
+  .result-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .result-panel__body { grid-template-columns: 1fr; padding: var(--space-4); }
+  .result-panel__status { padding: 12px var(--space-4); }
+  .result-panel .callout { margin: 0 var(--space-4) var(--space-4); }
+  .result-actions .btn { flex: 1 1 100%; }
+  .result-actions__saved { width: 100%; justify-content: center; }
+  .recorded { padding: var(--space-4); }
+}
