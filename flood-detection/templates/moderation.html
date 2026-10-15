@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moderation · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/moderation.css">
+</head>
+<body class="moderation-page">
+
+  <!-- ===== Moderator header: no public navigation. Only moderator accounts can open this area. ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+      <span class="mod-badge">
+        <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 5 6v5.5c0 4.2 2.8 7.4 7 9 4.2-1.6 7-4.8 7-9V6z"/><path d="m9 12 2.2 2.2L15 10"/></svg>
+        Moderator area
+      </span>
+
+      <!-- Phone title bar -->
+      <a class="mod-header__mobile" href="index.html">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+        Moderation
+      </a>
+
+      <a class="mod-header__back" href="index.html">
+        <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+        Back to site
+      </a>
+
+      <div class="site-header__actions" style="margin-left: 0">
+        <a class="icon-button" href="notifications.html" aria-label="Notifications, 5 unread">
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          <span class="icon-button__count">5</span>
+        </a>
+        <span class="avatar avatar--mod" title="Moderator account">MOD</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Desktop layout ===== -->
+  <main class="mod-layout">
+
+    <!-- Section menu -->
+    <nav class="mod-menu" aria-label="Moderation sections">
+      <p class="eyebrow">Moderation</p>
+      <ul class="mod-menu__list">
+        <li>
+          <a class="mod-menu__item" href="moderation.html">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/></svg>
+            Overview
+          </a>
+        </li>
+        <li>
+          <a class="mod-menu__item mod-menu__item--active" href="moderation.html" aria-current="page">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+            Report queue <span class="mod-menu__count">8</span>
+          </a>
+        </li>
+        <li>
+          <a class="mod-menu__item" href="moderation.html">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>
+            Comment queue <span class="mod-menu__count">3</span>
+          </a>
+        </li>
+        <li>
+          <a class="mod-menu__item" href="moderation.html">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>
+            Possible duplicates <span class="mod-menu__count">2</span>
+          </a>
+        </li>
+        <li>
+          <a class="mod-menu__item" href="moderation.html">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>
+            Reviewed today <span class="mod-menu__count">14</span>
+          </a>
+        </li>
+      </ul>
+      <p class="mod-menu__note">Moderators review community input. Agent results are not changed here.</p>
+    </nav>
+
+    <!-- Report queue + comment queue -->
+    <div class="mod-main">
+      <div class="mod-main__head">
+        <h1 class="heading-lg">Report queue</h1>
+        <span class="badge badge--sample">SAMPLE DATA</span>
+      </div>
+
+      <div class="filter-row" role="group" aria-label="Filter the queue">
+        <button class="filter-chip" type="button" aria-pressed="true">All · 8</button>
+        <button class="filter-chip" type="button" aria-pressed="false">
+          <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>
+          Duplicates · 2
+        </button>
+        <button class="filter-chip" type="button" aria-pressed="false">
+          <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 5h11l-2 4 2 4H6"/></svg>
+          Reported · 3
+        </button>
+        <button class="filter-chip" type="button" aria-pressed="false">
+          <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+          Outdated · 3
+        </button>
+      </div>
+
+      <div class="card queue">
+        <table>
+          <caption class="visually-hidden">Reports waiting for review</caption>
+          <thead>
+            <tr>
+              <th class="queue__check"><span class="visually-hidden">Select</span></th>
+              <th scope="col">Report</th>
+              <th scope="col">Agent status</th>
+              <th scope="col">Why it is here</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr aria-selected="true">
+              <td class="queue__check"><input type="checkbox" checked aria-label="Select report #1043"></td>
+              <td class="queue__place"><span class="queue__id">#1043 · España cor. Lacson</span><small>Brgy. 463, Sampaloc · 9:48 PM</small></td>
+              <td class="queue__status">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+                <small>91% probability</small>
+              </td>
+              <td><span class="badge badge--duplicate"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>Duplicate of #1042?</span></td>
+            </tr>
+            <tr>
+              <td class="queue__check"><input type="checkbox" aria-label="Select report #1037"></td>
+              <td class="queue__place"><span class="queue__id">#1037 · Rizal Ave.</span><small>Brgy. 76, Caloocan · 9:22 PM</small></td>
+              <td class="queue__status">
+                <span class="badge badge--unclear-photo"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>Unclear photo</span>
+                <small>44% probability</small>
+              </td>
+              <td><span class="badge badge--reported"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 5h11l-2 4 2 4H6"/></svg>Reported by 2 users</span></td>
+            </tr>
+            <tr>
+              <td class="queue__check"><input type="checkbox" aria-label="Select report #1031"></td>
+              <td class="queue__place"><span class="queue__id">#1031 · España Blvd.</span><small>Brgy. 463, Sampaloc · 8:41 PM</small></td>
+              <td class="queue__status">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+                <small>88% probability</small>
+              </td>
+              <td><span class="badge badge--outdated"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>May be outdated</span></td>
+            </tr>
+            <tr>
+              <td class="queue__check"><input type="checkbox" aria-label="Select report #1036"></td>
+              <td class="queue__place"><span class="queue__id">#1036 · Marcos Hwy.</span><small>San Roque, Marikina · 8:52 PM</small></td>
+              <td class="queue__status">
+                <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible flood</span>
+                <small>58% probability</small>
+              </td>
+              <td><span class="queue__none" aria-label="No flag">—</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Comment queue preview -->
+      <section class="card comment-queue" aria-labelledby="cq-title">
+        <div class="comment-queue__head">
+          <h2 class="heading-sm" id="cq-title">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true" style="display:inline; vertical-align:-3px"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>
+            Comment queue (3)
+          </h2>
+          <a class="link text-small" href="moderation.html">Open queue →</a>
+        </div>
+        <ul>
+          <li class="comment-item">
+            <div class="comment-item__text">
+              <p class="comment-item__quote">“Avoid España going to Quiapo.”</p>
+              <p class="comment-item__meta">On #1042 · <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 5h11l-2 4 2 4H6"/></svg> Not about this flood · 1 report</p>
+            </div>
+            <div class="comment-item__actions">
+              <button class="btn btn--ghost btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Keep</button>
+              <button class="btn btn--danger btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Remove</button>
+            </div>
+          </li>
+          <li class="comment-item">
+            <div class="comment-item__text">
+              <p class="comment-item__quote">“Buy cheap phones here: (link)”</p>
+              <p class="comment-item__meta">On #1039 · <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 5h11l-2 4 2 4H6"/></svg> Spam · 3 reports</p>
+            </div>
+            <div class="comment-item__actions">
+              <button class="btn btn--ghost btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Keep</button>
+              <button class="btn btn--danger btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Remove</button>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Review panel -->
+    <aside class="review" aria-labelledby="review-title">
+      <p class="eyebrow" id="review-title">Reviewing #1043</p>
+      <p class="text-xs text-muted" style="margin-top: 4px">Compare with possible original</p>
+
+      <div class="review__compare">
+        <figure class="review__photo">
+          <img src="../static/img/sample-street-flooded.svg" alt="Photo from report #1043">
+          <figcaption><strong>#1043</strong><span>9:48 PM</span></figcaption>
+        </figure>
+        <figure class="review__photo">
+          <img src="../static/img/sample-street-flooded.svg" alt="Photo from report #1042, the possible original">
+          <figcaption><strong>#1042</strong><span>9:46 PM</span></figcaption>
+        </figure>
+      </div>
+      <p class="review__facts">About 150 m apart · 2 min apart · same status</p>
+
+      <p class="eyebrow" style="margin-top: var(--space-5)">Actions</p>
+      <div class="review__actions">
+        <button class="btn btn--duplicate" type="button"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>Mark as duplicate of #1042</button>
+        <button class="btn btn--approve" type="button"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Approve as separate report</button>
+        <button class="btn btn--ghost" type="button"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Review later</button>
+        <button class="btn btn--danger-outline" type="button"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Remove report…</button>
+      </div>
+      <p class="review__note">Removing asks for a reason. The reporter is notified of any action.</p>
+    </aside>
+  </main>
+
+  <!-- ===== Phone layout: quick actions on the comment queue ===== -->
+  <div class="container mod-mobile">
+    <div class="mod-tabs" role="group" aria-label="Queue">
+      <button class="filter-chip" type="button" aria-pressed="false">Reports · 8</button>
+      <button class="filter-chip" type="button" aria-pressed="true">Comments · 3</button>
+    </div>
+
+    <ul class="comment-list">
+      <li class="comment-item">
+        <div class="comment-item__text">
+          <p class="comment-item__quote">“Avoid España going to Quiapo.”</p>
+          <p class="comment-item__meta">On #1042 · <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 5h11l-2 4 2 4H6"/></svg> Not about this flood · 1 report</p>
+        </div>
+        <div class="comment-item__actions">
+          <button class="btn btn--ghost btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Keep</button>
+          <button class="btn btn--danger btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Remove</button>
+        </div>
+      </li>
+      <li class="comment-item">
+        <div class="comment-item__text">
+          <p class="comment-item__quote">“Buy cheap phones here: (link)”</p>
+          <p class="comment-item__meta">On #1039 · <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 5h11l-2 4 2 4H6"/></svg> Spam · 3 reports</p>
+        </div>
+        <div class="comment-item__actions">
+          <button class="btn btn--ghost btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Keep</button>
+          <button class="btn btn--danger btn--sm" type="button"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Remove</button>
+        </div>
+      </li>
+    </ul>
+
+    <section class="card mod-mobile__report" aria-label="Report needing desktop review">
+      <div class="mod-mobile__report-row">
+        <img class="mod-mobile__thumb" src="../static/img/sample-street-flooded.svg" alt="">
+        <div>
+          <p class="mod-mobile__title">#1043 · España cor. Lacson</p>
+          <span class="badge badge--duplicate"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>Duplicate of #1042?</span>
+        </div>
+      </div>
+      <a class="btn btn--primary btn--block" href="moderation.html">Review on desktop for side-by-side</a>
+    </section>
+
+    <p class="mod-mobile__note">Quick actions work on mobile. Comparing photos and bulk actions are designed for desktop.</p>
+  </div>
+
+</body>
+</html>

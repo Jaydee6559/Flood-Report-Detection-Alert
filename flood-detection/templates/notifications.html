@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notifications · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/switch.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/notifications.css">
+</head>
+<body>
+
+  <!-- ===== Header (same on every signed-in page). The bell is the way into this page. ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link" href="weather.html">Weather report</a>
+        <a class="site-nav__link" href="reports.html">Reports</a>
+        <a class="site-nav__link" href="map.html">Flood map</a>
+        <a class="site-nav__link" href="routes.html">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+        <a class="icon-button icon-button--active" href="notifications.html" aria-label="Notifications, 3 unread" aria-current="page">
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          <span class="icon-button__count">3</span>
+        </a>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="container">
+      <div class="notices-layout">
+
+        <!-- ===== Notification list ===== -->
+        <div class="notices-main">
+          <div class="notices-head">
+            <h1 class="heading-xl">Notifications</h1>
+            <button class="link-button text-small notices-head__desktop" type="button">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+              Mark all as read
+            </button>
+            <a class="link text-small notices-head__mobile" href="#notification-settings">Settings</a>
+          </div>
+
+          <div class="filter-row" role="group" aria-label="Filter notifications">
+            <button class="filter-chip" type="button" aria-pressed="true">All · 6</button>
+            <button class="filter-chip" type="button" aria-pressed="false">Route alerts · 1</button>
+            <button class="filter-chip" type="button" aria-pressed="false">Travel schedule · 2</button>
+            <button class="filter-chip" type="button" aria-pressed="false">My reports · 3</button>
+          </div>
+
+          <div class="card notice-list">
+            <p class="notice-group">Today <span class="badge badge--sample">SAMPLE DATA</span></p>
+            <ul>
+              <!-- Route alert -->
+              <li>
+                <article class="notice notice--unread">
+                  <span class="notice__icon notice__icon--alert"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg></span>
+                  <div class="notice__body">
+                    <div class="notice__top">
+                      <span class="notice__kind">Route alert</span>
+                      <span class="notice__time">9:52 PM <span class="notice__dot" aria-hidden="true"></span><span class="visually-hidden">Unread</span></span>
+                    </div>
+                    <h2 class="notice__title">Flood warning on Home → School</h2>
+                    <p class="notice__text">España Blvd., Brgy. 463 · reported 6 min ago</p>
+                    <a class="link notice__action" href="routes.html">View route →</a>
+                  </div>
+                </article>
+              </li>
+              <!-- Report confirmed -->
+              <li>
+                <article class="notice notice--unread">
+                  <span class="notice__icon notice__icon--confirmed"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5M17.5 14.5A5.5 5.5 0 0 1 21 19"/></svg></span>
+                  <div class="notice__body">
+                    <div class="notice__top">
+                      <span class="notice__kind">My report</span>
+                      <span class="notice__time">9:51 PM <span class="notice__dot" aria-hidden="true"></span><span class="visually-hidden">Unread</span></span>
+                    </div>
+                    <h2 class="notice__title">Your report #1042 was confirmed 5 times</h2>
+                    <p class="notice__text">5 people say it is still flooded</p>
+                    <a class="link notice__action" href="report-details.html">Open report →</a>
+                  </div>
+                </article>
+              </li>
+              <!-- New comment -->
+              <li>
+                <article class="notice">
+                  <span class="notice__icon notice__icon--comment"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg></span>
+                  <div class="notice__body">
+                    <div class="notice__top">
+                      <span class="notice__kind">My report</span>
+                      <span class="notice__time">9:50 PM</span>
+                    </div>
+                    <h2 class="notice__title">New comment on your report #1042</h2>
+                    <p class="notice__text">“Still knee-deep near the jeepney stop.”</p>
+                    <a class="link notice__action" href="report-details.html">Reply →</a>
+                  </div>
+                </article>
+              </li>
+              <!-- Marked as duplicate -->
+              <li>
+                <article class="notice">
+                  <span class="notice__icon notice__icon--duplicate"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg></span>
+                  <div class="notice__body">
+                    <div class="notice__top">
+                      <span class="notice__kind">My report</span>
+                      <span class="notice__time">9:49 PM</span>
+                    </div>
+                    <h2 class="notice__title">Your report #1043 was marked as a duplicate</h2>
+                    <p class="notice__text">Merged with #1042 by a moderator</p>
+                    <a class="link notice__action" href="report-details.html">Why? →</a>
+                  </div>
+                </article>
+              </li>
+              <!-- Travel check set -->
+              <li>
+                <article class="notice notice--unread">
+                  <span class="notice__icon notice__icon--schedule"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>
+                  <div class="notice__body">
+                    <div class="notice__top">
+                      <span class="notice__kind">Travel schedule</span>
+                      <span class="notice__time">9:40 PM <span class="notice__dot" aria-hidden="true"></span><span class="visually-hidden">Unread</span></span>
+                    </div>
+                    <h2 class="notice__title">Travel check for 6:45 AM tomorrow is set</h2>
+                    <p class="notice__text">Weekdays · Home → School · check at 6:15 AM</p>
+                    <a class="link notice__action" href="schedules.html">Edit schedule →</a>
+                  </div>
+                </article>
+              </li>
+            </ul>
+
+            <p class="notice-group">Yesterday</p>
+            <ul>
+              <!-- All clear -->
+              <li>
+                <article class="notice">
+                  <span class="notice__icon notice__icon--confirmed"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg></span>
+                  <div class="notice__body">
+                    <div class="notice__top">
+                      <span class="notice__kind">Travel schedule</span>
+                      <span class="notice__time">Yesterday</span>
+                    </div>
+                    <h2 class="notice__title">No recent reports on School → Part-time job</h2>
+                    <p class="notice__text">Checked 3:00 PM before your 3:30 PM trip</p>
+                  </div>
+                </article>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ===== Settings + empty state example ===== -->
+        <aside class="notices-side">
+          <section class="card settings-card" id="notification-settings" aria-labelledby="settings-title">
+            <h2 class="heading-sm" id="settings-title">Notification settings</h2>
+            <p class="text-xs text-muted">In-app notifications only.</p>
+            <ul class="settings-list">
+              <li class="setting-row">
+                <div>
+                  <p class="setting-row__title" id="set-route">Route alerts</p>
+                  <p class="setting-row__text">When a report appears along a saved route</p>
+                </div>
+                <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="set-route"></button>
+              </li>
+              <li class="setting-row">
+                <div>
+                  <p class="setting-row__title" id="set-schedule">Travel schedule alerts</p>
+                  <p class="setting-row__text">Results of pre-departure checks</p>
+                </div>
+                <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="set-schedule"></button>
+              </li>
+              <li class="setting-row">
+                <div>
+                  <p class="setting-row__title" id="set-reports">Updates to my reports</p>
+                  <p class="setting-row__text">Confirmations, comments and moderator actions</p>
+                </div>
+                <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="set-reports"></button>
+              </li>
+              <li class="setting-row">
+                <div>
+                  <p class="setting-row__title" id="set-clear">“All clear” checks</p>
+                  <p class="setting-row__text">Also notify when nothing is found</p>
+                </div>
+                <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="set-clear"></button>
+              </li>
+            </ul>
+          </section>
+
+          <section class="card empty-card" aria-label="Empty state example">
+            <p class="eyebrow">Empty state example</p>
+            <span class="empty-card__icon"><svg class="icon icon--lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span>
+            <p class="empty-card__title">No route alerts yet</p>
+            <p class="empty-card__text">Save a route to get alerts when a flood report appears along it.</p>
+            <a class="btn btn--outline btn--sm" href="routes.html">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+              Add a route
+            </a>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports, alerts and notifications are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only). No tab is highlighted: notifications open from the bell. ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item" href="weather.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+      Weather
+    </a>
+    <a class="bottom-nav__item" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item" href="map.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item" href="routes.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>

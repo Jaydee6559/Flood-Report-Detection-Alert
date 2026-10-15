@@ -1,0 +1,181 @@
+/* ==========================================================================
+   Travel Schedules page (static design)
+   Desktop: schedule list + alert examples on the left, "Set a travel schedule"
+   form on the right. Phone: the pre-departure alert first, then the schedule
+   list with on/off switches.
+   All times and alerts are sample content.
+   ========================================================================== */
+
+.schedules-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.schedules-main,
+.schedules-side { display: grid; gap: var(--space-4); min-width: 0; }
+
+.schedules-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.eyebrow-row { display: flex; align-items: center; gap: var(--space-2); }
+
+/* ---------- Schedule list ---------- */
+.schedule-list { overflow: hidden; }
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 12px var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.schedule-list li:last-child .schedule-item { border-bottom: 0; }
+
+.schedule-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.schedule-item__text { flex: 1; min-width: 0; }
+.schedule-item__title { font-weight: 700; color: var(--color-navy); }
+.schedule-item__meta { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+
+.schedule-item__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-success);
+  white-space: nowrap;
+}
+
+.schedule-item--paused .schedule-item__icon { background: var(--color-neutral-light); color: var(--color-neutral-text); }
+.schedule-item--paused .schedule-item__status { color: var(--color-text-muted); }
+
+/* ---------- Alert examples ---------- */
+.sched-alert { overflow: hidden; }
+
+.sched-alert--warning { border-color: #e3a39d; }
+
+.sched-alert__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.sched-alert--warning .sched-alert__head { background: var(--color-danger); color: #fff; }
+.sched-alert__time { margin-left: auto; font-size: var(--font-size-xs); font-weight: 400; opacity: 0.92; white-space: nowrap; }
+
+.sched-alert__body { padding: var(--space-3) var(--space-4); font-size: var(--font-size-sm); }
+.sched-alert__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+
+/* "All clear" example: green outline, icon + text */
+.sched-alert--clear {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 12px var(--space-4);
+  border-color: #9fd0ae;
+  background: #f5fbf7;
+}
+.sched-alert--clear .icon { margin-top: 2px; color: var(--color-success); }
+.sched-alert--clear strong { display: block; color: var(--color-navy); }
+.sched-alert--clear span { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+
+/* ---------- Set a travel schedule form ---------- */
+.schedule-form { padding: var(--space-5); }
+.schedule-form__fields { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+
+.day-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+
+/* The page draws its own clock icon, so hide the browser's */
+#sched-time::-webkit-calendar-picker-indicator { display: none; }
+
+.day-chip {
+  min-width: 0;
+  min-height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+.day-chip[aria-pressed="true"] { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.day-chip:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.schedule-summary {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  font-size: var(--font-size-sm);
+}
+.schedule-summary p { margin-top: 4px; }
+
+.schedule-form__buttons { display: flex; gap: var(--space-2); }
+.schedule-form__buttons .btn--primary { flex: 1; }
+
+.schedules-note { display: flex; gap: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.schedules-note .icon { margin-top: 1px; }
+
+/* ---------- Phone-only pieces ---------- */
+.travel-check,
+.travel-mobile { display: none; }
+
+@media (max-width: 1100px) {
+  .schedules-layout { grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-4); }
+}
+
+@media (max-width: 899px) {
+  .schedules-layout { display: none; }
+  .schedules-page .page-main { padding-top: 0; }
+
+  /* Pre-departure alert: red panel under the header */
+  .travel-check { display: block; background: var(--color-danger); color: #fff; }
+  .travel-check__inner { padding-top: var(--space-3); padding-bottom: var(--space-4); }
+  .travel-check__label { font-size: var(--font-size-xs); opacity: 0.92; }
+  .travel-check__title { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-lg); font-weight: 700; }
+  .travel-check__sub { font-size: var(--font-size-sm); opacity: 0.92; }
+
+  .travel-mobile { display: grid; gap: var(--space-4); padding-top: var(--space-4); }
+
+  .trip-card { padding: var(--space-3); }
+  .trip-card__row { display: flex; gap: var(--space-3); align-items: center; }
+  .trip-card__thumb { width: 56px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; flex: none; }
+  .trip-card__title { font-weight: 700; color: var(--color-navy); }
+  .trip-card__meta { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+  .trip-card .badge { margin-top: 4px; }
+
+  .trip-advice { font-size: var(--font-size-sm); color: var(--color-text); }
+  .trip-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+
+  .my-schedules__head { display: flex; align-items: center; gap: var(--space-2); }
+  .my-schedules__list { margin-top: var(--space-2); }
+  .my-schedules__list li { border-bottom: 1px solid var(--color-border); }
+  .my-schedules__list li:last-child { border-bottom: 0; }
+  .my-schedule { display: flex; align-items: center; gap: var(--space-3); padding: 12px 0; }
+  .my-schedule .icon { color: var(--color-primary); }
+  .my-schedule__text { flex: 1; min-width: 0; }
+  .my-schedule__title { font-size: var(--font-size-sm); font-weight: 700; color: var(--color-navy); }
+  .my-schedule__meta { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+}

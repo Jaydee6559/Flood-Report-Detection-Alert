@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My routes · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/switch.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/routes.css">
+</head>
+<body>
+
+  <!-- Shared drawing of the Home → School route (streets, route line, report markers). Mock map. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <pattern id="route-blocks" width="74" height="52" patternUnits="userSpaceOnUse">
+        <rect x="6" y="6" width="58" height="38" rx="3" fill="#dfe5ea"/>
+      </pattern>
+      <symbol id="route-art" viewBox="0 0 1000 440">
+        <rect width="1000" height="440" fill="#eef1f4"/>
+        <rect width="1000" height="440" fill="url(#route-blocks)"/>
+
+        <!-- Campus -->
+        <rect x="205" y="168" width="170" height="92" rx="6" fill="#dcead9" stroke="#c6dcc2"/>
+        <text x="290" y="219" text-anchor="middle" font-size="12" fill="#6b8a68">Campus</text>
+
+        <!-- Streets -->
+        <g stroke="#fff" stroke-linecap="round" fill="none">
+          <path d="M-20 118 L1020 108" stroke-width="12"/>
+          <path d="M135 -10 L145 450" stroke-width="12"/>
+          <path d="M640 -10 L632 450" stroke-width="12"/>
+          <path d="M-20 398 L1020 270" stroke-width="14"/>
+          <path d="M-20 250 L1020 20" stroke-width="28"/>
+        </g>
+        <g font-size="12" fill="#7d8e9c" text-anchor="middle">
+          <text x="780" y="102">Dapitan St.</text>
+          <text transform="translate(440 190) rotate(-12.6)" font-weight="700">España Blvd.</text>
+          <text transform="translate(122 300) rotate(-89)">Lacson Ave.</text>
+          <text transform="translate(620 360) rotate(-91)">Dimasalang St.</text>
+          <text transform="translate(235 372) rotate(-7)">P. Noval St.</text>
+        </g>
+
+        <!-- Faded report outside the time filter -->
+        <g transform="translate(205 70)" opacity="0.5">
+          <circle r="13" fill="#2e8a4f" stroke="#fff" stroke-width="3"/>
+          <path d="m-5 0 3.5 3.5L6 -3.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+
+        <!-- Route line -->
+        <path d="M50 380 L330 348 L480 328 L600 292 L765 232 L900 110" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M50 380 L330 348 L480 328 L600 292 L765 232 L900 110" fill="none" stroke="#2468a2" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Home -->
+        <g transform="translate(50 380)">
+          <circle r="11" fill="#fff" stroke="#173248" stroke-width="4"/>
+          <text y="32" text-anchor="middle" font-size="12" font-weight="700" fill="#173248">Home</text>
+        </g>
+        <!-- School -->
+        <g transform="translate(900 110)">
+          <circle r="11" fill="#173248" stroke="#fff" stroke-width="3"/>
+          <text y="-20" text-anchor="middle" font-size="12" font-weight="700" fill="#173248">School</text>
+        </g>
+
+        <!-- #1035 possible flood -->
+        <g transform="translate(700 255)">
+          <circle r="16" fill="#c98516" stroke="#fff" stroke-width="3"/>
+          <g transform="translate(-9 -9) scale(.75)" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></g>
+          <rect x="-24" y="21" width="48" height="18" rx="4" fill="#fff" stroke="#d3dde5"/>
+          <text y="34" text-anchor="middle" font-size="11" font-weight="700" fill="#173248">#1035</text>
+        </g>
+        <!-- #1042 flood warning -->
+        <g transform="translate(480 328)">
+          <circle r="17" fill="#b8291f" stroke="#fff" stroke-width="3"/>
+          <g transform="translate(-9 -9) scale(.75)" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></g>
+          <rect x="-24" y="22" width="48" height="18" rx="4" fill="#fff" stroke="#d3dde5"/>
+          <text y="35" text-anchor="middle" font-size="11" font-weight="700" fill="#173248">#1042</text>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- ===== Header (same on every signed-in page) ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link" href="weather.html">Weather report</a>
+        <a class="site-nav__link" href="reports.html">Reports</a>
+        <a class="site-nav__link" href="map.html">Flood map</a>
+        <a class="site-nav__link site-nav__link--active" href="routes.html" aria-current="page">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+          <a class="icon-button" href="notifications.html" aria-label="Notifications, 3 unread">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+            <span class="icon-button__count">3</span>
+          </a>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="container">
+
+      <!-- ===== Desktop layout ===== -->
+      <div class="routes-layout">
+
+        <!-- Left: saved routes + add a route -->
+        <aside aria-label="Saved routes">
+          <h1 class="heading-lg">My routes</h1>
+          <p class="private-note">
+            <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            Saved routes are private to your account.
+          </p>
+
+          <ul class="route-list">
+            <li>
+              <a class="route-card route-card--selected" href="routes.html" aria-current="true">
+                <span class="route-card__title">
+                  <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+                  Home → School
+                </span>
+                <span class="route-card__places">Brgy. 471, Sampaloc → España Blvd. campus</span>
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>1 flood warning on route</span>
+              </a>
+              <button class="route-card__edit" type="button" aria-label="Edit Home → School">
+                <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
+              </button>
+            </li>
+            <li>
+              <a class="route-card" href="routes.html">
+                <span class="route-card__title">
+                  <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+                  School → Part-time job
+                </span>
+                <span class="route-card__places">España Blvd. campus → Brgy. Doña Imelda, Q.C.</span>
+                <span class="badge badge--no-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>No recent reports</span>
+              </a>
+              <button class="route-card__edit" type="button" aria-label="Edit School → Part-time job">
+                <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
+              </button>
+            </li>
+          </ul>
+
+          <!-- Add a route (static form) -->
+          <form class="card card--soft add-route" aria-labelledby="add-route-title">
+            <h2 class="heading-sm" id="add-route-title">Add a route</h2>
+            <div class="add-route__fields">
+              <div>
+                <label class="form-label" for="route-name">Route name</label>
+                <input class="form-input" id="route-name" type="text" placeholder="e.g. Home → Work">
+              </div>
+              <div>
+                <label class="form-label" for="route-start">Start point</label>
+                <div class="input-group">
+                  <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0C5.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></svg>
+                  <input class="form-input form-input--with-icon" id="route-start" type="text" placeholder="Barangay or landmark">
+                </div>
+              </div>
+              <div>
+                <label class="form-label" for="route-end">Destination</label>
+                <div class="input-group">
+                  <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0C5.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></svg>
+                  <input class="form-input form-input--with-icon" id="route-end" type="text" placeholder="Barangay or landmark">
+                </div>
+              </div>
+              <button class="btn btn--primary btn--block" type="button">Save route</button>
+            </div>
+          </form>
+        </aside>
+
+        <!-- Right: selected route -->
+        <section class="route-detail" aria-labelledby="route-title">
+          <div class="route-detail__head">
+            <div>
+              <h2 class="heading-lg" id="route-title">Home → School</h2>
+              <p class="text-small text-muted">Brgy. 471, Sampaloc → España Blvd. campus · about 2.4 km</p>
+            </div>
+            <div class="route-detail__aside">
+              <span class="badge badge--sample">SAMPLE DATA</span>
+              <a class="btn btn--outline btn--sm" href="schedules.html">
+                <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>
+                Travel schedules
+              </a>
+            </div>
+          </div>
+
+          <div class="route-alert" role="status">
+            <svg class="icon icon--lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+            <div class="route-alert__body">
+              <p class="route-alert__title">Flood warning on your route</p>
+              <p class="route-alert__text">#1042 · España Blvd., Brgy. 463 · reported 6 min ago · 5 still-flooded confirmations</p>
+            </div>
+            <a class="btn btn--light btn--sm" href="report-details.html">View report</a>
+          </div>
+
+          <div class="route-map">
+            <svg viewBox="0 0 1000 440" role="img" aria-label="Map of the Home to School route with report #1042 on the route and #1035 near it (illustration)">
+              <use href="#route-art"/>
+            </svg>
+          </div>
+
+          <div>
+            <div class="near-head">
+              <h3 class="heading-sm">Reports near this route (2)</h3>
+              <span class="text-xs text-muted">Faded: outside time filter</span>
+            </div>
+            <ul class="near-list">
+              <li>
+                <a class="near-item" href="report-details.html">
+                  <span class="near-item__top">
+                    <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+                    <span class="near-item__street">España Blvd.</span>
+                  </span>
+                  <span class="near-item__meta">On route · 6 min ago</span>
+                </a>
+              </li>
+              <li>
+                <a class="near-item" href="report-details.html">
+                  <span class="near-item__top">
+                    <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible flood</span>
+                    <span class="near-item__street">Dimasalang St.</span>
+                  </span>
+                  <span class="near-item__meta">Near route · 31 min ago</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card alert-toggle">
+            <span class="alert-toggle__label" id="alert-label">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+              Alert me in the app when a new report appears along this route
+            </span>
+            <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="alert-label"></button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== Phone: "New route" form ===== -->
+      <div class="route-editor">
+        <div>
+          <a class="route-editor__back" href="routes.html">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+            New route
+          </a>
+          <p class="private-note">
+            <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            Only you can see your saved routes.
+          </p>
+        </div>
+
+        <div>
+          <label class="form-label" for="m-route-name">Route name</label>
+          <input class="form-input" id="m-route-name" type="text" value="Home → School">
+        </div>
+
+        <div class="card route-points">
+          <div class="route-point">
+            <span class="route-point__dot" aria-hidden="true"></span>
+            <div>
+              <p class="route-point__label">Start point</p>
+              <p class="route-point__value">Brgy. 471, Sampaloc</p>
+            </div>
+          </div>
+          <span class="route-point__link" aria-hidden="true"></span>
+          <div class="route-point">
+            <span class="route-point__dot route-point__dot--end" aria-hidden="true"></span>
+            <div>
+              <p class="route-point__label">Destination</p>
+              <p class="route-point__value">España Blvd. campus</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="route-map">
+          <svg viewBox="0 0 1000 440" role="img" aria-label="Map of the Home to School route (illustration)">
+            <use href="#route-art"/>
+          </svg>
+        </div>
+
+        <div class="switch-row">
+          <span id="m-alert-label">Route alerts in the app</span>
+          <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="m-alert-label"></button>
+        </div>
+
+        <div class="route-now" role="status">
+          <strong>
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+            Right now on this route
+          </strong>
+          Flood warning on España Blvd. · 6 min ago
+        </div>
+
+        <button class="btn btn--primary btn--lg btn--block" type="button">Save route</button>
+        <a class="btn btn--outline btn--lg btn--block" href="schedules.html">Travel schedules</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports, routes and alerts are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only) ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item" href="weather.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+      Weather
+    </a>
+    <a class="bottom-nav__item" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item" href="map.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="routes.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>
