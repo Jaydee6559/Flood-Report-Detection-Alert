@@ -36,6 +36,10 @@
   --color-duplicate-light: #efeafa;
   --color-sample: #8a4b00;
   --color-sample-border: #f0c98a;
+  --color-advisory: #c2570c;
+  --color-advisory-light: #fff1e3;
+  --color-advisory-border: #f2c291;
+  --color-advisory-text: #8a3f06;
 
   /* Typography */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

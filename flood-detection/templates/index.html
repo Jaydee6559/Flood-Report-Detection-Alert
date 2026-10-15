@@ -34,10 +34,10 @@
         <span class="brand__name">Flood Detection &amp; Alert</span>
       </a>
 
-      <!-- Desktop navigation. Flood map and My routes are not built yet. -->
+      <!-- Desktop navigation -->
       <nav class="site-nav" aria-label="Main">
         <a class="site-nav__link site-nav__link--active" href="index.html" aria-current="page">Home</a>
-        <a class="site-nav__link" href="weather.html">Weather Report</a>
+        <a class="site-nav__link" href="weather.html">Weather report</a>
         <a class="site-nav__link" href="reports.html">Reports</a>
         <a class="site-nav__link" href="map.html">Flood map</a>
         <a class="site-nav__link" href="routes.html">My routes</a>
@@ -92,7 +92,7 @@
                 1 flood warning on your route · 6 min ago
               </p>
             </div>
-            <button class="link-button text-small" type="button">View →</button>
+            <a class="link-button text-small" href="routes.html">View →</a>
           </div>
         </div>
 
@@ -174,11 +174,16 @@
     </div>
   </footer>
 
-  <!-- ===== Bottom navigation (phones only). Map and Routes are not built yet. ===== -->
+  <!-- ===== Bottom navigation (phones only). 7 tabs so the Report button sits in the exact center:
+       Home · Weather · Reports | REPORT | Map · Routes · Login ===== -->
   <nav class="bottom-nav" aria-label="Main">
-    <a class="bottom-nav__item bottom-nav__item--active" href="index.html" aria-current="page">
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="index.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
       Home
+    </a>
+    <a class="bottom-nav__item" href="weather.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+      Weather
     </a>
     <a class="bottom-nav__item" href="reports.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
@@ -190,13 +195,17 @@
       </span>
       Report
     </a>
-    <a class="bottom-nav__item">
+    <a class="bottom-nav__item" href="map.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
       Map
     </a>
-    <a class="bottom-nav__item">
+    <a class="bottom-nav__item" href="routes.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
       Routes
+    </a>
+    <a class="bottom-nav__item" href="auth/login.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/></svg>
+      Login
     </a>
   </nav>
 

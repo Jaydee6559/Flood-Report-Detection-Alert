@@ -35,7 +35,7 @@
         <span class="brand__name">Flood Detection &amp; Alert</span>
       </a>
 
-      <!-- Desktop navigation. Flood map and My routes are not built yet. -->
+      <!-- Desktop navigation -->
       <nav class="site-nav" aria-label="Main">
         <a class="site-nav__link" href="index.html">Home</a>
         <a class="site-nav__link site-nav__link--active" href="weather.html" aria-current="page">Weather report</a>
@@ -298,7 +298,8 @@
     </div>
   </footer>
 
-  <!-- ===== Bottom navigation (phones only). Map and Routes are not built yet. ===== -->
+  <!-- ===== Bottom navigation (phones only). 7 tabs so the Report button sits in the exact center:
+       Home · Weather · Reports | REPORT | Map · Routes · Login ===== -->
   <nav class="bottom-nav" aria-label="Main">
     <a class="bottom-nav__item" href="index.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
@@ -318,13 +319,17 @@
       </span>
       Report
     </a>
-    <a class="bottom-nav__item">
+    <a class="bottom-nav__item" href="map.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
       Map
     </a>
-    <a class="bottom-nav__item">
+    <a class="bottom-nav__item" href="routes.html">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
       Routes
+    </a>
+    <a class="bottom-nav__item" href="auth/login.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/></svg>
+      Login
     </a>
   </nav>
 
