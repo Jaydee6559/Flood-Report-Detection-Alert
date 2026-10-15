@@ -238,11 +238,17 @@
 
 /* ---------- Phone ---------- */
 @media (max-width: 899px) {
-  .details-layout { grid-template-columns: 1fr; }
+  .details-layout { grid-template-columns: minmax(0, 1fr); }
+  .details-main, .details-aside { min-width: 0; }
+  .details-aside { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 380px) {
+  .confirm-card__buttons { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 600px) {
-  .details-summary { grid-template-columns: 1fr; padding: var(--space-4); }
+  .details-summary { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
   .duplicates { padding: var(--space-4); }
   .duplicates__list { grid-template-columns: 1fr; }
 }

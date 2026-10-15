@@ -1,7 +1,7 @@
 /* ==========================================================================
    Site header
    Desktop: logo + top navigation + bell + "Report a flood".
-   Phone (under 900px): logo + bell only; navigation moves to the bottom bar.
+   Phone (under 900px): logo + bell only; navigation and Login move to the bottom bar.
    ========================================================================== */
 
 .site-header {
@@ -69,6 +69,8 @@
   .site-header__inner { height: 56px; }
   .site-nav,
   .site-header__report { display: none; }
+  /* Login/sign-out lives in the bottom bar on phones (moderator badge is a <span>, so it stays) */
+  a.avatar { display: none; }
   .avatar { width: 32px; height: 32px; }
   .site-header__actions { margin-left: auto; }
 }
