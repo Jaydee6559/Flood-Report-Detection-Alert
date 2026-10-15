@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weather report · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/weather.css">
+</head>
+<body class="weather-page">
+
+  <!-- ===== Header (same on every signed-in page) ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <!-- Desktop navigation. Flood map and My routes are not built yet. -->
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link site-nav__link--active" href="weather.html" aria-current="page">Weather report</a>
+        <a class="site-nav__link" href="reports.html">Reports</a>
+        <a class="site-nav__link" href="map.html">Flood map</a>
+        <a class="site-nav__link" href="routes.html">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+          <a class="icon-button" href="notifications.html" aria-label="Notifications, 3 unread">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+            <span class="icon-button__count">3</span>
+          </a>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Phone: orange advisory bar under the header -->
+  <div class="advisory-bar" role="status">
+    <div class="container advisory-bar__inner">
+      <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+      <span>Orange rainfall warning</span>
+      <span class="advisory-bar__note">PAGASA · 8:00 PM</span>
+    </div>
+  </div>
+
+  <main class="page-main">
+    <div class="container">
+
+      <div class="page-heading">
+        <div>
+          <h1 class="heading-xl">Weather report</h1>
+          <p class="page-subtitle">
+            Updated 9:50 PM · every 30 min
+            <span class="badge badge--sample">SAMPLE DATA</span>
+          </p>
+        </div>
+        <div class="weather-controls">
+          <!-- Area picker (static; the weather service is not connected yet) -->
+          <div class="input-group location-select">
+            <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0C5.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></svg>
+            <label class="visually-hidden" for="area">Area</label>
+            <select class="form-select form-input--with-icon" id="area">
+              <option>Sampaloc, Manila</option>
+              <option>Malate, Manila</option>
+              <option>Marikina City</option>
+              <option>Quezon City</option>
+              <option>Caloocan City</option>
+            </select>
+          </div>
+          <button class="btn btn--ghost" type="button">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>
+            My location
+          </button>
+        </div>
+      </div>
+
+      <!-- Official advisory (desktop) -->
+      <section class="advisory" aria-label="Official advisory">
+        <svg class="icon icon--lg advisory__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+        <div class="advisory__body">
+          <p class="advisory__title">Orange rainfall warning · Metro Manila</p>
+          <p class="advisory__text">Official PAGASA advisory, issued 8:00 PM. Flooding is threatening in low-lying areas.</p>
+        </div>
+        <a class="advisory__link" href="https://www.pagasa.dost.gov.ph/" target="_blank" rel="noopener">
+          PAGASA bulletin
+          <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+        </a>
+      </section>
+
+      <div class="weather-layout">
+
+        <!-- ===== Left column ===== -->
+        <div class="weather-main">
+
+          <div class="weather-top">
+
+            <!-- Current conditions -->
+            <section class="card now-card" aria-label="Current conditions">
+              <p class="eyebrow">Right now · Sampaloc</p>
+              <div class="now-card__main">
+                <svg class="icon now-card__icon" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width:1.5"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M8 17.5l-1 2.5M12 17.5l-1 2.5M16 17.5l-1 2.5"/></svg>
+                <span class="now-card__temp">26°</span>
+                <div>
+                  <p class="now-card__condition">Heavy rain</p>
+                  <p class="now-card__feels">Feels like 29°</p>
+                  <p class="now-card__mobile-line">Humidity 94% · Wind 24 km/h NE</p>
+                </div>
+              </div>
+              <dl class="now-card__stats">
+                <div class="now-card__stat"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg><dt>Rain</dt><dd><strong>18 mm/h</strong></dd></div>
+                <div class="now-card__stat"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/><path d="M9.5 14.5h5"/></svg><dt>Humidity</dt><dd><strong>94%</strong></dd></div>
+                <div class="now-card__stat"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5h10a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 15.5h7a2 2 0 1 1-2 2"/></svg><dt>Wind</dt><dd><strong>24 km/h NE</strong></dd></div>
+                <div class="now-card__stat"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg><dt>Chance</dt><dd><strong>95%</strong></dd></div>
+              </dl>
+            </section>
+
+            <!-- Agent flood-risk outlook -->
+            <section class="card outlook" aria-label="Flood-risk outlook">
+              <div class="outlook__head">
+                <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+                High flood risk · next 6 hours
+                <span class="outlook__tag">Agent outlook</span>
+              </div>
+              <div class="outlook__body">
+                <p class="outlook__line">
+                  <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+                  <span>About <strong>83 mm</strong> of rain expected by 4 AM; heaviest around midnight.</span>
+                </p>
+                <p class="outlook__line">
+                  <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5M17.5 14.5A5.5 5.5 0 0 1 21 19"/></svg>
+                  <span><strong>4 flood warnings</strong> reported in Sampaloc in the last 2 hours.</span>
+                </p>
+                <p class="callout callout--danger">Avoid low streets like España Blvd. Check reports before you travel.</p>
+              </div>
+            </section>
+          </div>
+
+          <!-- Hourly rainfall -->
+          <section class="card rain-card" aria-labelledby="rain-title">
+            <div class="rain-card__head">
+              <h2 class="heading-sm" id="rain-title">Hourly rainfall · next 12 hours</h2>
+              <ul class="rain-legend" aria-label="Rainfall intensity">
+                <li class="rain-legend__item"><span class="rain-legend__swatch" style="--swatch: var(--rain-light)"></span>Light</li>
+                <li class="rain-legend__item"><span class="rain-legend__swatch" style="--swatch: var(--rain-moderate)"></span>Moderate</li>
+                <li class="rain-legend__item"><span class="rain-legend__swatch" style="--swatch: var(--rain-heavy)"></span>Heavy</li>
+                <li class="rain-legend__item"><span class="rain-legend__swatch" style="--swatch: var(--rain-intense)"></span>Intense</li>
+              </ul>
+            </div>
+
+            <div class="rain-chart" role="img" aria-label="Hourly rainfall in mm per hour: 12 now, 16 at 11 PM, 22 at 12 AM, 18 at 1 AM, then easing to 1 by 9 AM.">
+              <div class="rain-chart__level rain-chart__level--red" style="--at: 30"><span>Red</span></div>
+              <div class="rain-chart__level rain-chart__level--orange" style="--at: 15"><span>Orange</span></div>
+              <div class="rain-chart__level rain-chart__level--yellow" style="--at: 7.5"><span>Yellow</span></div>
+
+              <div class="rain-chart__bars" aria-hidden="true">
+                <div class="rain-bar rain-bar--heavy rain-bar--now"  style="--mm: 12"><span class="rain-bar__value">12</span><span class="rain-bar__fill"></span><span class="rain-bar__label">Now</span></div>
+                <div class="rain-bar rain-bar--intense"              style="--mm: 16"><span class="rain-bar__value">16</span><span class="rain-bar__fill"></span><span class="rain-bar__label">11 PM</span></div>
+                <div class="rain-bar rain-bar--intense"              style="--mm: 22"><span class="rain-bar__value">22</span><span class="rain-bar__fill"></span><span class="rain-bar__label">12 AM</span></div>
+                <div class="rain-bar rain-bar--intense"              style="--mm: 18"><span class="rain-bar__value">18</span><span class="rain-bar__fill"></span><span class="rain-bar__label">1 AM</span></div>
+                <div class="rain-bar rain-bar--heavy"                style="--mm: 9"><span class="rain-bar__value">9</span><span class="rain-bar__fill"></span><span class="rain-bar__label">2 AM</span></div>
+                <div class="rain-bar rain-bar--moderate"             style="--mm: 6"><span class="rain-bar__value">6</span><span class="rain-bar__fill"></span><span class="rain-bar__label">3 AM</span></div>
+                <div class="rain-bar rain-bar--moderate"             style="--mm: 4"><span class="rain-bar__value">4</span><span class="rain-bar__fill"></span><span class="rain-bar__label">4 AM</span></div>
+                <div class="rain-bar rain-bar--moderate"             style="--mm: 3"><span class="rain-bar__value">3</span><span class="rain-bar__fill"></span><span class="rain-bar__label">5 AM</span></div>
+                <div class="rain-bar rain-bar--moderate rain-bar--extra" style="--mm: 5"><span class="rain-bar__value">5</span><span class="rain-bar__fill"></span><span class="rain-bar__label">6 AM</span></div>
+                <div class="rain-bar rain-bar--moderate rain-bar--extra" style="--mm: 6"><span class="rain-bar__value">6</span><span class="rain-bar__fill"></span><span class="rain-bar__label">7 AM</span></div>
+                <div class="rain-bar rain-bar--light rain-bar--extra"    style="--mm: 2"><span class="rain-bar__value">2</span><span class="rain-bar__fill"></span><span class="rain-bar__label">8 AM</span></div>
+                <div class="rain-bar rain-bar--light rain-bar--extra"    style="--mm: 1"><span class="rain-bar__value">1</span><span class="rain-bar__fill"></span><span class="rain-bar__label">9 AM</span></div>
+              </div>
+            </div>
+            <p class="rain-card__note">mm per hour · dashed lines show PAGASA rainfall warning levels</p>
+          </section>
+        </div>
+
+        <!-- ===== Right column ===== -->
+        <aside class="weather-side">
+
+          <!-- 7-day forecast -->
+          <section class="card forecast-card" aria-labelledby="forecast-title">
+            <div class="forecast-card__head">
+              <h2 class="heading-sm" id="forecast-title">7-day forecast</h2>
+              <span class="text-xs text-muted">Sampaloc, Manila</span>
+            </div>
+            <ul class="forecast-list">
+              <li class="forecast-row forecast-row--extra">
+                <span class="forecast-row__day">Today<small>Oct 15</small></span>
+                <svg class="icon icon--md forecast-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+                <span class="forecast-row__bar" style="--value: 95%" aria-hidden="true"></span>
+                <span class="forecast-row__chance">95%</span>
+                <span class="forecast-row__mm">62 mm</span>
+                <span class="forecast-row__temp">25° / 29°</span>
+              </li>
+              <li class="forecast-row">
+                <span class="forecast-row__day">Fri<small>Oct 16</small></span>
+                <svg class="icon icon--md forecast-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+                <span class="forecast-row__bar" style="--value: 90%" aria-hidden="true"></span>
+                <span class="forecast-row__chance">90%</span>
+                <span class="forecast-row__mm">48 mm</span>
+                <span class="forecast-row__temp">25° / 29°</span>
+              </li>
+              <li class="forecast-row">
+                <span class="forecast-row__day">Sat<small>Oct 17</small></span>
+                <svg class="icon icon--md forecast-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+                <span class="forecast-row__bar" style="--value: 70%" aria-hidden="true"></span>
+                <span class="forecast-row__chance">70%</span>
+                <span class="forecast-row__mm">18 mm</span>
+                <span class="forecast-row__temp">25° / 30°</span>
+              </li>
+              <li class="forecast-row">
+                <span class="forecast-row__day">Sun<small>Oct 18</small></span>
+                <svg class="icon icon--md forecast-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 11a3.5 3.5 0 0 1 .5 7z"/></svg>
+                <span class="forecast-row__bar" style="--value: 40%" aria-hidden="true"></span>
+                <span class="forecast-row__chance">40%</span>
+                <span class="forecast-row__mm">4 mm</span>
+                <span class="forecast-row__temp">26° / 31°</span>
+              </li>
+              <li class="forecast-row forecast-row--extra">
+                <span class="forecast-row__day">Mon<small>Oct 19</small></span>
+                <svg class="icon icon--md forecast-row__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8.5" r="2.8"/><path d="M8.5 2.5v1.2M2.5 8.5h1.2M4.3 4.3l.9.9M12.7 4.3l-.9.9"/><path d="M9 19a3.5 3.5 0 0 1-.4-7 4.7 4.7 0 0 1 9 1.4 3 3 0 0 1 .4 5.6z"/></svg>
+                <span class="forecast-row__bar" style="--value: 20%" aria-hidden="true"></span>
+                <span class="forecast-row__chance">20%</span>
+                <span class="forecast-row__mm">1 mm</span>
+                <span class="forecast-row__temp">26° / 32°</span>
+              </li>
+              <li class="forecast-row forecast-row--extra">
+                <span class="forecast-row__day">Tue<small>Oct 20</small></span>
+                <svg class="icon icon--md forecast-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+                <span class="forecast-row__bar" style="--value: 60%" aria-hidden="true"></span>
+                <span class="forecast-row__chance">60%</span>
+                <span class="forecast-row__mm">12 mm</span>
+                <span class="forecast-row__temp">25° / 31°</span>
+              </li>
+              <li class="forecast-row forecast-row--extra">
+                <span class="forecast-row__day">Wed<small>Oct 21</small></span>
+                <svg class="icon icon--md forecast-row__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8.5" r="2.8"/><path d="M8.5 2.5v1.2M2.5 8.5h1.2M4.3 4.3l.9.9M12.7 4.3l-.9.9"/><path d="M9 19a3.5 3.5 0 0 1-.4-7 4.7 4.7 0 0 1 9 1.4 3 3 0 0 1 .4 5.6z"/></svg>
+                <span class="forecast-row__bar" style="--value: 30%" aria-hidden="true"></span>
+                <span class="forecast-row__chance">30%</span>
+                <span class="forecast-row__mm">2 mm</span>
+                <span class="forecast-row__temp">26° / 32°</span>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Weather on saved routes -->
+          <section class="card route-weather-card" aria-labelledby="routes-title">
+            <div class="route-weather-card__head">
+              <h2 class="heading-sm" id="routes-title">Weather on my routes</h2>
+              <span class="text-xs text-muted">Next departure</span>
+            </div>
+            <ul class="route-weather">
+              <li class="route-weather__item">
+                <span class="route-weather__icon"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg></span>
+                <span class="route-weather__text"><strong>Home → School</strong><small>Fri 6:45 AM · 6 mm/h, 80%</small></span>
+                <span class="badge badge--rain-moderate">Moderate rain</span>
+              </li>
+              <li class="route-weather__item">
+                <span class="route-weather__icon"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg></span>
+                <span class="route-weather__text"><strong>School → Part-time job</strong><small>Fri 3:30 PM · 2 mm/h, 55%</small></span>
+                <span class="badge badge--rain-light">Light rain</span>
+              </li>
+            </ul>
+          </section>
+
+          <p class="weather-disclaimer">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.3"/></svg>
+            <span>Forecasts are estimates from a weather service. Follow official PAGASA, NDRRMC and LGU advisories. Emergency? Call 911.</span>
+          </p>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports, weather and results are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only). Map and Routes are not built yet. ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="weather.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+      Weather
+    </a>
+    <a class="bottom-nav__item" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>

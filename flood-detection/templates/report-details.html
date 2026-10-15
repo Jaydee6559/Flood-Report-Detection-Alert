@@ -39,16 +39,17 @@
       <!-- Desktop navigation. Flood map and My routes are not built yet. -->
       <nav class="site-nav" aria-label="Main">
         <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link" href="weather.html">Weather Report</a>
         <a class="site-nav__link site-nav__link--active" href="reports.html" aria-current="page">Reports</a>
         <a class="site-nav__link">Flood map</a>
         <a class="site-nav__link">My routes</a>
       </nav>
 
       <div class="site-header__actions">
-        <button class="icon-button" type="button" aria-label="Notifications, 3 unread">
-          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
-          <span class="icon-button__count">3</span>
-        </button>
+          <a class="icon-button" href="notifications.html" aria-label="Notifications, 3 unread">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+            <span class="icon-button__count">3</span>
+          </a>
         <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
         <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
       </div>

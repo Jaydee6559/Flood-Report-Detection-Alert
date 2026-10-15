@@ -1,0 +1,410 @@
+/* ==========================================================================
+   Weather Report page
+   Desktop: two columns (current conditions + chart on the left,
+   forecast and routes on the right). Phone: one column in order of urgency.
+   All numbers are sample content.
+   ========================================================================== */
+
+/* Rainfall intensity colors (PAGASA bands). Values are always printed on the
+   bars, so color is never the only signal. */
+.weather-page {
+  --rain-light: #9fc3e0;
+  --rain-moderate: #6aa3d1;
+  --rain-heavy: #2b73b0;
+  --rain-intense: #0d3f6b;
+  --level-yellow: #a87800;
+  --level-orange: #b9540a;
+  --level-red: #b8291f;
+}
+
+/* ---------- Heading controls ---------- */
+.weather-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.location-select { position: relative; min-width: 220px; }
+
+/* ---------- Advisory banner ---------- */
+.advisory {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding: 12px var(--space-4);
+  border: 1px solid var(--color-advisory-border);
+  border-left: 5px solid var(--color-advisory);
+  border-radius: var(--radius-md);
+  background: var(--color-advisory-light);
+  color: var(--color-advisory-text);
+}
+
+.advisory__icon { color: var(--color-advisory); }
+.advisory__body { flex: 1; min-width: 0; }
+.advisory__title { font-weight: 700; font-size: var(--font-size-md); }
+.advisory__text { font-size: var(--font-size-sm); }
+
+.advisory__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-advisory-text);
+  white-space: nowrap;
+}
+.advisory__link:hover { text-decoration: underline; }
+
+/* Compact version shown under the header on phones */
+.advisory-bar { display: none; }
+
+/* ---------- Page grid ---------- */
+.weather-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  align-items: start;
+}
+
+.weather-main,
+.weather-side {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.weather-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* ---------- Current conditions ---------- */
+.now-card { padding: var(--space-5); }
+
+.now-card__main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.now-card__icon { width: 44px; height: 44px; color: var(--color-primary); }
+
+.now-card__temp {
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-navy);
+}
+
+.now-card__condition { font-weight: 700; color: var(--color-navy); }
+.now-card__feels { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+.now-card__stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.now-card__stat { display: flex; align-items: center; gap: 6px; color: var(--color-text-muted); white-space: nowrap; }
+.now-card__stat dd { margin: 0 0 0 auto; }
+.now-card__stat strong { color: var(--color-navy); }
+
+/* Compact one-line details used on phones */
+.now-card__mobile-line { display: none; }
+
+/* ---------- Agent flood-risk outlook ---------- */
+.outlook {
+  overflow: hidden;
+  border-color: #e3a39d;
+}
+
+.outlook__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px var(--space-4);
+  background: var(--color-danger);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.outlook__tag {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.outlook__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.outlook__line { display: flex; gap: var(--space-2); align-items: flex-start; }
+.outlook__line .icon { margin-top: 2px; color: var(--color-text-muted); }
+
+/* ---------- Hourly rainfall chart ---------- */
+.rain-card { padding: var(--space-5); }
+
+.rain-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.rain-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.rain-legend__item { display: inline-flex; align-items: center; gap: 5px; }
+.rain-legend__swatch { width: 10px; height: 10px; border-radius: 2px; background: var(--swatch); }
+
+.rain-chart {
+  position: relative;
+  height: 210px;
+  margin-top: var(--space-5);
+  padding-top: 18px;
+}
+
+/* Dashed PAGASA warning-level lines. --at is the level in mm/h (chart max is 30). */
+.rain-chart__level {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(22px + var(--at) / 30 * 154px);
+  border-top: 1.5px dashed var(--level-color);
+  pointer-events: none;
+}
+
+.rain-chart__level span {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  padding-left: 4px;
+  background: var(--color-surface);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--level-color);
+}
+
+.rain-chart__level--yellow { --level-color: var(--level-yellow); }
+.rain-chart__level--orange { --level-color: var(--level-orange); }
+.rain-chart__level--red    { --level-color: var(--level-red); }
+
+.rain-chart__bars {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  height: 100%;
+  padding-right: 52px;
+}
+
+.rain-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.rain-bar__value { margin-bottom: 3px; font-size: 11px; font-weight: 700; color: var(--color-navy); }
+
+.rain-bar__fill {
+  width: 100%;
+  max-width: 44px;
+  /* 154px = usable plot height (chart height minus label rows) */
+  height: calc(var(--mm) / 30 * 154px);
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--rain-light);
+}
+
+.rain-bar--moderate .rain-bar__fill { background: var(--rain-moderate); }
+.rain-bar--heavy .rain-bar__fill    { background: var(--rain-heavy); }
+.rain-bar--intense .rain-bar__fill  { background: var(--rain-intense); }
+
+.rain-bar__label { margin-top: 6px; height: 16px; font-size: 11px; color: var(--color-text-muted); }
+.rain-bar--now .rain-bar__label { font-weight: 700; color: var(--color-navy); }
+
+.rain-card__note { margin-top: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); }
+
+/* ---------- 7-day forecast ---------- */
+.forecast-card { padding: var(--space-4) var(--space-5); }
+
+.forecast-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.forecast-list { margin-top: var(--space-2); }
+
+.forecast-row {
+  display: grid;
+  grid-template-columns: 52px 22px minmax(40px, 1fr) 34px 46px auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+
+.forecast-row:last-child { border-bottom: 0; }
+
+.forecast-row__day { font-weight: 700; color: var(--color-navy); line-height: 1.2; }
+.forecast-row__day small { display: block; font-size: var(--font-size-xs); font-weight: 400; color: var(--color-text-muted); }
+.forecast-row__icon { color: var(--color-primary); }
+
+.forecast-row__bar {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #e6ecf1;
+}
+.forecast-row__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--value);
+  border-radius: 3px;
+  background: var(--rain-heavy);
+}
+
+.forecast-row__chance { text-align: right; color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.forecast-row__mm { text-align: right; color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.forecast-row__temp { text-align: right; font-weight: 600; color: var(--color-navy); white-space: nowrap; }
+
+/* ---------- Weather on saved routes ---------- */
+.route-weather-card { padding: var(--space-4) var(--space-5); }
+
+.route-weather-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.route-weather { margin-top: var(--space-2); }
+
+.route-weather__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.route-weather li:last-child .route-weather__item { border-bottom: 0; }
+
+.route-weather__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.route-weather__text { flex: 1; min-width: 0; font-size: var(--font-size-sm); }
+.route-weather__text strong { display: block; color: var(--color-navy); }
+.route-weather__text small { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+
+.badge--rain-moderate { background: var(--color-warning-light); color: var(--color-warning); }
+.badge--rain-light    { background: var(--color-neutral-light); color: var(--color-neutral-text); }
+
+.weather-disclaimer {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.weather-disclaimer .icon { margin-top: 1px; }
+
+/* ---------- Tablet ---------- */
+@media (max-width: 1100px) {
+  .weather-layout { grid-template-columns: 1fr; }
+  .weather-side { grid-template-columns: 1fr 1fr; }
+  .forecast-card { grid-row: span 2; }
+  .weather-disclaimer { grid-column: 1 / -1; }
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 899px) {
+  .weather-page .page-main { padding-top: 0; }
+
+  /* Solid orange bar replaces the boxed advisory */
+  .advisory { display: none; }
+  .advisory-bar {
+    display: block;
+    background: var(--color-advisory);
+    color: #fff;
+  }
+  .advisory-bar__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 40px;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+  }
+  .advisory-bar__note { margin-left: auto; font-weight: 400; font-size: var(--font-size-xs); opacity: 0.95; white-space: nowrap; }
+
+  .page-heading { margin-top: var(--space-4); }
+  .page-heading h1 { font-size: var(--font-size-xl); }
+  .weather-page .page-subtitle { display: none; }
+  .weather-controls { width: 100%; }
+  .location-select { flex: 1; min-width: 0; }
+  .weather-controls .btn { display: none; }
+
+  .weather-layout { margin-top: var(--space-3); gap: var(--space-3); }
+  .weather-side { grid-template-columns: 1fr; }
+  .forecast-card { grid-row: auto; }
+  .weather-top { grid-template-columns: 1fr; gap: var(--space-3); }
+
+  /* Current conditions: temperature row, no card chrome */
+  .now-card { padding: var(--space-1) 0; border: 0; background: none; box-shadow: none; }
+  .now-card .eyebrow,
+  .now-card__stats { display: none; }
+  .now-card__mobile-line { display: block; font-size: var(--font-size-xs); color: var(--color-text-muted); }
+  .now-card__main { margin-top: 0; }
+  .now-card__condition { font-size: var(--font-size-sm); }
+  .now-card__feels { display: none; }
+
+  .rain-card__note { display: none; }
+  .rain-card { padding: var(--space-4); }
+  .rain-card .rain-legend,
+  .rain-bar--extra,
+  .rain-chart__level { display: none; }
+  .rain-chart { height: 170px; margin-top: var(--space-3); }
+  .rain-chart__bars { padding-right: 0; gap: 6px; }
+  .rain-bar__fill { height: calc(var(--mm) / 22 * 112px); }
+
+  .forecast-row--extra { display: none; }
+  .forecast-row { grid-template-columns: 36px 22px 1fr auto; }
+  .forecast-row__bar,
+  .forecast-row__chance { display: none; }
+  .forecast-row__mm { text-align: left; }
+  .forecast-card__head .text-xs { display: none; }
+}

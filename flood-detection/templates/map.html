@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flood map · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/switch.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/map.css">
+</head>
+<body class="map-page">
+
+  <!-- Shared drawing of the Philippines (stylized, mock). Used by the phone map and the overview box. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="ph-shape" viewBox="0 0 360 540">
+        <g fill="#d3e2ee" stroke="#aac4d9" stroke-width="1.5" stroke-linejoin="round">
+          <!-- Luzon -->
+          <path d="M150 38 L176 28 L204 52 L212 98 L238 128 L228 168 L262 196 L246 214 L208 196 L192 216 L170 186 L150 202 L132 164 L118 122 L134 80 Z"/>
+          <!-- Mindoro, Palawan -->
+          <path d="M126 224 L146 220 L152 246 L134 256 Z"/>
+          <path d="M72 262 L90 270 L128 330 L152 392 L138 396 L104 346 L74 292 Z"/>
+          <!-- Samar, Leyte -->
+          <path d="M242 262 L274 268 L282 318 L264 332 L248 296 Z"/>
+          <path d="M236 322 L252 318 L256 352 L240 358 Z"/>
+          <!-- Panay, Negros, Cebu, Bohol -->
+          <path d="M150 292 L184 288 L188 316 L158 322 Z"/>
+          <path d="M184 322 L208 326 L204 372 L186 366 Z"/>
+          <path d="M214 316 L224 318 L222 352 L212 350 Z"/>
+          <path d="M222 362 L240 364 L238 378 L224 376 Z"/>
+          <!-- Mindanao -->
+          <path d="M198 408 L238 392 L286 398 L318 428 L324 470 L296 492 L262 480 L244 506 L220 492 L214 452 L196 436 Z"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- ===== Header (same on every signed-in page) ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link" href="weather.html">Weather report</a>
+        <a class="site-nav__link" href="reports.html">Reports</a>
+        <a class="site-nav__link site-nav__link--active" href="map.html" aria-current="page">Flood map</a>
+        <a class="site-nav__link" href="routes.html">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+          <a class="icon-button" href="notifications.html" aria-label="Notifications, 3 unread">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+            <span class="icon-button__count">3</span>
+          </a>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="map-layout">
+
+    <!-- ===== Sidebar (desktop): search, filters, list of reports in view ===== -->
+    <aside class="map-sidebar" aria-label="Map filters">
+      <div class="map-sidebar__title">
+        <h1 class="heading-md">Flood map</h1>
+        <span class="badge badge--sample">MOCK MAP DATA</span>
+      </div>
+
+      <div>
+        <label class="visually-hidden" for="map-search">Search a city, municipality, barangay or street</label>
+        <div class="input-group">
+          <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
+          <input class="form-input form-input--with-icon" id="map-search" type="search" value="Sampaloc, Manila">
+        </div>
+        <p class="map-hint">Search a city, municipality, barangay or street.</p>
+      </div>
+
+      <div class="filter-group">
+        <p class="eyebrow filter-group__label">Status</p>
+        <div class="chip-row" role="group" aria-label="Status filter">
+          <button class="chip" type="button" aria-pressed="true"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Flood warning</button>
+          <button class="chip" type="button" aria-pressed="true"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Possible</button>
+          <button class="chip" type="button" aria-pressed="false">Unclear</button>
+          <button class="chip" type="button" aria-pressed="false">No flood</button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="eyebrow filter-group__label" for="map-time" style="display:block">Time</label>
+        <select class="form-select" id="map-time">
+          <option>Today</option>
+          <option>Last 3 days</option>
+          <option>Last 7 days</option>
+        </select>
+      </div>
+
+      <div class="switch-row">
+        <span id="outdated-label">Show outdated reports (faded)</span>
+        <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="outdated-label"></button>
+      </div>
+
+      <section class="area-list" aria-label="Reports in this area">
+        <div class="area-list__head">
+          <h2 class="heading-sm">In this area (6)</h2>
+          <span class="text-xs text-muted">Newest first</span>
+        </div>
+        <ul>
+          <li>
+            <a class="area-item" href="report-details.html">
+              <span class="area-item__top">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+                <span class="area-item__street">España cor. Lacson</span>
+              </span>
+              <span class="area-item__meta">#1043 · 4 min ago</span>
+            </a>
+          </li>
+          <li>
+            <a class="area-item" href="report-details.html">
+              <span class="area-item__top">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+                <span class="area-item__street">España Blvd.</span>
+              </span>
+              <span class="area-item__meta">#1042 · 6 min ago</span>
+            </a>
+          </li>
+          <li>
+            <a class="area-item" href="report-details.html">
+              <span class="area-item__top">
+                <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible flood</span>
+                <span class="area-item__street">Dimasalang St.</span>
+              </span>
+              <span class="area-item__meta">#1035 · 31 min ago</span>
+            </a>
+          </li>
+          <li>
+            <a class="area-item" href="report-details.html">
+              <span class="area-item__top">
+                <span class="badge badge--unclear-photo"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>Unclear photo</span>
+                <span class="area-item__street">Lacson Ave.</span>
+              </span>
+              <span class="area-item__meta">#1034 · 34 min ago</span>
+            </a>
+          </li>
+          <li>
+            <a class="area-item" href="report-details.html">
+              <span class="area-item__top">
+                <span class="badge badge--no-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>No flood</span>
+                <span class="area-item__street">Dapitan St.</span>
+              </span>
+              <span class="area-item__meta">#1033 · 37 min ago</span>
+            </a>
+          </li>
+          <li>
+            <a class="area-item area-item--faded" href="report-details.html">
+              <span class="area-item__top">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+                <span class="area-item__street">España Blvd.</span>
+              </span>
+              <span class="area-item__meta">#1031 · 1 h 11 min ago · may be outdated</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+    </aside>
+
+    <!-- ===== Map ===== -->
+    <section class="map-view" aria-label="Flood map (mock data)">
+
+      <!-- City view (desktop): Sampaloc, Manila -->
+      <div class="map-canvas map-canvas--city">
+        <svg class="map-canvas__art" viewBox="0 0 1000 640" preserveAspectRatio="none" role="img" aria-label="Street map of Sampaloc, Manila (illustration)">
+          <defs>
+            <pattern id="blocks" width="74" height="52" patternUnits="userSpaceOnUse">
+              <rect x="6" y="6" width="58" height="38" rx="3" fill="#dfe5ea"/>
+            </pattern>
+          </defs>
+          <rect width="1000" height="640" fill="#eef1f4"/>
+          <rect width="1000" height="640" fill="url(#blocks)"/>
+
+          <!-- Campus / park -->
+          <rect x="330" y="308" width="190" height="150" rx="6" fill="#dcead9" stroke="#c6dcc2"/>
+          <text x="425" y="388" text-anchor="middle" font-size="12" fill="#6b8a68">Campus</text>
+
+          <!-- Streets -->
+          <g stroke="#fff" stroke-linecap="round" fill="none">
+            <path d="M-20 154 L1020 140" stroke-width="12"/>
+            <path d="M290 -10 L300 650" stroke-width="12"/>
+            <path d="M575 -10 L570 650" stroke-width="12"/>
+            <path d="M-20 552 L1020 384" stroke-width="14"/>
+            <path d="M-20 336 L1020 78" stroke-width="30"/>
+          </g>
+          <path d="M-20 336 L1020 78" stroke="#d6dde3" stroke-width="1" fill="none" transform="translate(0 -15)"/>
+          <path d="M-20 336 L1020 78" stroke="#d6dde3" stroke-width="1" fill="none" transform="translate(0 15)"/>
+
+          <!-- Street names -->
+          <g font-size="12" fill="#7d8e9c" text-anchor="middle">
+            <text x="690" y="135">Dapitan St.</text>
+            <text transform="translate(470 208) rotate(-14.5)" font-weight="700">España Blvd.</text>
+            <text transform="translate(272 440) rotate(-89)">Lacson Ave.</text>
+            <text transform="translate(556 480) rotate(-91)">Dimasalang St.</text>
+            <text transform="translate(640 478) rotate(-9)">P. Noval St.</text>
+          </g>
+        </svg>
+
+        <!-- Report markers (percent positions inside the drawing) -->
+        <div class="map-marker map-marker--no-flood" style="--x: 17%; --y: 26%">
+          <span class="map-marker__pin"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+          <span class="map-marker__label">#1033</span>
+        </div>
+        <div class="map-marker map-marker--unclear" style="--x: 30%; --y: 48%">
+          <span class="map-marker__pin"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg></span>
+          <span class="map-marker__label">#1034</span>
+        </div>
+        <div class="map-marker map-marker--possible" style="--x: 81%; --y: 32%">
+          <span class="map-marker__pin"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg></span>
+          <span class="map-marker__label">#1035</span>
+        </div>
+        <div class="map-marker map-marker--warning" style="--x: 30%; --y: 69%">
+          <span class="map-marker__pin"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg></span>
+          <span class="map-marker__label">#1043</span>
+        </div>
+        <div class="map-marker map-marker--warning map-marker--faded" style="--x: 43%; --y: 87%">
+          <span class="map-marker__pin"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg></span>
+          <span class="map-marker__label">#1031</span>
+        </div>
+        <div class="map-marker map-marker--warning map-marker--selected" style="--x: 57%; --y: 73%">
+          <span class="map-marker__pin"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg></span>
+          <span class="map-marker__label">#1042</span>
+        </div>
+
+        <!-- Preview of the selected report -->
+        <div class="map-popup" role="dialog" aria-label="Report #1042 preview">
+          <div class="map-popup__row">
+            <img class="map-popup__thumb" src="../static/img/sample-street-flooded.svg" alt="">
+            <div>
+              <p class="map-popup__title">#1042 · España Blvd.</p>
+              <p class="map-popup__meta">Brgy. 463 · 9:46 PM · 6 min ago</p>
+            </div>
+          </div>
+          <div class="map-popup__badges">
+            <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+            <span class="map-popup__prob">93%</span>
+          </div>
+          <div class="map-popup__foot">
+            <span>5 still flooded</span>
+            <a class="link" href="report-details.html">View report →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Country view (phone): clusters per area -->
+      <div class="map-canvas map-canvas--country">
+        <svg class="map-canvas__art" viewBox="0 0 360 540" preserveAspectRatio="none" role="img" aria-label="Map of the Philippines (illustration)">
+          <use href="#ph-shape" width="360" height="540"/>
+        </svg>
+        <span class="cluster cluster--warning cluster--lg" style="--x: 42%; --y: 36%">9</span>
+        <span class="cluster cluster--possible" style="--x: 39%; --y: 32%; --size: 26px">2</span>
+        <span class="cluster-label" style="--x: 49%; --y: 36%">Metro Manila</span>
+        <span class="cluster cluster--possible" style="--x: 60%; --y: 41%; --size: 26px">1</span>
+        <span class="cluster cluster--warning" style="--x: 74%; --y: 52%; --size: 26px">1</span>
+        <span class="cluster cluster--unclear" style="--x: 55%; --y: 58%; --size: 26px">1</span>
+        <span class="cluster cluster--no-flood" style="--x: 77%; --y: 84%; --size: 26px">1</span>
+      </div>
+
+      <!-- Phone: search and quick chips -->
+      <div class="map-mobile-top">
+        <div class="input-group">
+          <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
+          <input class="form-input form-input--with-icon" type="search" placeholder="Search city or barangay…" aria-label="Search city or barangay">
+        </div>
+        <div class="chip-row">
+          <button class="chip" type="button" aria-pressed="true"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16l-6 7v5l-4 2v-7z"/></svg>Filters · 2</button>
+          <button class="chip" type="button" aria-pressed="false">Today</button>
+          <button class="chip" type="button" aria-pressed="false"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 8.5 12 13l9-4.5z"/><path d="m3 12.5 9 4.5 9-4.5"/></svg>Legend</button>
+        </div>
+      </div>
+
+      <!-- Desktop: breadcrumb for the zoom level -->
+      <nav class="map-overlay map-crumbs" aria-label="Map area">
+        <a href="map.html">Philippines</a><span aria-hidden="true">›</span>
+        <a href="map.html">Metro Manila</a><span aria-hidden="true">›</span>
+        <a href="map.html">Manila</a><span aria-hidden="true">›</span>
+        <strong>Sampaloc · Brgy. 463</strong>
+      </nav>
+
+      <!-- Zoom and locate -->
+      <div class="map-overlay map-controls">
+        <button class="map-control" type="button" aria-label="Zoom in"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button class="map-control" type="button" aria-label="Zoom out"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <button class="map-control" type="button" aria-label="Use my location"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg></button>
+      </div>
+
+      <!-- Desktop: legend -->
+      <div class="map-overlay map-legend" role="group" aria-label="Legend">
+        <p class="map-legend__title">Legend</p>
+        <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+        <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible flood</span>
+        <span class="badge badge--unclear-photo"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>Unclear photo</span>
+        <span class="badge badge--no-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>No flood</span>
+        <span class="map-legend__key"><span class="map-legend__dot"></span>Faded = may be outdated</span>
+        <span class="map-legend__key"><span class="map-legend__ring"></span>Ring = selected</span>
+      </div>
+
+      <!-- Desktop: overview of the Philippines -->
+      <div class="map-overlay map-overview">
+        <svg class="map-overview__art" viewBox="0 0 360 540" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Overview of the Philippines with the current area marked">
+          <use href="#ph-shape" width="360" height="540"/>
+          <rect x="128" y="168" width="34" height="34" fill="none" stroke="#b8291f" stroke-width="5"/>
+        </svg>
+        Overview
+      </div>
+
+      <p class="map-overlay map-notice">Mock map data · not a live or official feed</p>
+
+      <!-- Phone: bottom sheet -->
+      <section class="map-sheet" aria-label="Reports in view">
+        <div class="map-sheet__handle" aria-hidden="true"></div>
+        <div class="map-sheet__head">
+          <h1 class="heading-sm">Philippines · 15 reports</h1>
+          <span class="badge badge--sample">SAMPLE DATA</span>
+        </div>
+        <p class="map-sheet__hint">Tap a number to zoom to the city, then the barangay.</p>
+        <div class="chip-row">
+          <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Warning · 10</span>
+          <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible · 3</span>
+          <span class="badge badge--unclear-photo">+2</span>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- ===== Bottom navigation (phones only). ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item" href="weather.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+      Weather
+    </a>
+    <a class="bottom-nav__item" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="map.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item" href="routes.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>

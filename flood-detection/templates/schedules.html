@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Travel schedules · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/switch.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/schedules.css">
+</head>
+<body class="schedules-page">
+
+  <!-- ===== Header (same on every signed-in page). Travel schedules belongs under My routes. ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link" href="weather.html">Weather report</a>
+        <a class="site-nav__link" href="reports.html">Reports</a>
+        <a class="site-nav__link" href="map.html">Flood map</a>
+        <a class="site-nav__link site-nav__link--active" href="routes.html" aria-current="page">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+          <a class="icon-button" href="notifications.html" aria-label="Notifications, 3 unread">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+            <span class="icon-button__count">3</span>
+          </a>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Phone: pre-departure alert under the header -->
+  <section class="travel-check" role="status" aria-label="Travel check">
+    <div class="container travel-check__inner">
+      <p class="travel-check__label">Travel check · 6:15 AM</p>
+      <p class="travel-check__title">
+        <svg class="icon icon--lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+        Flood warning on your route
+      </p>
+      <p class="travel-check__sub">Before your 6:45 AM trip · Home → School</p>
+    </div>
+  </section>
+
+  <main class="page-main">
+    <div class="container">
+
+      <!-- ===== Desktop layout ===== -->
+      <div class="schedules-layout">
+
+        <!-- Left: schedules and alert examples -->
+        <div class="schedules-main">
+          <div class="schedules-head">
+            <div>
+              <h1 class="heading-lg">Travel schedules</h1>
+              <p class="text-small text-muted">Before each departure, the agent checks recent reports along the saved route.</p>
+            </div>
+            <button class="btn btn--primary btn--sm" type="button">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              New schedule
+            </button>
+          </div>
+
+          <ul class="card schedule-list" aria-label="Saved travel schedules">
+            <li class="schedule-item">
+              <span class="schedule-item__icon"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>
+              <div class="schedule-item__text">
+                <p class="schedule-item__title">Home → School</p>
+                <p class="schedule-item__meta">Weekdays · leave 6:45 AM</p>
+              </div>
+              <span class="schedule-item__status"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Check at 6:15 AM</span>
+            </li>
+            <li class="schedule-item">
+              <span class="schedule-item__icon"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>
+              <div class="schedule-item__text">
+                <p class="schedule-item__title">School → Part-time job</p>
+                <p class="schedule-item__meta">Mon, Wed, Fri · leave 3:30 PM</p>
+              </div>
+              <span class="schedule-item__status"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Check at 3:00 PM</span>
+            </li>
+            <li class="schedule-item schedule-item--paused">
+              <span class="schedule-item__icon"><svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>
+              <div class="schedule-item__text">
+                <p class="schedule-item__title">Home → Church</p>
+                <p class="schedule-item__meta">Sun · leave 7:30 AM</p>
+              </div>
+              <span class="schedule-item__status"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg>Paused</span>
+            </li>
+          </ul>
+
+          <div class="eyebrow-row">
+            <h2 class="eyebrow">Alert examples</h2>
+            <span class="badge badge--sample">SAMPLE DATA</span>
+          </div>
+
+          <!-- Example: warning found -->
+          <section class="card sched-alert sched-alert--warning" aria-label="Example alert with a flood warning">
+            <div class="sched-alert__head">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>
+              Before your 6:45 AM trip · Home → School
+              <span class="sched-alert__time">Checked 6:15 AM</span>
+            </div>
+            <div class="sched-alert__body">
+              <p>1 flood warning along your route: <strong>España Blvd., Brgy. 463</strong> — reported 12 min ago, 4 still-flooded confirmations.</p>
+              <div class="sched-alert__actions">
+                <a class="btn btn--primary btn--sm" href="routes.html">View on route</a>
+                <a class="btn btn--outline btn--sm" href="report-details.html">View report</a>
+              </div>
+            </div>
+          </section>
+
+          <!-- Example: all clear -->
+          <section class="card sched-alert sched-alert--clear" aria-label="Example alert with no reports">
+            <svg class="icon icon--lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>
+            <div>
+              <strong>Before your 3:30 PM trip · School → Part-time job</strong>
+              <span>No recent flood reports along this route. Check local conditions before leaving.</span>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right: set a travel schedule -->
+        <aside class="schedules-side">
+          <form class="card schedule-form" aria-labelledby="schedule-form-title">
+            <h2 class="heading-sm" id="schedule-form-title">Set a travel schedule</h2>
+
+            <div class="schedule-form__fields">
+              <div>
+                <label class="form-label" for="sched-route">Saved route</label>
+                <div class="input-group">
+                  <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+                  <select class="form-select form-input--with-icon" id="sched-route">
+                    <option>Home → School</option>
+                    <option>School → Part-time job</option>
+                    <option>Home → Church</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <p class="form-label" id="days-label">Days</p>
+                <div class="day-row" role="group" aria-labelledby="days-label">
+                  <button class="day-chip" type="button" aria-pressed="true">Mon</button>
+                  <button class="day-chip" type="button" aria-pressed="true">Tue</button>
+                  <button class="day-chip" type="button" aria-pressed="true">Wed</button>
+                  <button class="day-chip" type="button" aria-pressed="true">Thu</button>
+                  <button class="day-chip" type="button" aria-pressed="true">Fri</button>
+                  <button class="day-chip" type="button" aria-pressed="false">Sat</button>
+                  <button class="day-chip" type="button" aria-pressed="false">Sun</button>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div>
+                  <label class="form-label" for="sched-time">Usual departure</label>
+                  <div class="input-group">
+                    <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+                    <input class="form-input form-input--with-icon" id="sched-time" type="time" value="06:45">
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label" for="sched-before">Check before</label>
+                  <select class="form-select" id="sched-before">
+                    <option>15 min</option>
+                    <option selected>30 min</option>
+                    <option>45 min</option>
+                    <option>1 hour</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="schedule-summary">
+                <p class="eyebrow">Summary</p>
+                <p>Every <strong>weekday</strong> at <strong>6:15 AM</strong>, check recent reports along <strong>Home → School</strong> and alert me in the app if one is found.</p>
+              </div>
+
+              <div class="schedule-form__buttons">
+                <button class="btn btn--primary" type="button">Save schedule</button>
+                <button class="btn btn--ghost" type="button">Cancel</button>
+              </div>
+            </div>
+          </form>
+
+          <p class="schedules-note">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.3"/></svg>
+            <span>Community reports and AI estimates are an aid to awareness. Follow official PAGASA, NDRRMC and LGU guidance.</span>
+          </p>
+        </aside>
+      </div>
+
+      <!-- ===== Phone layout ===== -->
+      <div class="travel-mobile">
+
+        <section class="card trip-card" aria-label="Report on your route">
+          <div class="trip-card__row">
+            <img class="trip-card__thumb" src="../static/img/sample-street-flooded.svg" alt="">
+            <div>
+              <p class="trip-card__title">España Blvd., Brgy. 463</p>
+              <p class="trip-card__meta">12 min ago · on your route</p>
+              <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+            </div>
+          </div>
+        </section>
+
+        <p class="trip-advice">Consider leaving later or using another road. Do not drive through floodwater.</p>
+
+        <div class="trip-actions">
+          <a class="btn btn--primary" href="routes.html">View on route</a>
+          <button class="btn btn--ghost" type="button">Remind 6:35</button>
+        </div>
+
+        <section aria-labelledby="my-schedules-title">
+          <div class="my-schedules__head">
+            <h2 class="eyebrow" id="my-schedules-title">My schedules</h2>
+            <span class="badge badge--sample">SAMPLE DATA</span>
+          </div>
+          <ul class="my-schedules__list">
+            <li class="my-schedule">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>
+              <div class="my-schedule__text">
+                <p class="my-schedule__title" id="ms-1">Home → School</p>
+                <p class="my-schedule__meta">Weekdays · leave 6:45 AM</p>
+              </div>
+              <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="ms-1"></button>
+            </li>
+            <li class="my-schedule">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>
+              <div class="my-schedule__text">
+                <p class="my-schedule__title" id="ms-2">School → Part-time job</p>
+                <p class="my-schedule__meta">Mon, Wed, Fri · leave 3:30 PM</p>
+              </div>
+              <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="ms-2"></button>
+            </li>
+            <li class="my-schedule">
+              <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>
+              <div class="my-schedule__text">
+                <p class="my-schedule__title" id="ms-3">Home → Church</p>
+                <p class="my-schedule__meta">Sun · leave 7:30 AM</p>
+              </div>
+              <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="ms-3"></button>
+            </li>
+          </ul>
+        </section>
+
+        <button class="btn btn--outline btn--lg btn--block" type="button">
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          New schedule
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports, schedules and alerts are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only) ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item" href="weather.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+      Weather
+    </a>
+    <a class="bottom-nav__item" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item" href="map.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="routes.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>
