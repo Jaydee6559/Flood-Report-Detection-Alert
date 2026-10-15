@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flood reports · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/progress.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/reports.css">
+</head>
+<body>
+
+  <!-- ===== Header (same on every signed-in page) ===== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <!-- Desktop navigation. Flood map and My routes are not built yet. -->
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="index.html">Home</a>
+        <a class="site-nav__link site-nav__link--active" href="reports.html" aria-current="page">Reports</a>
+        <a class="site-nav__link">Flood map</a>
+        <a class="site-nav__link">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+        <button class="icon-button" type="button" aria-label="Notifications, 3 unread">
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          <span class="icon-button__count">3</span>
+        </button>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="container">
+
+      <div class="page-heading">
+        <div>
+          <h1 class="heading-xl">Flood reports</h1>
+          <p class="page-subtitle">Every submitted report in one place, newest first.</p>
+        </div>
+        <div class="page-heading__aside">
+          <span class="badge badge--sample">SAMPLE DATA · TODAY</span>
+          <!-- List / Map switch (static; the map is not built yet) -->
+          <div class="view-switch" role="group" aria-label="View">
+            <button class="view-switch__option view-switch__option--active" type="button" aria-pressed="true"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg> List</button>
+            <button class="view-switch__option" type="button" aria-pressed="false"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg> Map</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Count per status (static) -->
+      <div class="status-summary">
+        <button class="card status-summary__item" type="button">
+          <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span><span class="status-summary__count">4</span>
+        </button>
+        <button class="card status-summary__item" type="button">
+          <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible flood</span><span class="status-summary__count">2</span>
+        </button>
+        <button class="card status-summary__item" type="button">
+          <span class="badge badge--unclear-photo"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>Unclear photo</span><span class="status-summary__count">1</span>
+        </button>
+        <button class="card status-summary__item" type="button">
+          <span class="badge badge--no-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>No flood</span><span class="status-summary__count">5</span>
+        </button>
+      </div>
+
+      <!-- Search and filters (static) -->
+      <form class="report-filters" role="search">
+        <div class="report-filters__search">
+          <label class="form-label" for="search">Search location</label>
+          <div class="input-group">
+            <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
+            <input class="form-input form-input--with-icon" id="search" type="search" placeholder="Barangay, street, or city">
+          </div>
+        </div>
+        <div>
+          <label class="form-label" for="status">Status</label>
+          <select class="form-select" id="status">
+            <option>All statuses</option>
+            <option>Flood warning</option>
+            <option>Possible flood</option>
+            <option>Unclear photo</option>
+            <option>No flood</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="date">Date</label>
+          <select class="form-select" id="date">
+            <option>Today</option>
+            <option>Last 3 days</option>
+            <option>Last 7 days</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="age">Older reports</label>
+          <select class="form-select" id="age">
+            <option>Show, marked</option>
+            <option>Hide outdated</option>
+          </select>
+        </div>
+        <button class="btn btn--primary" type="button">Apply</button>
+      </form>
+
+      <!-- Report list: table on desktop, cards on phones -->
+      <section class="card report-list" aria-label="Reports">
+        <div class="report-list__head" aria-hidden="true">
+          <span>Report</span><span>Time</span><span>Location</span><span>Photo</span><span>Probability</span><span>Status</span><span>Agent note</span>
+        </div>
+        <ul>
+          <li>
+            <a class="report-row" href="report-details.html">
+              <span class="report-row__id">#1042</span>
+              <span class="report-row__time">9:46 PM<small>6 min ago</small></span>
+              <span class="report-row__place"><strong>España Blvd.</strong><small>Brgy. 463, Sampaloc, Manila</small></span>
+              <span class="report-row__thumb-cell"><img class="report-row__thumb" src="../static/img/sample-street-flooded.svg" alt="" width="52" height="36"></span>
+              <span class="report-row__prob"><span class="probability probability--flood-warning"><span class="probability__value">93%</span><span class="probability__bar" style="--value: 93%" aria-hidden="true"></span></span></span>
+              <span class="report-row__status">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+              </span>
+              <span class="report-row__note">Avoid the area</span>
+            </a>
+          </li>
+          <li>
+            <a class="report-row" href="report-details.html">
+              <span class="report-row__id">#1041</span>
+              <span class="report-row__time">9:44 PM<small>8 min ago</small></span>
+              <span class="report-row__place"><strong>G. Araneta Ave.</strong><small>Brgy. Doña Imelda, Quezon City</small></span>
+              <span class="report-row__thumb-cell"><img class="report-row__thumb" src="../static/img/sample-street-flooded.svg" alt="" width="52" height="36"></span>
+              <span class="report-row__prob"><span class="probability probability--flood-warning"><span class="probability__value">92%</span><span class="probability__bar" style="--value: 92%" aria-hidden="true"></span></span></span>
+              <span class="report-row__status">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+              </span>
+              <span class="report-row__note">Avoid the area</span>
+            </a>
+          </li>
+          <li>
+            <a class="report-row" href="report-details.html">
+              <span class="report-row__id">#1040</span>
+              <span class="report-row__time">9:39 PM<small>13 min ago</small></span>
+              <span class="report-row__place"><strong>Taft Ave.</strong><small>Brgy. 699, Malate, Manila</small></span>
+              <span class="report-row__thumb-cell"><img class="report-row__thumb" src="../static/img/sample-street-flooded.svg" alt="" width="52" height="36"></span>
+              <span class="report-row__prob"><span class="probability probability--flood-warning"><span class="probability__value">88%</span><span class="probability__bar" style="--value: 88%" aria-hidden="true"></span></span></span>
+              <span class="report-row__status">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+              </span>
+              <span class="report-row__note">Avoid the area</span>
+            </a>
+          </li>
+          <li>
+            <a class="report-row" href="report-details.html">
+              <span class="report-row__id">#1039</span>
+              <span class="report-row__time">9:35 PM<small>17 min ago</small></span>
+              <span class="report-row__place"><strong>Marcos Hwy.</strong><small>Brgy. San Roque, Marikina</small></span>
+              <span class="report-row__thumb-cell"><img class="report-row__thumb" src="../static/img/sample-street-shallow.svg" alt="" width="52" height="36"></span>
+              <span class="report-row__prob"><span class="probability probability--possible-flood"><span class="probability__value">62%</span><span class="probability__bar" style="--value: 62%" aria-hidden="true"></span></span></span>
+              <span class="report-row__status">
+                <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible flood</span>
+              </span>
+              <span class="report-row__note">Use caution</span>
+            </a>
+          </li>
+          <li>
+            <a class="report-row" href="report-details.html">
+              <span class="report-row__id">#1038</span>
+              <span class="report-row__time">9:33 PM<small>19 min ago</small></span>
+              <span class="report-row__place"><strong>Taft Ave.</strong><small>Brgy. 699, Malate, Manila</small></span>
+              <span class="report-row__thumb-cell"><img class="report-row__thumb" src="../static/img/sample-street-dry.svg" alt="" width="52" height="36"></span>
+              <span class="report-row__prob"><span class="probability probability--no-flood"><span class="probability__value">6%</span><span class="probability__bar" style="--value: 6%" aria-hidden="true"></span></span></span>
+              <span class="report-row__status">
+                <span class="badge badge--no-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>No flood</span>
+                <span class="badge badge--duplicate badge--sm"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>Same area as #1040?</span>
+              </span>
+              <span class="report-row__note">Review local conditions</span>
+            </a>
+          </li>
+          <li>
+            <a class="report-row" href="report-details.html">
+              <span class="report-row__id">#1037</span>
+              <span class="report-row__time">9:22 PM<small>30 min ago</small></span>
+              <span class="report-row__place"><strong>Rizal Ave.</strong><small>Brgy. 76, Caloocan</small></span>
+              <span class="report-row__thumb-cell"><img class="report-row__thumb" src="../static/img/sample-street-unclear.svg" alt="" width="52" height="36"></span>
+              <span class="report-row__prob"><span class="probability probability--unclear-photo"><span class="probability__value">44%</span><span class="probability__bar" style="--value: 44%" aria-hidden="true"></span></span></span>
+              <span class="report-row__status">
+                <span class="badge badge--unclear-photo"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>Unclear photo</span>
+              </span>
+              <span class="report-row__note">New photo requested</span>
+            </a>
+          </li>
+          <li>
+            <a class="report-row report-row--outdated" href="report-details.html">
+              <span class="report-row__id">#1031</span>
+              <span class="report-row__time">8:41 PM<small>1 h 11 min ago</small></span>
+              <span class="report-row__place"><strong>España Blvd.</strong><small>Brgy. 463, Sampaloc, Manila</small></span>
+              <span class="report-row__thumb-cell"><img class="report-row__thumb" src="../static/img/sample-street-flooded.svg" alt="" width="52" height="36"></span>
+              <span class="report-row__prob"><span class="probability probability--flood-warning"><span class="probability__value">88%</span><span class="probability__bar" style="--value: 88%" aria-hidden="true"></span></span></span>
+              <span class="report-row__status">
+                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
+                <span class="badge badge--outdated badge--sm"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>May be outdated</span>
+              </span>
+              <span class="report-row__note">Avoid the area</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Pagination (static) -->
+      <div class="pagination">
+        <span>Showing 1–7 of 12 reports · Sample data</span>
+        <div class="pagination__buttons">
+          <button class="btn btn--outline btn--sm" type="button">Previous</button>
+          <button class="btn btn--outline btn--sm" type="button">Next</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
+      <span>Prototype · all reports and results are sample content</span>
+    </div>
+  </footer>
+
+  <!-- ===== Bottom navigation (phones only). Map and Routes are not built yet. ===== -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5.5v-5.5h-5V20H4z"/></svg>
+      Home
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+  </nav>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+/* ==========================================================================
+   Flood Reports page
+   Desktop: a table-like list with a header row.
+   Phone: each row becomes a card. One list, two layouts.
+   ========================================================================== */
+
+/* ---------- List / Map switch ---------- */
+.view-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.view-switch__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.view-switch__option--active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ---------- Status summary ---------- */
+.status-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.status-summary__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 12px var(--space-4);
+  text-align: left;
+}
+
+.status-summary__count {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+/* ---------- Filters ---------- */
+.report-filters {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 0.9fr 1fr auto;
+  gap: var(--space-3);
+  align-items: end;
+  margin-top: var(--space-5);
+}
+
+/* ---------- Report list ---------- */
+.report-list {
+  margin-top: var(--space-4);
+  overflow: hidden;
+}
+
+.report-list__head,
+.report-row {
+  display: grid;
+  grid-template-columns: 70px 92px minmax(170px, 1.5fr) 56px 128px minmax(150px, 1fr) minmax(130px, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  padding: 10px var(--space-4);
+}
+
+.report-list__head {
+  background: #f3f6f9;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.report-row {
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.report-list li:last-child .report-row { border-bottom: 0; }
+
+.report-row:hover { background: var(--color-surface-soft); }
+.report-row:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
+
+/* Older reports are shown lighter */
+.report-row--outdated { opacity: 0.65; }
+
+.report-row__id { font-weight: 700; color: var(--color-navy); }
+
+.report-row__time small,
+.report-row__place small {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.report-row__place strong { color: var(--color-navy); }
+
+.report-row__thumb {
+  width: 52px;
+  height: 36px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.report-row__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.report-row__note { color: var(--color-text-muted); }
+
+/* ---------- Pagination ---------- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.pagination__buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ---------- Tablet ---------- */
+@media (max-width: 1100px) {
+  .report-filters { grid-template-columns: 1fr 1fr; }
+  .report-filters__search { grid-column: 1 / -1; }
+  .report-filters .btn { grid-column: 1 / -1; }
+}
+
+/* ---------- Phone: rows become cards ---------- */
+@media (max-width: 899px) {
+  .status-summary { grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .status-summary__item { padding: 10px 12px; }
+  .status-summary__count { font-size: 1.15rem; }
+
+  .report-list {
+    background: none;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .report-list__head { display: none; }
+
+  .report-list ul {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .report-row,
+  .report-list li:last-child .report-row {
+    grid-template-columns: 64px 1fr auto;
+    grid-template-areas:
+      "thumb place time"
+      "thumb status prob"
+      "note  note   note";
+    gap: 6px var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .report-row__id      { display: none; }
+  .report-row__time    { grid-area: time; text-align: right; font-size: var(--font-size-xs); }
+  .report-row__place   { grid-area: place; min-width: 0; }
+  .report-row__thumb-cell { grid-area: thumb; align-self: start; }
+  .report-row__thumb   { width: 64px; height: 56px; border-radius: var(--radius-sm); }
+  .report-row__prob    { grid-area: prob; justify-self: end; }
+  .report-row__prob .probability__bar { display: none; }
+  .report-row__status  { grid-area: status; }
+  .report-row__note {
+    grid-area: note;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 600px) {
+  .pagination { flex-direction: column; }
+  .pagination__buttons { width: 100%; }
+  .pagination__buttons .btn { flex: 1; }
+}
