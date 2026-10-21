@@ -6,7 +6,7 @@
  *   click a barangay  -> zoom in and load its streets from OpenStreetMap, coloured by how much lies in a hazard zone
  *   hover a street    -> street card;  Rain slider (Now, +1 h, +2 h, +3 h) re-runs Rule 2 for that hour
  * Layers: hazard zones, rain (area-risk outlines + district rain labels), streets, recurring flood spots,
- * community reports (clustered when zoomed out) and evacuation / help places (OSM).
+ * and community reports (clustered when zoomed out).
  * Hazard levels are SAMPLE data until the UP NOAH layer is added (see scripts/build_barangays.py).
  */
 (function () {
@@ -18,12 +18,12 @@
   var RISK_RANK = { high: 3, elevated: 2, low: 1 }, HAZ_RANK = { high: 3, medium: 2, low: 1, none: 0 };
 
   var state = {
-    hours: 0, layers: { hazard: true, rain: true, streets: true, spots: true, reports: true, evac: false },
+    hours: 0, layers: { hazard: true, rain: true, streets: true, spots: true, reports: true },
     selected: null, hover: null, hoverStreet: null, pinStreet: null, areas: null,
     statuses: { "flood-warning": true, "possible-flood": true, "unclear-photo": false, "no-flood": false }, windowH: 24, outdated: true
   };
   var L = null, map = null, polys = {}, polyGroup = null, streetGroup = null, streetData = null, streetFor = null;
-  var spotGroup = null, reportGroup = null, rainGroup = null, evacGroup = null, evacLoaded = false, tempMarker = null;
+  var spotGroup = null, reportGroup = null, rainGroup = null, tempMarker = null;
 
   var card = $("#map-card"), listUl = $("#risk-list"), banner = $("#rain-banner"), legend = $("#map-legend"), toastEl = $("#map-toast");
 
@@ -198,7 +198,7 @@
   }
   function styleStreet(s, on) { (s._layers || []).forEach(function (pl) { pl.setStyle(on ? { weight: 7, color: "#0b5d98" } : { weight: 3.5, color: s._color }); if (on) pl.bringToFront(); }); }
 
-  /* ---------- Markers: spots, reports, rain labels, evacuation ---------- */
+  /* ---------- Markers: spots, reports, rain labels ---------- */
   function drawSpots() {
     if (spotGroup) map.removeLayer(spotGroup);
     spotGroup = L.layerGroup();
@@ -256,29 +256,6 @@
     if (state.layers.rain) rainGroup.addTo(map);
   }
 
-  function loadEvac() {
-    if (evacLoaded) return; evacLoaded = true;
-    say("Loading evacuation and help places…", 15000);
-    var q = '[out:json][timeout:25];(node["amenity"~"^(hospital|fire_station)$"](14.575,120.97,14.775,121.135);way["amenity"~"^(hospital|fire_station)$"](14.575,120.97,14.775,121.135);node["emergency"="assembly_point"](14.575,120.97,14.775,121.135););out center tags 250;';
-    var urls = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
-    function go(i) {
-      return fetch(urls[i], { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" } })
-        .then(function (r) { if (!r.ok) throw new Error("busy"); return r.json(); }).catch(function (e) { if (i + 1 < urls.length) return go(i + 1); throw e; });
-    }
-    go(0).then(function (data) {
-      evacGroup = L.layerGroup();
-      (data.elements || []).forEach(function (el) {
-        var lat = el.lat || (el.center && el.center.lat), lng = el.lon || (el.center && el.center.lon); if (lat == null) return;
-        var t = el.tags || {}, kind = t.amenity === "hospital" ? "H" : t.amenity === "fire_station" ? "F" : "E";
-        var m = L.marker([lat, lng], { icon: L.divIcon({ className: "", html: '<span class="fda-evac">' + kind + "</span>", iconSize: [22, 22], iconAnchor: [11, 11] }), title: t.name || "" });
-        m.bindPopup("<strong>" + esc(t.name || "Unnamed") + "</strong><br>" + (kind === "H" ? "Hospital" : kind === "F" ? "Fire station" : "Assembly point") + "<br><small>© OpenStreetMap contributors</small>");
-        evacGroup.addLayer(m);
-      });
-      toastEl.hidden = true;
-      if (state.layers.evac) evacGroup.addTo(map);
-    }).catch(function () { evacLoaded = false; say("Could not load evacuation places right now. Try the switch again in a minute.", 6000); setLayer("evac", false); });
-  }
-
   /* ---------- Legend ---------- */
   function drawLegend() {
     var h = "";
@@ -294,10 +271,9 @@
     state.layers[key] = on;
     var sw = $('[data-layer="' + key + '"]'); if (sw) sw.setAttribute("aria-checked", String(on));
     if (!map) return;
-    var g = { streets: streetGroup, spots: spotGroup, reports: reportGroup, rain: rainGroup, evac: evacGroup }[key];
+    var g = { streets: streetGroup, spots: spotGroup, reports: reportGroup, rain: rainGroup }[key];
     if (g) { if (on) g.addTo(map); else map.removeLayer(g); }
     if (key === "streets" && on && streetGroup) keepStreetsOnTop();
-    if (key === "evac" && on) loadEvac();
     if (key === "hazard" || key === "rain") { restyleAll(); drawLegend(); }
   }
   $$("[data-layer]").forEach(function (sw) {
@@ -394,7 +370,6 @@
     if (rep) { state.statuses[rep.status] = true; $$("#report-filters .chip").forEach(function (b) { b.setAttribute("aria-pressed", String(state.statuses[b.dataset.status])); }); if (Date.now() - rep.ts > 24 * 3600000) { state.windowH = 168; $("#map-time").value = "168"; } drawReports(); }
     if (start && FDA.hazard.get(start)) select(start);
     if (rep && wantMarker) { map.setView([rep.lat, rep.lng], 16); wantMarker.openPopup(); }
-    if (state.layers.evac) loadEvac();
   }).catch(function (err) {
     var f = $("#map-fallback"); f.hidden = false; f.textContent = err.message + " The lists on the left still work.";
   });
