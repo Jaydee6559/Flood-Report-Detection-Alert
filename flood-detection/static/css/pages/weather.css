@@ -416,3 +416,28 @@
 .outlook--low .outlook__head { background: #2e8a4f; }
 .badge--rain-heavy { background: var(--color-danger-light); color: var(--color-danger-text); }
 .badge--rain-none { background: var(--color-success-light); color: var(--color-success); }
+
+/* ---------- Rain by district now ---------- */
+.district-card { margin-top: var(--space-4); }
+.district-card__head { display: grid; gap: 2px; margin-bottom: var(--space-2); }
+.district-card__head .card__title { margin: 0; }
+.district-list { list-style: none; margin: 0; padding: 0; }
+.district-row {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px var(--space-3);
+  padding: 10px 0; border-top: 1px solid var(--color-border);
+}
+.district-row:first-child { border-top: 0; }
+.district-row__name { font-weight: 700; color: var(--color-navy); font-size: var(--font-size-sm); line-height: 1.25; }
+.district-row__name small { display: block; margin-top: 2px; font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.district-row__rain { display: flex; align-items: center; gap: 8px; justify-content: flex-end; font-size: var(--font-size-sm); color: var(--color-navy); white-space: nowrap; }
+.district-row__rain .badge { min-width: 62px; justify-content: center; }
+.district-row__bar { grid-column: 1 / -1; position: relative; height: 6px; border-radius: 3px; background: #e6ecf1; overflow: hidden; }
+.district-row__bar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--value); border-radius: 3px; background: var(--rain-heavy, #2d6fb0); }
+.district-row__bar--yellow::after { background: var(--lvl-yellow, #e0b400); }
+.district-row__bar--orange::after { background: var(--lvl-orange, #d8730f); }
+.district-row__bar--red::after { background: var(--lvl-red, #c0281c); }
+.district-card__scale { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: var(--space-2) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
+.district-card__scale span { display: inline-flex; align-items: center; gap: 5px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.dot--yellow { background: var(--lvl-yellow, #e0b400); } .dot--orange { background: var(--lvl-orange, #d8730f); } .dot--red { background: var(--lvl-red, #c0281c); }
+.district-card__note { margin-top: var(--space-2); }
