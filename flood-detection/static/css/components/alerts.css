@@ -73,3 +73,8 @@
     gap: var(--space-1);
   }
 }
+
+/* Other callout colours, used when the agent's status is not a flood warning */
+.callout--warning { background: var(--color-warning-light); color: var(--color-warning); }
+.callout--neutral { background: var(--color-neutral-light); color: var(--color-neutral-text); }
+.callout--success { background: var(--color-success-light); color: var(--color-success); }

@@ -408,3 +408,11 @@
   .forecast-row__mm { text-align: left; }
   .forecast-card__head .text-xs { display: none; }
 }
+
+/* Outlook colours for lower risk levels (high risk is the red default above), used by weather.js */
+.outlook--moderate { border-color: #efcf9a; }
+.outlook--moderate .outlook__head { background: #c98516; }
+.outlook--low { border-color: #a9d3b6; }
+.outlook--low .outlook__head { background: #2e8a4f; }
+.badge--rain-heavy { background: var(--color-danger-light); color: var(--color-danger-text); }
+.badge--rain-none { background: var(--color-success-light); color: var(--color-success); }

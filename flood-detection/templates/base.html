@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+
+  <!-- Shared styles (same on every page) -->
+  {% block shared_css %}
+  {% for css in [
+    'base/variables', 'base/reset', 'base/typography',
+    'components/icons', 'components/brand', 'components/buttons', 'components/forms',
+    'components/cards', 'components/badges', 'components/alerts', 'components/progress',
+    'components/switch', 'components/page-header',
+    'layout/container', 'layout/header', 'layout/bottom-nav', 'layout/footer'
+  ] %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/' ~ css ~ '.css') }}">
+  {% endfor %}
+  {% endblock %}
+
+  <!-- Page styles -->
+  {% block page_css %}{% endblock %}
+</head>
+<body{% block body_class %}{% endblock %}>
+
+  {% block before_header %}{% endblock %}
+
+  {# Header, footer and phone tab bar live in templates/partials/. Edit them once, every page updates. #}
+  {% block header %}{% include "partials/_header.html" %}{% endblock %}
+
+  {% block content %}{% endblock %}
+
+  {% block footer %}{% include "partials/_footer.html" %}{% endblock %}
+
+  {% block bottom_nav %}{% include "partials/_bottom_nav.html" %}{% endblock %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

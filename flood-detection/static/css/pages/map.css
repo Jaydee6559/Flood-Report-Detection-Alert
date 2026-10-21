@@ -442,3 +442,6 @@
   .map-sheet__hint { margin-top: 4px; font-size: var(--font-size-xs); color: var(--color-text-muted); }
   .map-sheet .chip-row { margin-top: var(--space-3); }
 }
+
+/* The popup is hidden until a marker is selected (map.js) */
+.map-popup[hidden] { display: none; }
