@@ -1,0 +1,38 @@
+{#
+  Site header (desktop nav + bell + Report button + avatar).
+  Each page sets  {% set active_page = 'weather' %}  to highlight its link.
+  Keys: home, weather, reports, map, routes, notifications  (report/result use 'report': no desktop link is highlighted).
+#}
+{% set desktop_nav = [
+  ('home',    'index',   'Home'),
+  ('weather', 'weather', 'Weather report'),
+  ('reports', 'reports', 'Reports'),
+  ('map',     'map_view','Flood map'),
+  ('routes',  'routes',  'My routes'),
+] %}
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="{{ url_for('index') }}">
+        <img class="brand__logo" src="{{ url_for('static', filename='img/logo.svg') }}" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <!-- Desktop navigation -->
+      <nav class="site-nav" aria-label="Main">
+        {% for key, endpoint, label in desktop_nav %}
+        <a class="site-nav__link{% if active_page == key %} site-nav__link--active{% endif %}" href="{{ url_for(endpoint) }}"{% if active_page == key %} aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
+
+      <div class="site-header__actions">
+        {% set unread = unread_count|default(3) %}
+        <a class="icon-button{% if active_page == 'notifications' %} icon-button--active{% endif %}" href="{{ url_for('notifications') }}" aria-label="Notifications, {{ unread }} unread"{% if active_page == 'notifications' %} aria-current="page"{% endif %}>
+          <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+          <span class="icon-button__count">{{ unread }}</span>
+        </a>
+        <a class="btn btn--primary site-header__report" href="{{ url_for('report') }}"{% if active_page == 'report' %} aria-current="page"{% endif %}>Report a flood</a>
+        {# Hidden on phones: Login is a tab in the bottom bar there. #}
+        <a class="avatar" href="{{ url_for('login') }}" title="Sign out" aria-label="Sign out">{{ user_initials|default('MS') }}</a>
+      </div>
+    </div>
+  </header>

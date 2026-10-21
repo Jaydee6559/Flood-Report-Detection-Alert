@@ -187,3 +187,11 @@
   .result-actions__saved { width: 100%; justify-content: center; }
   .recorded { padding: var(--space-4); }
 }
+
+/* Result panel colours for each agent status (flood warning is the default red above) */
+.result-panel--possible-flood { border-color: #efcf9a; }
+.result-panel--possible-flood .result-panel__status { background: #c98516; }
+.result-panel--unclear-photo { border-color: #c9d3db; }
+.result-panel--unclear-photo .result-panel__status { background: #5d7080; }
+.result-panel--no-flood { border-color: #a9d3b6; }
+.result-panel--no-flood .result-panel__status { background: #2e8a4f; }
