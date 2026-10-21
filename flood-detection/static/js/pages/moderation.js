@@ -174,5 +174,51 @@
   });
   var openQueue = $(".comment-queue__head .link"); if (openQueue) openQueue.addEventListener("click", function (e) { e.preventDefault(); menu[2].click(); });
 
+  /* ---------- Flood-spot log: recurring flood spots the agent uses as the S input ---------- */
+  (function spotLog() {
+    var sec = document.createElement("section");
+    sec.className = "card card--padded"; sec.id = "spot-log"; sec.setAttribute("aria-labelledby", "spot-title"); sec.style.marginTop = "16px";
+    sec.innerHTML = '<h2 class="heading-sm" id="spot-title">Flood-spot log</h2>' +
+      '<p class="text-muted text-sm">Add a place that flooded. If the same corner is added again it counts as another time. These spots feed the agent (recurring spot within 200 m).</p>' +
+      '<form id="spot-form" class="form-row" style="margin-top:12px;gap:10px;align-items:end;flex-wrap:wrap" novalidate>' +
+      '<div><label class="form-label" for="sp-date">Date seen</label><input class="form-input" id="sp-date" type="date"></div>' +
+      '<div><label class="form-label" for="sp-b">Barangay</label><input class="form-input" id="sp-b" list="sp-bl" autocomplete="off"><datalist id="sp-bl"></datalist></div>' +
+      '<div><label class="form-label" for="sp-c">Corner</label><input class="form-input" id="sp-c" placeholder="e.g. Banawe cor. Retiro"></div>' +
+      '<div><label class="form-label" for="sp-d">Depth</label><select class="form-select" id="sp-d"></select></div>' +
+      '<div><label class="form-label" for="sp-p">Who can pass</label><select class="form-select" id="sp-p"></select></div>' +
+      '<div><label class="form-label" for="sp-u">Source link (optional)</label><input class="form-input" id="sp-u" type="url" placeholder="https://"></div>' +
+      '<button class="btn btn--primary" type="submit">Add sighting</button></form>' +
+      '<p class="form-error" id="sp-err" role="alert" hidden></p>' +
+      '<div style="overflow-x:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:var(--font-size-sm)"><thead><tr><th align="left">Corner</th><th align="left">Barangay</th><th align="left">Times</th><th align="left">Depth</th><th align="left">Last seen</th><th></th></tr></thead><tbody id="sp-body"></tbody></table></div>';
+    cq.insertAdjacentElement("afterend", sec);
+    $("#sp-bl").innerHTML = FDA.geo.barangays("Quezon City").map(function (n) { return '<option value="' + esc(n) + '">'; }).join("");
+    $("#sp-d").innerHTML = Object.keys(FDA.hazard.DEPTHS).map(function (k) { return '<option value="' + k + '">' + FDA.hazard.DEPTHS[k].label + "</option>"; }).join("");
+    $("#sp-p").innerHTML = Object.keys(FDA.hazard.PASSES).map(function (k) { return '<option value="' + k + '">' + FDA.hazard.PASSES[k] + "</option>"; }).join("");
+    $("#sp-date").value = new Date().toISOString().slice(0, 10);
+
+    function draw() {
+      var all = FDA.hazard.spots().slice().sort(function (a, b) { return (b.last || "").localeCompare(a.last || ""); });
+      $("#sp-body").innerHTML = all.slice(0, 60).map(function (x) {
+        return "<tr><td>" + esc(x.corner) + "</td><td>" + esc(x.barangay) + "</td><td>" + x.times + "</td><td>" + esc(FDA.hazard.depth(x.depth).label) + "</td><td>" + esc(x.last) + "</td><td>" +
+          (x.seed ? '<small class="text-muted">sample</small>' : '<button class="btn btn--ghost btn--sm" type="button" data-rm="' + esc(x.id) + '">Remove</button>') + "</td></tr>";
+      }).join("");
+    }
+    $("#sp-body").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-rm]"); if (!b) return;
+      FDA.hazard.removeSpot(b.dataset.rm); draw(); FDA.ui.toast("Sighting removed.");
+    });
+    $("#spot-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var err = $("#sp-err"), b = $("#sp-b").value.trim(), c = $("#sp-c").value.trim(), url = $("#sp-u").value.trim();
+      err.hidden = true;
+      if (!FDA.hazard.get(b)) { err.textContent = "Choose a barangay from the list."; err.hidden = false; return; }
+      if (!c) { err.textContent = "Enter the corner or street."; err.hidden = false; return; }
+      if (url && !/^https?:\/\//i.test(url)) { err.textContent = "The source link must start with http:// or https://."; err.hidden = false; return; }
+      FDA.hazard.addSpot({ barangay: b, corner: c, date: $("#sp-date").value, depth: $("#sp-d").value, pass: $("#sp-p").value, url: url, source: "Moderator log" });
+      $("#sp-c").value = ""; $("#sp-u").value = ""; draw(); FDA.ui.toast("Added to the flood-spot log.", "success");
+    });
+    draw();
+  })();
+
   render();
 })();

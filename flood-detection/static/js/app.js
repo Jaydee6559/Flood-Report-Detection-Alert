@@ -19,10 +19,13 @@
   var page = (location.pathname.split("/").pop() || "index.html").replace(/\.html$/, "") || "index";
 
   // data/locations.js is a copy of data/locations.json (see scripts/build_locations.py)
-  var data = base.replace(/js\/$/, "") + "data/locations.js";
-  var core = ["geo", "store", "agent", "classifier", "ui", "auth", "notify", "scheduler", "layout"];
+  var dataDir = base.replace(/js\/$/, "") + "data/";
+  var data = ["locations", "barangays", "flood-spots"];   // barangays.js = polygons + hazard; flood-spots.js = recurring spots
+  var core = ["geo", "store", "hazard", "agent", "rain", "areas", "classifier", "ui", "auth", "notify", "scheduler", "layout", "mapkit", "streets"];
 
-  var tags = ['<script src="' + data + '"><\/script>'].concat(core.map(function (name) {
+  var tags = data.map(function (name) {
+    return '<script src="' + dataDir + name + '.js"><\/script>';
+  }).concat(core.map(function (name) {
     return '<script src="' + base + "core/" + name + '.js"><\/script>';
   }));
   tags.push('<script src="' + base + "pages/" + page + '.js" onerror="void 0"><\/script>');

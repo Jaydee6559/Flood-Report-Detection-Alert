@@ -4,12 +4,13 @@
  * kinds:  route    – a report appeared along a saved route
  *         schedule – result of a pre-departure check
  *         report   – confirmations, comments and moderator actions on your reports
+ *         area     – rain alert: a barangay you watch (home barangay by default) became High risk (Rule 2)
  * Each user can switch kinds off in the Notification settings.
  */
 (function () {
   "use strict";
   var FDA = (window.FDA = window.FDA || {});
-  var DEFAULTS = { route: true, schedule: true, reports: true, clear: false };
+  var DEFAULTS = { route: true, schedule: true, reports: true, clear: false, area: true };
 
   FDA.notify = {
     settings: function (userId) {
@@ -24,7 +25,7 @@
      */
     push: function (userId, n) {
       var db = FDA.store.db(), s = FDA.notify.settings(userId);
-      var allowed = n.kind === "route" ? s.route : n.kind === "schedule" ? (n.clear ? s.schedule && s.clear : s.schedule) : s.reports;
+      var allowed = n.kind === "area" ? s.area : n.kind === "route" ? s.route : n.kind === "schedule" ? (n.clear ? s.schedule && s.clear : s.schedule) : s.reports;
       if (!allowed) return null;
       var existing = n.key && db.notifications.filter(function (x) { return x.userId === userId && x.key === n.key; })[0];
       if (existing) {

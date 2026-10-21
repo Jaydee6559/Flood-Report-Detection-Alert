@@ -13,13 +13,15 @@
     sel.appendChild(new Option(first, ""));
     items.forEach(function (n) { sel.appendChild(new Option(n, n)); });
   }
-  fillSelect(f.city, "Select city", FDA.geo.cityNames());
-  fillSelect(f.barangay, "Select barangay", []);
-  f.barangay.disabled = true;
+  var CITY = "Quezon City";
+  fillSelect(f.city, "Select district", []);
+  FDA.geo.districts(CITY).forEach(function (d) { f.city.appendChild(new Option("District " + d.id, d.id)); });
+  fillSelect(f.barangay, "Select barangay", FDA.geo.barangays(CITY));
   f.city.addEventListener("change", function () {
-    fillSelect(f.barangay, "Select barangay", FDA.geo.barangays(f.city.value));
-    f.barangay.disabled = !f.city.value;
+    var list = FDA.geo.barangays(CITY).filter(function (n) { return !f.city.value || String(FDA.geo.districtOf(CITY, n)) === f.city.value; });
+    fillSelect(f.barangay, "Select barangay", list);
   });
+  f.barangay.addEventListener("change", function () { if (f.barangay.value) f.city.value = FDA.geo.districtOf(CITY, f.barangay.value); });
 
   /* ---------- Password strength and rules ---------- */
   var bars = $$(".password-strength__bar"), label = $(".password-strength__label"), rules = $$(".password-rules li");
@@ -46,7 +48,7 @@
 
     var res = FDA.auth.register({
       name: f.name.value, login: f.login.value, password: f.password.value, confirm: f.confirm.value,
-      city: f.city.value, barangay: f.barangay.value, agree: agree.checked
+      city: f.barangay.value ? CITY : "", barangay: f.barangay.value, agree: agree.checked
     });
     if (!res.ok) {
       Object.keys(res.errors).forEach(function (k) { if (k === "agree") termsError(res.errors[k]); else FDA.ui.fieldError(f[k], res.errors[k]); });

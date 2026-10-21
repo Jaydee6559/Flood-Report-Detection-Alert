@@ -44,6 +44,19 @@
     "<li>" + liSvg[1] + "<span>" + esc(r.street + ", " + r.barangay + ", " + r.city) + "</span></li>" +
     "<li>" + liSvg[2] + "<span>Checked at " + when + "</span></li>";
 
+  /* The five inputs the agent looked at (Rule 1). Older reports have no list, so say so plainly. */
+  var tagText = { start: "Starting point", raise: "Raised it", support: "Supports it", info: "For information", none: "Not a factor" };
+  var why = document.createElement("section");
+  why.className = "result-section";
+  why.innerHTML = '<h2 class="result-label">What the agent looked at</h2>' + (r.reasons && r.reasons.length
+    ? '<ul class="why-list">' + r.reasons.map(function (x) {
+      return '<li class="' + (x.effect === "none" ? "is-off" : x.effect === "raise" ? "is-on" : "") + '"><span>' + FDA.ui.svg(x.effect === "raise" ? "possible-flood" : "no-flood") + '</span><span><span class="why-list__title">' + esc(x.title) +
+        '</span><span class="why-list__detail">' + esc(x.detail) + '</span></span><span class="why-list__tag">' + esc(tagText[x.effect] || "") + "</span></li>";
+    }).join("") + "</ul>" +
+      '<p class="text-muted text-sm" style="margin-top:8px">Photo cut-offs: flood warning from ' + Math.round(FDA.agent.config.floodAt * 100) + "%, possible flood from " + Math.round(FDA.agent.config.possibleAt * 100) + "%, unclear photo from " + Math.round(FDA.agent.config.unclearAt * 100) + "%. Rain, hazard, recurring spots and nearby reports can raise the result one step.</p>"
+    : '<p class="text-muted text-sm">This report was checked before the agent listed its inputs, so no breakdown was saved.</p>');
+  facts.closest(".result-section").insertAdjacentElement("afterend", why);
+
   var callout = $(".result-panel .callout");
   callout.className = "callout callout--" + meta.cls;
   callout.innerHTML = "<strong>Recommendation:</strong> " + esc(r.recommendation);

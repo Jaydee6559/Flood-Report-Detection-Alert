@@ -62,6 +62,11 @@
   FDA.layout = { refresh: refresh, page: page };
   refresh();
 
+  /* ---------- Rule 2 (area risk) runs when a page opens and every 15 minutes after that ---------- */
+  function runAreaJob() { FDA.areas.refresh().then(refresh, function () { /* offline: keep what is on screen */ }); }
+  runAreaJob();
+  setInterval(runAreaJob, 15 * 60000);
+
   /* ---------- Pre-departure checks run while any page is open ---------- */
   if (user) {
     FDA.scheduler.runDue();

@@ -4,31 +4,90 @@
   var FDA = window.FDA, $ = FDA.ui.$, $$ = FDA.ui.$$;
 
   var drop = $(".dropzone");
-  var citySel = $("#city"), brgySel = $("#barangay"), street = $("#street"), desc = $("#description");
+  var distSel = $("#district"), brgySel = $("#barangay"), street = $("#street"), desc = $("#description");
   var submit = $(".form-actions a.btn--primary");
   var steps = $$(".stepper__item");
   var state = { photo: null, img: null, gps: null };
 
   FDA.classifier.init(); // start loading the trained model, if there is one
 
-  /* ---------- Location drop-downs ---------- */
-  function fill(sel, first, items) { sel.innerHTML = ""; sel.appendChild(new Option(first, "")); items.forEach(function (n) { sel.appendChild(new Option(n, n)); }); }
-  fill(citySel, "Select a city", FDA.geo.cityNames());
-  fill(brgySel, "Select a barangay", []);
-  brgySel.disabled = true;
-  citySel.addEventListener("change", function () {
-    fill(brgySel, "Select a barangay", FDA.geo.barangays(citySel.value));
-    brgySel.disabled = !citySel.value;
-    state.gps = null; paintSteps();
+  /* ---------- Location: District -> Barangay -> Street, with a draggable pin ---------- */
+  var CITY = "Quezon City", L = null, map = null, pin = null, streetTimer = null;
+  function fill(sel, first, items) { sel.innerHTML = ""; sel.appendChild(new Option(first, "")); items.forEach(function (n) { sel.appendChild(n instanceof Option ? n : new Option(n, n)); }); }
+  fill(distSel, "Select a district", FDA.geo.districts(CITY).map(function (d) { return new Option("District " + d.id, d.id); }));
+  function fillBarangays(district, keep) {
+    var list = FDA.geo.barangays(CITY).filter(function (n) { return !district || String(FDA.geo.districtOf(CITY, n)) === String(district); });
+    fill(brgySel, "Select a barangay", list);
+    if (keep && list.indexOf(keep) >= 0) brgySel.value = keep;
+  }
+  fillBarangays("");
+
+  function hint() {
+    var el = $("#hazard-hint"), p = pin ? pin.getLatLng() : null;
+    if (!p || !brgySel.value) { el.hidden = true; return; }
+    var at = FDA.hazard.at(p.lat, p.lng), h = at ? at.hazard : FDA.hazard.of(brgySel.value);
+    var near = FDA.hazard.spotsNear({ lat: p.lat, lng: p.lng }, FDA.agent.config.spotMeters);
+    el.className = "hazard-hint" + (h === "high" ? " hazard-hint--high" : h === "medium" ? " hazard-hint--medium" : "");
+    el.innerHTML = FDA.ui.svg("possible-flood") + "<span>" + FDA.ui.esc(brgySel.value) + " is in a <strong>" + FDA.hazard.label(h).toLowerCase() + "</strong> zone (sample data)." +
+      (near.length ? " A recurring flood spot is within " + FDA.agent.config.spotMeters + " m (" + FDA.ui.esc(near[0].corner) + ")." : "") + "</span>";
+    el.hidden = false;
+  }
+  function placePin(lat, lng, zoom) {
+    if (!map) return;
+    if (!pin) {
+      pin = L.marker([lat, lng], { draggable: true, title: "Drag me to the flood" }).addTo(map);
+      pin.on("dragend", function () { state.gps = null; state.dragged = true; syncFromPin(); });
+    } else pin.setLatLng([lat, lng]);
+    if (zoom) map.setView([lat, lng], zoom);
+    $("#pin-note").textContent = "Drag the pin or tap the map to move it.";
+    hint();
+  }
+  /* when the pin is dropped in another barangay, follow it */
+  function syncFromPin() {
+    var p = pin.getLatLng(), at = FDA.hazard.at(p.lat, p.lng);
+    if (at && at.barangay !== brgySel.value) { distSel.value = at.district || ""; fillBarangays("", at.barangay); brgySel.value = at.barangay; loadStreetNames(); }
+    state.pin = { lat: p.lat, lng: p.lng }; hint(); paintSteps();
+  }
+  function loadStreetNames() {
+    var dl = $("#street-names"); dl.innerHTML = "";
+    if (!brgySel.value) return;
+    var name = brgySel.value;
+    FDA.streets.names(name).then(function (list) {
+      if (brgySel.value !== name) return;
+      dl.innerHTML = list.map(function (n) { return '<option value="' + FDA.ui.esc(n) + '">'; }).join("");
+    }).catch(function () { /* street suggestions are optional */ });
+  }
+  function onBarangay(zoom) {
+    state.gps = null; state.pin = null; state.dragged = false;
+    if (brgySel.value) { var b = FDA.hazard.get(brgySel.value); if (b) { distSel.value = b.district; placePin(b.lat, b.lng, zoom || 16); state.pin = { lat: b.lat, lng: b.lng }; } }
+    loadStreetNames(); hint(); paintSteps();
+  }
+  distSel.addEventListener("change", function () { fillBarangays(distSel.value); onBarangay(); if (!brgySel.value && pin) { map.removeLayer(pin); pin = null; $("#hazard-hint").hidden = true; } });
+  brgySel.addEventListener("change", function () { onBarangay(); });
+  $("#street").addEventListener("change", function () {
+    // a street we know about moves the pin to it
+    var name = brgySel.value, v = this.value.trim(); if (!name || !v) return;
+    FDA.streets.load(name).then(function (res) {
+      var s = res.streets.filter(function (x) { return x.name.toLowerCase() === v.toLowerCase(); })[0];
+      if (s) { var c = FDA.streets.center(s); placePin(c.lat, c.lng, 17); state.gps = null; state.pin = { lat: c.lat, lng: c.lng }; hint(); }
+    }).catch(function () { /* optional */ });
   });
-  brgySel.addEventListener("change", function () { state.gps = null; paintSteps(); });
+
+  FDA.mapkit.create($("#pin-map"), { center: [14.676, 121.0437], zoom: 12 }).then(function (m) {
+    map = m; L = window.L;
+    map.on("click", function (e) { if (!brgySel.value) return; placePin(e.latlng.lat, e.latlng.lng); state.gps = null; syncFromPin(); });
+    if (brgySel.value) onBarangay();
+  }).catch(function () { $("#pin-map").outerHTML = '<p class="text-muted text-sm">The map could not be loaded. The barangay you pick is used for the location.</p>'; $("#pin-note").hidden = true; });
 
   var user = FDA.auth.current();
-  if (user && user.homeCity) { citySel.value = user.homeCity; citySel.dispatchEvent(new Event("change")); if (user.homeBarangay) brgySel.value = user.homeBarangay; }
+  var qb = FDA.ui.param("barangay"), qs = FDA.ui.param("street");
+  var startB = qb && FDA.hazard.get(qb) ? qb : user && user.homeBarangay && FDA.hazard.get(user.homeBarangay) ? user.homeBarangay : "";
+  if (startB) { var sb = FDA.hazard.get(startB); distSel.value = sb.district; fillBarangays(sb.district, startB); brgySel.value = startB; onBarangay(); }
+  if (qs) $("#street").value = qs;
 
   /* ---------- Stepper follows what is filled in ---------- */
   function paintSteps() {
-    var cur = !state.photo ? 0 : !(citySel.value && brgySel.value) ? 1 : 3;
+    var cur = !state.photo ? 0 : !brgySel.value ? 1 : 3;
     steps.forEach(function (li, i) {
       li.classList.toggle("stepper__item--current", i === cur);
       if (i === cur) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
@@ -107,11 +166,11 @@
   locateBtn.addEventListener("click", function () {
     locateBtn.disabled = true;
     FDA.geo.locate().then(function (pos) {
-      var near = FDA.geo.nearest(pos.lat, pos.lng);
-      if (!near || near.meters > 8000) { FDA.ui.toast("You seem to be outside the areas in this prototype. Please pick the city and barangay.", "error"); return; }
-      citySel.value = near.city; citySel.dispatchEvent(new Event("change"));
-      brgySel.value = near.barangay; state.gps = pos; paintSteps();
-      FDA.ui.toast("Location set to " + near.barangay + ", " + near.city + ".", "success");
+      var at = FDA.hazard.at(pos.lat, pos.lng), near = FDA.geo.nearest(pos.lat, pos.lng);
+      if (!at || !near || near.meters > 8000) { FDA.ui.toast("You seem to be outside Quezon City. Please pick the district and barangay.", "error"); return; }
+      distSel.value = at.district || ""; fillBarangays("", at.barangay); brgySel.value = at.barangay;
+      loadStreetNames(); placePin(pos.lat, pos.lng, 17); state.gps = pos; state.pin = { lat: pos.lat, lng: pos.lng }; hint(); paintSteps();
+      FDA.ui.toast("Location set to " + at.barangay + ", " + CITY + ".", "success");
     }).catch(function (err) { FDA.ui.toast(err.message, "error"); })
       .then(function () { locateBtn.disabled = false; });
   });
@@ -122,9 +181,8 @@
     e.preventDefault();
     if (busy) return;
     var ok = true;
-    photoError(""); FDA.ui.fieldError(citySel, ""); FDA.ui.fieldError(brgySel, "");
+    photoError(""); FDA.ui.fieldError(brgySel, "");
     if (!state.photo) { photoError("Add a photo of the street first."); ok = false; }
-    if (!citySel.value) { FDA.ui.fieldError(citySel, "Select a city or municipality."); ok = false; }
     if (!brgySel.value) { FDA.ui.fieldError(brgySel, "Select a barangay."); ok = false; }
     if (!ok) { var bad = $('[aria-invalid="true"]') || drop; bad.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
 
@@ -135,22 +193,23 @@
 
     FDA.classifier.predict(state.img).then(function (out) {
       var db = FDA.store.db(), me = FDA.auth.current();
-      var p = state.gps || FDA.geo.point(citySel.value, brgySel.value, street.value.trim());
-      var loc = { city: citySel.value, barangay: brgySel.value, street: street.value.trim(), lat: p.lat, lng: p.lng };
-      var verdict = FDA.agent.evaluate({ prob: out.prob, loc: loc, reports: db.reports });
+      var p = state.gps || state.pin || FDA.geo.point(CITY, brgySel.value, street.value.trim());
+      var loc = { city: CITY, barangay: brgySel.value, street: street.value.trim(), lat: p.lat, lng: p.lng };
+      var verdict = FDA.agent.checkPhoto({ prob: out.prob, loc: loc, reports: db.reports });
 
       var report = {
         id: FDA.store.nextId("nextReport"), ownerId: me ? me.id : FDA.store.deviceId(), ownerName: me ? me.name : "Guest",
         ts: Date.now(), city: loc.city, barangay: loc.barangay, street: loc.street || "Street not given", lat: loc.lat, lng: loc.lng,
         desc: desc.value.trim(), photo: state.photo, prob: out.prob, depthCm: out.depthCm, model: out.source,
         status: verdict.status, note: verdict.note, recommendation: verdict.recommendation, evidence: verdict.evidence,
-        dupCandidate: verdict.dupCandidate, dupOf: null, flags: 0, removed: false, review: null, still: 0, not: 0, lastConfirmTs: null
+        dupCandidate: verdict.dupCandidate, startStatus: verdict.startStatus, reasons: verdict.reasons, inputs: verdict.inputs, dupOf: null, flags: 0, removed: false, review: null, still: 0, not: 0, lastConfirmTs: null
       };
       db.reports.unshift(report);
       if (!FDA.store.save()) { // storage full: retry once with a smaller photo
         report.photo = shrink(state.img, 480, 0.6);
         if (!FDA.store.save()) { db.reports.shift(); throw new Error("Your browser storage is full, so the report could not be saved."); }
       }
+      FDA.areas.logDecision({ kind: "photo", reportId: report.id, barangay: report.barangay, prob: report.prob, startStatus: verdict.startStatus, status: verdict.status, inputs: verdict.inputs });
       FDA.notify.fanOutReport(report);
       location.href = "result.html?id=" + report.id;
     }).catch(function (err) {

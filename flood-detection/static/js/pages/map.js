@@ -1,238 +1,401 @@
 /**
- * Flood map (mock map): filters, search, zoom levels, markers and clusters
- * all come from the saved reports. The drawing behind the markers is the
- * design's illustration, so marker positions are relative, not geographic.
- * TODO (backend): swap the illustration for Leaflet + OpenStreetMap tiles.
+ * Flood map (home page)
+ *
+ * Leaflet + OpenStreetMap with the 142 Quezon City barangays.
+ *   hover a barangay  -> card with hazard, rain, area risk, recurring spots, latest report (and the matching row lights up)
+ *   click a barangay  -> zoom in and load its streets from OpenStreetMap, coloured by how much lies in a hazard zone
+ *   hover a street    -> street card;  Rain slider (Now, +1 h, +2 h, +3 h) re-runs Rule 2 for that hour
+ * Layers: hazard zones, rain (area-risk outlines + district rain labels), streets, recurring flood spots,
+ * community reports (clustered when zoomed out) and evacuation / help places (OSM).
+ * Hazard levels are SAMPLE data until the UP NOAH layer is added (see scripts/build_barangays.py).
  */
 (function () {
   "use strict";
   var FDA = window.FDA, $ = FDA.ui.$, $$ = FDA.ui.$$, esc = FDA.ui.esc;
-  var db = FDA.store.db();
-
-  var STATUSES = ["flood-warning", "possible-flood", "unclear-photo", "no-flood"];
-  var CLS = { "flood-warning": "warning", "possible-flood": "possible", "unclear-photo": "unclear", "no-flood": "no-flood" };
-  var HOURS = [{ label: "Last 24 hours", h: 24 }, { label: "Last 3 days", h: 72 }, { label: "Last 7 days", h: 168 }];
-  var CLUSTER_AT = { "Quezon City": [47, 32] }; // where each city's cluster sits on the country illustration
-
-  var search = $("#map-search"), mSearch = $(".map-mobile-top input[type=search]");
-  var chips = $$(".map-sidebar .chip-row .chip");
-  var timeSel = $("#map-time"), outdatedSw = $(".switch-row .switch");
-  var cityCanvas = $(".map-canvas--city"), countryCanvas = $(".map-canvas--country");
-  var popup = $(".map-popup"), areaUl = $(".area-list ul"), areaTitle = $(".area-list__head h2");
+  var CITY = "Quezon City";
+  var HAZ = FDA.mapkit.HAZARD, RISK = FDA.mapkit.RISK;
+  var LVL = { yellow: "Yellow", orange: "Orange", red: "Red" };
+  var RISK_RANK = { high: 3, elevated: 2, low: 1 }, HAZ_RANK = { high: 3, medium: 2, low: 1, none: 0 };
 
   var state = {
-    statuses: { "flood-warning": true, "possible-flood": true, "unclear-photo": false, "no-flood": false },
-    hours: 24, outdated: true, query: "Quezon City", selected: null
+    hours: 0, layers: { hazard: true, rain: true, streets: true, spots: true, reports: true, evac: false },
+    selected: null, hover: null, hoverStreet: null, pinStreet: null, areas: null,
+    statuses: { "flood-warning": true, "possible-flood": true, "unclear-photo": false, "no-flood": false }, windowH: 24, outdated: true
   };
+  var L = null, map = null, polys = {}, polyGroup = null, streetGroup = null, streetData = null, streetFor = null;
+  var spotGroup = null, reportGroup = null, rainGroup = null, evacGroup = null, evacLoaded = false, tempMarker = null;
 
-  // On a phone the map starts zoomed out on the whole country, like the design
-  if (window.matchMedia && window.matchMedia("(max-width: 899px)").matches) state.query = "";
-  var wantId = +FDA.ui.param("id");
-  var wanted = db.reports.filter(function (r) { return r.id === wantId; })[0];
-  if (wanted) {
-    state.query = wanted.barangay + ", " + wanted.city; state.selected = wanted.id; state.statuses[wanted.status] = true;
-    state.hours = Math.max(24, Math.ceil((Date.now() - wanted.ts) / 3600000)) <= 24 ? 24 : 168;
+  var card = $("#map-card"), listUl = $("#risk-list"), banner = $("#rain-banner"), legend = $("#map-legend"), toastEl = $("#map-toast");
+
+  /* ---------- Small helpers ---------- */
+  function say(msg, ms) {
+    toastEl.textContent = msg; toastEl.hidden = false;
+    clearTimeout(say.t); say.t = setTimeout(function () { toastEl.hidden = true; }, ms || 4000);
+  }
+  function areaOf(name) { return state.areas.byName[name]; }
+  function hourText(h) { return h ? "+" + h + " h" : "now"; }
+  function lvlBadge(level, mm) {
+    return '<span class="badge badge--lvl-' + (level || "none") + '">' + FDA.ui.svg("possible-flood") + (level ? LVL[level] + " rain" : "No rain level") + " · " + mm + " mm/h</span>";
+  }
+  function hzBadge(h) { return '<span class="badge badge--hz-' + h + '"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0"/><path d="M3 15c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0"/></svg>' + FDA.hazard.label(h) + "</span>"; }
+  function reportsIn(name) {
+    return FDA.store.db().reports.filter(function (r) { return !r.removed && !r.dupOf && r.barangay === name; }).sort(function (a, b) { return b.ts - a.ts; });
+  }
+  function recompute() { state.areas = FDA.areas.compute(state.hours); }
+
+  /* ---------- Polygon styling ---------- */
+  function polyStyle(name) {
+    var b = FDA.hazard.get(name), a = areaOf(name), L_ = state.layers;
+    var fill = L_.hazard ? HAZ[b.hazard] : L_.rain ? RISK[a.level] : null;
+    var weight = 1, color = "#ffffff", fo = fill ? 0.55 : 0, dash = null;
+    if (L_.rain && a.level === "high") { weight = 3; color = "#8f1d14"; }
+    else if (L_.rain && a.level === "elevated") { weight = 2.5; color = "#b45309"; }
+    else if (!fill) { color = "#8597a8"; }
+    if (b.approx) dash = "4 4";
+    if (name === state.selected) { weight = 3.5; color = "#0b5d98"; fo = fill ? 0.7 : 0.05; }
+    if (name === state.hover) { weight = 3.5; color = "#173248"; fo = fill ? 0.8 : 0.1; }
+    return { color: color, weight: weight, fillColor: fill || "#ffffff", fillOpacity: fo, opacity: 1, dashArray: dash };
+  }
+  function restyle(name) { if (polys[name]) polys[name].setStyle(polyStyle(name)); }
+  function restyleAll() { Object.keys(polys).forEach(restyle); keepStreetsOnTop(); }
+  function keepStreetsOnTop() { if (streetGroup) streetGroup.bringToFront(); }
+
+  /* ---------- Cards ---------- */
+  function barangayCard(name, pinned) {
+    var b = FDA.hazard.get(name), a = areaOf(name), spots = FDA.hazard.spotsIn(name), reps = reportsIn(name), latest = reps[0];
+    var corners = spots.slice(0, 2).map(function (s) { return esc(s.corner); }).join(", ") + (spots.length > 2 ? "…" : "");
+    var latestHtml = latest && Date.now() - latest.ts < 2 * 3600000
+      ? "#" + latest.id + " " + esc(FDA.agent.label(latest.status)) + " · " + FDA.ui.timeAgo(latest.ts) : "None in the last 2 h";
+    return (pinned ? '<button class="map-card__close" type="button" data-close aria-label="Close card">×</button>' : "") +
+      '<p class="map-card__eyebrow">Barangay · District ' + b.district + (b.approx ? " · approximate area" : "") + "</p>" +
+      '<h2 class="map-card__title">' + esc(name) + "</h2>" +
+      '<div class="map-card__badges">' + hzBadge(b.hazard) + lvlBadge(a.rain, a.mm) + "</div>" +
+      "<dl><dt>Area risk (" + hourText(state.hours) + ')</dt><dd class="text-risk-' + a.level + '">' + esc(a.text) + "</dd>" +
+      "<dt>Recurring spots</dt><dd>" + (spots.length ? spots.length + " · " + corners : "None logged") + "</dd>" +
+      "<dt>Reports</dt><dd>" + latestHtml + "</dd></dl>" +
+      '<div class="map-card__actions"><a class="btn btn--primary" href="areas.html?b=' + encodeURIComponent(name) + '">Open barangay</a>' +
+      '<a class="btn btn--outline" href="report.html?barangay=' + encodeURIComponent(name) + '">Report here</a></div>';
   }
 
-  $$("option", timeSel).forEach(function (o) { if (o.textContent === "Today") o.textContent = "Last 24 hours"; });
-  timeSel.value = HOURS.filter(function (x) { return x.h === state.hours; })[0].label;
-
-  function words(q) { return q.toLowerCase().split(/[,\s]+/).filter(Boolean); }
-  function inScope(r, q) {
-    var text = (r.street + " " + r.barangay + " " + r.city).toLowerCase();
-    return words(q).every(function (w) { return text.indexOf(w) >= 0 || (w === "city" || w === "brgy." || w === "brgy"); });
+  function streetCard(s, brgy, pinned) {
+    var spots = FDA.hazard.spotsOnStreet(brgy, s.name), worst = FDA.hazard.worstDepth(spots);
+    var rep = reportsIn(brgy).filter(function (r) { return r.street && (r.street.toLowerCase().indexOf(s.name.toLowerCase()) >= 0 || s.name.toLowerCase().indexOf(r.street.toLowerCase()) >= 0); })[0];
+    var d = FDA.hazard.get(brgy).district, lvl1 = FDA.rain.level(d, 1), mm1 = FDA.rain.mm(d, 1);
+    return (pinned ? '<button class="map-card__close" type="button" data-close aria-label="Close card">×</button>' : "") +
+      '<p class="map-card__eyebrow">Street · ' + esc(brgy) + "</p>" +
+      '<h2 class="map-card__title">' + esc(s.name) + "</h2>" +
+      "<dl><dt>In medium or high hazard zone</dt><dd>" + s.pct + "%</dd></dl>" +
+      '<div class="map-card__bar" role="img" aria-label="' + s.pct + ' percent of this street lies in a medium or high hazard zone"><span style="width:' + s.pct + '%;background:' + FDA.streets.COLORS[FDA.streets.bin(s.pct)] + '"></span></div>' +
+      "<dl><dt>Recurring spots</dt><dd>" + (spots.length ? spots.length + " · " + esc(spots[0].corner.replace(/^.* cor\.? /i, "cor. ")) : "None logged") + "</dd>" +
+      "<dt>Worst depth</dt><dd>" + (worst ? esc(FDA.hazard.depth(worst.depth).label) : "–") + "</dd>" +
+      "<dt>Latest report</dt><dd>" + (rep ? "#" + rep.id + " " + esc(FDA.agent.label(rep.status)) + " · " + FDA.ui.timeAgo(rep.ts) : "None yet") + "</dd>" +
+      "<dt>Rain at +1 h</dt><dd>" + (lvl1 ? LVL[lvl1] : "None") + " · " + mm1 + " mm/h</dd></dl>" +
+      '<div class="map-card__actions"><a class="btn btn--primary" href="report.html?barangay=' + encodeURIComponent(brgy) + "&street=" + encodeURIComponent(s.name) + '">Report on this street</a></div>';
   }
 
-  function visible(applyScope) {
+  function renderCard() {
+    var s = state.hoverStreet || state.pinStreet, html = "";
+    if (s && streetFor) html = streetCard(s, streetFor, !state.hoverStreet);
+    else if (state.hover) html = barangayCard(state.hover, false);
+    else if (state.selected) html = barangayCard(state.selected, true);
+    card.hidden = !html; card.innerHTML = html;
+  }
+  card.addEventListener("click", function (e) {
+    if (e.target.closest("[data-close]")) { state.selected = state.pinStreet = null; restyleAll(); drawList(); renderCard(); setHash(); }
+  });
+
+  /* ---------- Sidebar: rain banner and area-risk list ---------- */
+  function drawBanner() {
+    var snap = FDA.rain.get(), best = null;
+    FDA.geo.districts(CITY).forEach(function (d) {
+      var mm = FDA.rain.mm(d.id, state.hours);
+      if (!best || mm > best.mm) best = { id: d.id, mm: mm, level: FDA.agent.rainLevel(mm) };
+    });
+    var next3 = best ? [1, 2, 3].reduce(function (s, h) { return s + FDA.rain.mm(best.id, h); }, 0) : 0;
+    var modeText = { live: "Live · Open-Meteo, updated " + FDA.ui.clock(snap.at), simulated: "Demo storm (simulated) so Rule 2 can be shown on a dry day", sample: "Sample rain: live data could not be loaded" }[snap.source];
+    banner.className = "rain-banner" + (best && best.level ? " rain-banner--" + best.level : "");
+    banner.innerHTML = best && best.level
+      ? "<strong>" + FDA.ui.svg("possible-flood", "md") + LVL[best.level] + " rainfall · District " + best.id + " " + (state.hours ? "(" + hourText(state.hours) + ")" : "") + "</strong><small>" + best.mm + " mm/h " + hourText(state.hours) + " · " + Math.round(next3 * 10) / 10 + " mm expected in the next 3 h · PAGASA level (estimate)</small><small>" + esc(modeText) + "</small>"
+      : "<strong>" + FDA.ui.svg("no-flood", "md") + "No rainfall warning level " + hourText(state.hours) + "</strong><small>Heaviest rain: " + (best ? best.mm + " mm/h in District " + best.id : "–") + ". Below the PAGASA yellow level (7.5 mm/h).</small><small>" + esc(modeText) + "</small>";
+    $("#rain-updated").textContent = { live: "Updated " + FDA.ui.clock(snap.at) + " · Open-Meteo", simulated: "Demo storm", sample: "Sample rain" }[snap.source];
+    $("#l-rain-sub").textContent = { live: "Open-Meteo · every 15 min", simulated: "Demo storm (simulated)", sample: "Sample rain (live unavailable)" }[snap.source];
+  }
+
+  function rowsForList() {
+    var all = Object.keys(state.areas.byName).map(function (n) { return state.areas.byName[n]; });
+    all.sort(function (x, y) { return RISK_RANK[y.level] - RISK_RANK[x.level] || HAZ_RANK[y.hazard] - HAZ_RANK[x.hazard] || y.spots - x.spots || x.name.localeCompare(y.name); });
+    var top = all.slice(0, 6);
+    if (state.selected && !top.some(function (r) { return r.name === state.selected; })) top.unshift(state.areas.byName[state.selected]);
+    return top;
+  }
+  function drawList() {
+    var rows = rowsForList(), c = state.areas.counts;
+    $("#all-areas").textContent = "All 142 →";
+    listUl.innerHTML = rows.map(function (r) {
+      return '<li><button class="risk-item' + (r.name === state.selected ? " is-selected" : "") + '" type="button" data-name="' + esc(r.name) + '"><span class="risk-bar risk-bar--' + r.level + '"></span><span><span class="risk-item__name">' + esc(r.name) + "</span>" +
+        '<span class="risk-item__meta">D' + r.district + " · " + esc(FDA.hazard.label(r.hazard).toLowerCase()) + " · " + (r.rain ? LVL[r.rain].toLowerCase() + " rain" : "no rain level") + " · " + r.spots + " spot" + (r.spots === 1 ? "" : "s") +
+        '</span><span class="risk-item__meta"><strong class="text-risk-' + r.level + '">' + esc(FDA.agent.areaLabel(r.level)) + " risk</strong></span></span></button></li>";
+    }).join("") + '<li class="risk-empty">' + c.high + " high · " + c.elevated + " elevated · " + c.low + " low (" + hourText(state.hours) + ")</li>";
+  }
+  listUl.addEventListener("click", function (e) { var b = e.target.closest("[data-name]"); if (b) select(b.dataset.name, true); });
+  listUl.addEventListener("mouseover", function (e) { var b = e.target.closest("[data-name]"); if (b && b.dataset.name !== state.hover) setHover(b.dataset.name, true); });
+  listUl.addEventListener("mouseleave", function () { setHover(null, true); });
+  function markRows() {
+    $$(".risk-item", listUl).forEach(function (el) { el.classList.toggle("is-hover", el.dataset.name === state.hover); });
+  }
+
+  /* ---------- Hover and select ---------- */
+  function setHover(name, fromList) {
+    var prev = state.hover; state.hover = name;
+    if (prev && prev !== name) restyle(prev);
+    if (name) { restyle(name); if (polys[name] && polys[name].bringToFront) { polys[name].bringToFront(); keepStreetsOnTop(); } }
+    markRows(); renderCard();
+  }
+
+  function select(name, fit) {
+    if (!FDA.hazard.get(name)) return;
+    var prev = state.selected; state.selected = name; state.pinStreet = null; state.hoverStreet = null;
+    if (prev) restyle(prev); restyle(name);
+    if (map && polys[name] && fit !== false) map.fitBounds(polys[name].getBounds(), { padding: [40, 40], maxZoom: 16 });
+    loadStreets(name); drawList(); renderCard(); setHash(); closeSidebar();
+  }
+
+  function setHash() {
+    try { history.replaceState(null, "", state.selected ? "#b=" + encodeURIComponent(state.selected) : location.pathname + location.search); } catch (e) { /* file:// in some browsers */ }
+  }
+
+  /* ---------- Streets ---------- */
+  function loadStreets(name) {
+    if (streetGroup && map) { map.removeLayer(streetGroup); streetGroup = null; }
+    streetData = null; streetFor = null; drawLegend();
+    if (!map) return;
+    say("Loading streets of " + name + "…", 20000);
+    FDA.streets.load(name).then(function (res) {
+      if (state.selected !== name) return;
+      toastEl.hidden = true;
+      streetData = res; streetFor = name; drawStreets(); drawLegend(); fillPlaces();
+      if (!res.streets.length) say("OpenStreetMap has no named streets for " + name + " yet.");
+    }).catch(function (err) { if (state.selected === name) say(err.message, 7000); });
+  }
+
+  function drawStreets() {
+    if (streetGroup) { map.removeLayer(streetGroup); streetGroup = null; }
+    if (!streetData) return;
+    streetGroup = L.featureGroup();
+    streetData.streets.forEach(function (s) {
+      var color = FDA.streets.COLORS[FDA.streets.bin(s.pct)], layers = [];
+      s.lines.forEach(function (line) {
+        var pl = L.polyline(line, { color: color, weight: 3.5, opacity: 0.95, lineCap: "round" });
+        pl.bindTooltip(s.name, { sticky: true, className: "street-tip" });
+        pl.on("mouseover", function () { state.hoverStreet = s; styleStreet(s, true); renderCard(); });
+        pl.on("mouseout", function () { state.hoverStreet = null; styleStreet(s, false); renderCard(); });
+        pl.on("click", function (e) { L.DomEvent.stopPropagation(e); state.pinStreet = s; renderCard(); });
+        layers.push(pl); streetGroup.addLayer(pl);
+      });
+      s._layers = layers; s._color = color;
+    });
+    if (state.layers.streets) streetGroup.addTo(map);
+  }
+  function styleStreet(s, on) { (s._layers || []).forEach(function (pl) { pl.setStyle(on ? { weight: 7, color: "#0b5d98" } : { weight: 3.5, color: s._color }); if (on) pl.bringToFront(); }); }
+
+  /* ---------- Markers: spots, reports, rain labels, evacuation ---------- */
+  function drawSpots() {
+    if (spotGroup) map.removeLayer(spotGroup);
+    spotGroup = L.layerGroup();
+    FDA.hazard.spots().forEach(function (s) {
+      var m = L.marker([s.lat, s.lng], { icon: FDA.mapkit.dropIcon(L, s.times), title: s.corner, keyboard: true });
+      m.bindPopup("<strong>" + esc(s.corner) + "</strong><br>" + esc(s.barangay) + "<br>Flooded " + s.times + " times · worst: " + esc(FDA.hazard.depth(s.depth).label) +
+        "<br>" + esc(FDA.hazard.pass(s.pass)) + "<br>Last seen " + esc(s.last) + "<br><small>" + esc(s.source || "") + "</small>");
+      spotGroup.addLayer(m);
+    });
+    if (state.layers.spots) spotGroup.addTo(map);
+  }
+
+  function visibleReports() {
     var now = Date.now();
-    return db.reports.filter(function (r) {
-      if (r.removed || !state.statuses[r.status] || now - r.ts > state.hours * 3600000) return false;
-      if (!state.outdated && !FDA.agent.isRecent(r, now)) return false;
-      return applyScope === false || inScope(r, state.query);
+    return FDA.store.db().reports.filter(function (r) {
+      if (r.removed || r.dupOf || r.lat == null || !state.statuses[r.status] || now - r.ts > state.windowH * 3600000) return false;
+      return state.outdated || FDA.agent.isRecent(r, now);
     }).sort(function (a, b) { return b.ts - a.ts; });
   }
-
-  /* ---------- Scope and breadcrumb ---------- */
-  function scope() {
-    var hit = FDA.geo.resolve(state.query);
-    return hit ? { city: hit.city, barangay: hit.barangay || null } : { city: null, barangay: null };
-  }
-  function setScope(city, barangay) {
-    state.query = barangay ? barangay + ", " + city : city || "";
-    search.value = state.query; if (mSearch) mSearch.value = state.query;
-    state.selected = null; render();
-  }
-  function crumbs() {
-    var s = scope(), nav = $(".map-crumbs");
-    var html = '<a href="#" data-all="1">Philippines</a>';
-    if (s.city) html += '<span aria-hidden="true">›</span><a href="#" data-metro="1">Metro Manila</a><span aria-hidden="true">›</span>' + (s.barangay ? '<a href="#" data-city="' + esc(s.city) + '">' + esc(s.city) + "</a>" : "<strong>" + esc(s.city) + "</strong>");
-    if (s.barangay) html += '<span aria-hidden="true">›</span><strong>' + esc(s.barangay.replace("Brgy. ", "Brgy. ")) + "</strong>";
-    nav.innerHTML = html;
-  }
-  $(".map-crumbs").addEventListener("click", function (e) {
-    var a = e.target.closest("a"); if (!a) return; e.preventDefault();
-    if (a.dataset.all || a.dataset.metro) setScope(""); else setScope(a.dataset.city);
-  });
-
-  /* ---------- Drawing ---------- */
-  function projector(rows) {
-    var lats = rows.map(function (r) { return r.lat; }), lngs = rows.map(function (r) { return r.lng; });
-    var minLat = Math.min.apply(null, lats), maxLat = Math.max.apply(null, lats), minLng = Math.min.apply(null, lngs), maxLng = Math.max.apply(null, lngs);
-    var spanLat = Math.max(maxLat - minLat, 0.006), spanLng = Math.max(maxLng - minLng, 0.009);
-    var cLat = (minLat + maxLat) / 2, cLng = (minLng + maxLng) / 2;
-    return function (r) {
-      var x = 50 + ((r.lng - cLng) / (spanLng * 1.35)) * 100, y = 50 - ((r.lat - cLat) / (spanLat * 1.35)) * 100;
-      return { x: Math.max(9, Math.min(91, x)), y: Math.max(14, Math.min(86, y)) };
-    };
-  }
-
-  function drawMarkers(rows) {
-    $$(".map-marker", cityCanvas).forEach(function (m) { m.remove(); });
-    var project = projector(rows.length ? rows : [{ lat: 14.645, lng: 121.04 }]);
-    var placed = [];
-    // Reports a few metres apart would sit on top of each other and could not be clicked,
-    // so each marker that lands too close to an earlier one is moved to the nearest free spot around it.
-    function free(p) { return placed.every(function (q) { return Math.abs(q.x - p.x) > 4.2 || Math.abs(q.y - p.y) > 7.5; }); }
-    function spread(p) {
-      if (free(p)) return p;
-      for (var ring = 1; ring <= 6; ring++) for (var k = 0; k < 6 * ring; k++) {
-        var ang = (k / (6 * ring)) * Math.PI * 2, c = { x: p.x + Math.cos(ang) * 5 * ring, y: p.y + Math.sin(ang) * 8.5 * ring };
-        if (c.x > 6 && c.x < 94 && c.y > 10 && c.y < 90 && free(c)) return c;
-      }
-      return p;
-    }
+  var wantReport = +FDA.ui.param("id") || null, wantMarker = null;
+  function drawReports() {
+    if (reportGroup) map.removeLayer(reportGroup);
+    reportGroup = L.layerGroup(); wantMarker = null;
+    var rows = visibleReports(), zoom = map.getZoom(), cell = zoom < 13 ? 0.012 : 0, buckets = {};
+    $("#l-reports-sub").textContent = rows.length + " shown · newest first";
     rows.forEach(function (r) {
-      var p = spread(project(r)); placed.push(p);
-      var pin = r.status === "no-flood" ? FDA.ui.icon.check : FDA.ui.icon[r.status];
-      var d = document.createElement("div");
-      d.className = "map-marker map-marker--" + CLS[r.status] + (FDA.agent.isRecent(r) ? "" : " map-marker--faded") + (r.id === state.selected ? " map-marker--selected" : "");
-      d.style.cssText = "--x: " + p.x.toFixed(1) + "%; --y: " + p.y.toFixed(1) + "%; cursor: pointer";
-      d.tabIndex = 0; d.setAttribute("role", "button"); d.dataset.id = r.id;
-      d.setAttribute("aria-label", "Report #" + r.id + ", " + FDA.agent.label(r.status));
-      d.innerHTML = '<span class="map-marker__pin"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true">' + pin + '</svg></span><span class="map-marker__label">#' + r.id + "</span>";
-      cityCanvas.insertBefore(d, popup);
+      var key = cell ? Math.round(r.lat / cell) + ":" + Math.round(r.lng / cell) : "r" + r.id;
+      (buckets[key] = buckets[key] || []).push(r);
     });
-  }
-
-  function drawPopup(rows) {
-    var r = rows.filter(function (x) { return x.id === state.selected; })[0];
-    popup.hidden = !r;
-    if (!r) return;
-    popup.setAttribute("aria-label", "Report #" + r.id + " preview");
-    popup.innerHTML =
-      '<div class="map-popup__row"><img class="map-popup__thumb" src="' + esc(r.photo) + '" alt=""><div><p class="map-popup__title">#' + r.id + " · " + esc(r.street) + '</p><p class="map-popup__meta">' + esc(r.barangay.replace(/, .*/, "")) + " · " + FDA.ui.clock(r.ts) + " · " + FDA.ui.timeAgo(r.ts) + "</p></div></div>" +
-      '<div class="map-popup__badges">' + FDA.ui.badge(r.status) + '<span class="map-popup__prob">' + Math.round(r.prob * 100) + "%</span></div>" +
-      '<div class="map-popup__foot"><span>' + r.still + ' still flooded</span><a class="link" href="report-details.html?id=' + r.id + '">View report →</a></div>';
-  }
-
-  function drawList(rows) {
-    areaTitle.textContent = "In this area (" + rows.length + ")";
-    areaUl.innerHTML = rows.length ? rows.map(function (r) {
-      var old = !FDA.agent.isRecent(r);
-      return '<li><a class="area-item' + (old ? " area-item--faded" : "") + '" href="report-details.html?id=' + r.id + '" data-id="' + r.id + '"><span class="area-item__top">' + FDA.ui.badge(r.status) +
-        '<span class="area-item__street">' + esc(r.street) + '</span></span><span class="area-item__meta">#' + r.id + " · " + FDA.ui.timeAgo(r.ts) + (old ? " · may be outdated" : "") + "</span></a></li>";
-    }).join("") : '<li class="text-small text-muted" style="padding:12px 4px">No reports match. Try another area or turn on more statuses.</li>';
-  }
-
-  function drawClusters() {
-    $$(".cluster, .cluster-label", countryCanvas).forEach(function (c) { c.remove(); });
-    var all = visible(false), byCity = {};
-    all.forEach(function (r) { (byCity[r.city] = byCity[r.city] || []).push(r); });
-    Object.keys(byCity).forEach(function (city) {
-      var rows = byCity[city], pos = CLUSTER_AT[city] || [45, 36];
-      var worst = STATUSES.filter(function (s) { return rows.some(function (r) { return r.status === s; }); })[0];
-      var el = document.createElement("span");
-      el.className = "cluster cluster--" + CLS[worst] + (rows.length > 4 ? " cluster--lg" : "");
-      el.style.cssText = "--x: " + pos[0] + "%; --y: " + pos[1] + "%; --size: " + (rows.length > 4 ? 40 : 26) + "px; cursor: pointer";
-      el.textContent = rows.length; el.tabIndex = 0; el.setAttribute("role", "button"); el.setAttribute("aria-label", city + ": " + rows.length + " reports"); el.dataset.city = city;
-      countryCanvas.appendChild(el);
+    Object.keys(buckets).forEach(function (k) {
+      var g = buckets[k], first = g[0], m;
+      if (g.length > 1) {
+        var worst = g.some(function (r) { return r.status === "flood-warning"; }) ? "flood-warning" : g[0].status;
+        m = L.marker([first.lat, first.lng], { icon: L.divIcon({ className: "fda-pin fda-pin--" + worst + " fda-pin--cluster", html: "<span>" + g.length + "</span>", iconSize: [34, 34], iconAnchor: [17, 17] }) });
+        m.on("click", function () { map.setView(m.getLatLng(), Math.max(map.getZoom() + 2, 14)); });
+      } else {
+        var fresh = FDA.agent.isRecent(first);
+        m = L.marker([first.lat, first.lng], { icon: FDA.mapkit.statusIcon(L, first.status, ""), opacity: fresh ? 1 : 0.55, title: "#" + first.id + " " + FDA.agent.label(first.status) });
+        m.bindPopup('<strong>#' + first.id + " " + esc(FDA.agent.label(first.status)) + "</strong><br>" + esc(first.street) + ", " + esc(first.barangay) + "<br>" + FDA.ui.timeAgo(first.ts) + (fresh ? "" : " · may be outdated") +
+          '<br><a href="report-details.html?id=' + first.id + '">Open report</a>');
+        if (first.id === wantReport) wantMarker = m;
+      }
+      reportGroup.addLayer(m);
     });
-    var label = document.createElement("span");
-    label.className = "cluster-label"; label.style.cssText = "--x: 52%; --y: 36%"; label.textContent = "Metro Manila";
-    if (all.length) countryCanvas.appendChild(label);
+    if (state.layers.reports) reportGroup.addTo(map);
   }
 
-  function drawSheet() {
-    var s = scope(), rows = visible(true), all = visible(false), box = $(".map-sheet");
-    $(".map-sheet__head h1").textContent = (s.barangay || s.city || "Philippines") + " · " + rows.length + " report" + (rows.length === 1 ? "" : "s");
-    $(".map-sheet__hint").textContent = s.city ? "Tap a report to open it." : "Tap a number to zoom to the city, then the barangay.";
-    var count = function (st) { return rows.filter(function (r) { return r.status === st; }).length; };
-    var row = $(".chip-row", box);
-    row.innerHTML = FDA.ui.badge("flood-warning").replace("Flood warning", "Warning · " + count("flood-warning")) +
-      FDA.ui.badge("possible-flood").replace("Possible flood", "Possible · " + count("possible-flood")) +
-      '<span class="badge badge--unclear-photo">+' + (count("unclear-photo") + count("no-flood")) + "</span>";
-    var list = $(".map-sheet__list", box);
-    if (!list) { list = document.createElement("ul"); list.className = "map-sheet__list"; list.style.cssText = "list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px;max-height:140px;overflow:auto"; box.appendChild(list); }
-    list.innerHTML = s.city ? rows.map(function (r) {
-      return '<li><a class="area-item" href="report-details.html?id=' + r.id + '"><span class="area-item__top">' + FDA.ui.badge(r.status) + '<span class="area-item__street">' + esc(r.street) + '</span></span><span class="area-item__meta">#' + r.id + " · " + FDA.ui.timeAgo(r.ts) + "</span></a></li>";
-    }).join("") : "";
-    void all;
+  function drawRain() {
+    if (rainGroup) map.removeLayer(rainGroup);
+    rainGroup = L.layerGroup();
+    FDA.geo.districts(CITY).forEach(function (d) {
+      var mm = FDA.rain.mm(d.id, state.hours), lvl = FDA.agent.rainLevel(mm);
+      rainGroup.addLayer(L.marker([d.lat, d.lng], { interactive: false, keyboard: false, icon: L.divIcon({ className: "", html: '<span class="fda-label' + (lvl ? " fda-label--" + lvl : "") + '">D' + d.id + " · " + mm + " mm/h</span>", iconSize: [92, 22], iconAnchor: [46, 11] }) }));
+    });
+    if (state.layers.rain) rainGroup.addTo(map);
   }
 
-  function syncFilterChips() {
-    chips.forEach(function (c, i) { c.setAttribute("aria-pressed", String(!!state.statuses[STATUSES[i]])); });
-    var n = STATUSES.filter(function (s) { return state.statuses[s]; }).length;
-    var mf = $$(".map-mobile-top .chip")[0]; if (mf) mf.lastChild.textContent = "Filters · " + n;
-    var mt = $$(".map-mobile-top .chip")[1]; if (mt) mt.textContent = HOURS.filter(function (x) { return x.h === state.hours; })[0].label.replace("Last 24 hours", "Today");
-    timeSel.value = HOURS.filter(function (x) { return x.h === state.hours; })[0].label;
-    outdatedSw.setAttribute("aria-checked", String(state.outdated));
-  }
-
-  function render() {
-    var rows = visible(true);
-    if (state.selected && !rows.some(function (r) { return r.id === state.selected; })) state.selected = null;
-    crumbs(); drawMarkers(rows); drawPopup(rows); drawList(rows); drawClusters(); drawSheet(); syncFilterChips();
-  }
-
-  function select(id) { state.selected = id; render(); }
-
-  /* ---------- Events ---------- */
-  cityCanvas.addEventListener("click", function (e) { var m = e.target.closest(".map-marker"); if (m) select(+m.dataset.id); });
-  cityCanvas.addEventListener("keydown", function (e) { var m = e.target.closest(".map-marker"); if (m && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(+m.dataset.id); } });
-  countryCanvas.addEventListener("click", function (e) { var c = e.target.closest(".cluster"); if (c) setScope(c.dataset.city); });
-  countryCanvas.addEventListener("keydown", function (e) { var c = e.target.closest(".cluster"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setScope(c.dataset.city); } });
-  areaUl.addEventListener("mouseover", function (e) { var a = e.target.closest(".area-item"); if (a && a.dataset.id && +a.dataset.id !== state.selected) { state.selected = +a.dataset.id; drawMarkers(visible(true)); drawPopup(visible(true)); } });
-
-  FDA.ui.bindChips(chips, "multi", function () {
-    chips.forEach(function (c, i) { state.statuses[STATUSES[i]] = c.getAttribute("aria-pressed") === "true"; });
-    render();
-  });
-  timeSel.addEventListener("change", function () { state.hours = HOURS.filter(function (x) { return x.label === timeSel.value; })[0].h; render(); });
-  FDA.ui.bindSwitch(outdatedSw, state.outdated, function (v) { state.outdated = v; render(); });
-
-  function onSearch(src) { return function () { state.query = src.value; var other = src === search ? mSearch : search; if (other) other.value = src.value; state.selected = null; render(); }; }
-  search.value = state.query; search.addEventListener("input", onSearch(search));
-  if (mSearch) { mSearch.value = state.query; mSearch.addEventListener("input", onSearch(mSearch)); }
-
-  var controls = $$(".map-controls .map-control");
-  controls[0].addEventListener("click", function () { // zoom in: all → city → barangay of the newest report
-    var s = scope(), rows = visible(true);
-    if (!rows.length) return FDA.ui.toast("No reports in view to zoom into.");
-    if (!s.city) setScope(rows[0].city); else if (!s.barangay) setScope(rows[0].city, rows[0].barangay);
-  });
-  controls[1].addEventListener("click", function () { var s = scope(); if (s.barangay) setScope(s.city); else setScope(""); });
-  controls[2].addEventListener("click", function () {
-    FDA.geo.locate().then(function (p) { var n = FDA.geo.nearest(p.lat, p.lng); if (n && n.meters < 8000) setScope(n.city, n.barangay); else FDA.ui.toast("You seem to be outside the areas in this prototype.", "error"); })
-      .catch(function (err) { FDA.ui.toast(err.message, "error"); });
-  });
-
-  /* Phone: Filters dialog, Today cycle, Legend */
-  var mChips = $$(".map-mobile-top .chip");
-  if (mChips.length === 3) {
-    mChips[0].addEventListener("click", function () {
-      var html = STATUSES.map(function (s) { return '<label class="checkbox" style="display:flex;gap:8px;margin-top:10px"><input type="checkbox" data-s="' + s + '"' + (state.statuses[s] ? " checked" : "") + "> " + esc(FDA.agent.label(s)) + "</label>"; }).join("");
-      FDA.ui.dialog({ title: "Filter by status", html: html, confirm: "Apply" });
-      var dlg = $("dialog.fda-dialog");
-      // read the boxes when the form is sent, before the dialog is removed
-      dlg.querySelector("form").addEventListener("submit", function () {
-        $$("[data-s]", dlg).forEach(function (b) { state.statuses[b.dataset.s] = b.checked; });
-        setTimeout(render, 0);
+  function loadEvac() {
+    if (evacLoaded) return; evacLoaded = true;
+    say("Loading evacuation and help places…", 15000);
+    var q = '[out:json][timeout:25];(node["amenity"~"^(hospital|fire_station)$"](14.575,120.97,14.775,121.135);way["amenity"~"^(hospital|fire_station)$"](14.575,120.97,14.775,121.135);node["emergency"="assembly_point"](14.575,120.97,14.775,121.135););out center tags 250;';
+    var urls = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
+    function go(i) {
+      return fetch(urls[i], { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" } })
+        .then(function (r) { if (!r.ok) throw new Error("busy"); return r.json(); }).catch(function (e) { if (i + 1 < urls.length) return go(i + 1); throw e; });
+    }
+    go(0).then(function (data) {
+      evacGroup = L.layerGroup();
+      (data.elements || []).forEach(function (el) {
+        var lat = el.lat || (el.center && el.center.lat), lng = el.lon || (el.center && el.center.lon); if (lat == null) return;
+        var t = el.tags || {}, kind = t.amenity === "hospital" ? "H" : t.amenity === "fire_station" ? "F" : "E";
+        var m = L.marker([lat, lng], { icon: L.divIcon({ className: "", html: '<span class="fda-evac">' + kind + "</span>", iconSize: [22, 22], iconAnchor: [11, 11] }), title: t.name || "" });
+        m.bindPopup("<strong>" + esc(t.name || "Unnamed") + "</strong><br>" + (kind === "H" ? "Hospital" : kind === "F" ? "Fire station" : "Assembly point") + "<br><small>© OpenStreetMap contributors</small>");
+        evacGroup.addLayer(m);
       });
-    });
-    mChips[1].addEventListener("click", function () { var i = HOURS.findIndex(function (x) { return x.h === state.hours; }); state.hours = HOURS[(i + 1) % HOURS.length].h; render(); });
-    mChips[2].addEventListener("click", function () { FDA.ui.dialog({ title: "Legend", html: $(".map-legend").innerHTML, cancel: false, confirm: "Close" }); });
+      toastEl.hidden = true;
+      if (state.layers.evac) evacGroup.addTo(map);
+    }).catch(function () { evacLoaded = false; say("Could not load evacuation places right now. Try the switch again in a minute.", 6000); setLayer("evac", false); });
   }
 
-  if (wanted) { search.value = state.query; if (mSearch) mSearch.value = state.query; }
-  render();
+  /* ---------- Legend ---------- */
+  function drawLegend() {
+    var h = "";
+    if (state.layers.hazard) h += "<h3>Flood hazard</h3><ul>" + ["high", "medium", "low"].map(function (k) { return '<li><i style="background:' + HAZ[k] + '"></i>' + FDA.hazard.label(k) + "</li>"; }).join("") + "</ul>";
+    else if (state.layers.rain) h += "<h3>Area risk</h3><ul>" + ["high", "elevated", "low"].map(function (k) { return '<li><i style="background:' + RISK[k] + '"></i>' + FDA.agent.areaLabel(k) + "</li>"; }).join("") + "</ul>";
+    if (state.layers.rain) h += "<h3" + (h ? ' style="margin-top:8px"' : "") + ">Outline = area risk " + hourText(state.hours) + '</h3><ul><li><i style="background:#fff;border:3px solid #8f1d14"></i>High</li><li><i style="background:#fff;border:2.5px solid #b45309"></i>Elevated</li></ul>';
+    if (streetData && state.layers.streets) h += '<h3 style="margin-top:8px">Street in hazard zone</h3><ul><li><i class="line" style="background:' + FDA.streets.COLORS.over50 + '"></i>Over 50%</li><li><i class="line" style="background:' + FDA.streets.COLORS.mid + '"></i>20–50%</li><li><i class="line" style="background:' + FDA.streets.COLORS.under20 + '"></i>Under 20%</li><li><i class="line" style="background:' + FDA.streets.COLORS.none + '"></i>Outside</li></ul>';
+    legend.innerHTML = h; legend.hidden = !h;
+  }
+
+  /* ---------- Layers ---------- */
+  function setLayer(key, on) {
+    state.layers[key] = on;
+    var sw = $('[data-layer="' + key + '"]'); if (sw) sw.setAttribute("aria-checked", String(on));
+    if (!map) return;
+    var g = { streets: streetGroup, spots: spotGroup, reports: reportGroup, rain: rainGroup, evac: evacGroup }[key];
+    if (g) { if (on) g.addTo(map); else map.removeLayer(g); }
+    if (key === "streets" && on && streetGroup) keepStreetsOnTop();
+    if (key === "evac" && on) loadEvac();
+    if (key === "hazard" || key === "rain") { restyleAll(); drawLegend(); }
+  }
+  $$("[data-layer]").forEach(function (sw) {
+    sw.addEventListener("click", function () { setLayer(sw.dataset.layer, sw.getAttribute("aria-checked") !== "true"); });
+  });
+
+  /* Report filters */
+  $$("#report-filters .chip").forEach(function (b) {
+    b.addEventListener("click", function () { state.statuses[b.dataset.status] = !state.statuses[b.dataset.status]; b.setAttribute("aria-pressed", String(state.statuses[b.dataset.status])); if (map) drawReports(); });
+  });
+  $("#map-time").addEventListener("change", function () { state.windowH = +this.value; if (map) drawReports(); });
+  $("#outdated-switch").addEventListener("click", function () { state.outdated = this.getAttribute("aria-checked") !== "true"; this.setAttribute("aria-checked", String(state.outdated)); if (map) drawReports(); });
+
+  /* Rain slider */
+  $$("#rain-slider button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.hours = +b.dataset.h;
+      $$("#rain-slider button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      refreshAll();
+    });
+  });
+  $("#rain-mode").value = FDA.rain.simulated();
+  $("#rain-mode").addEventListener("change", function () { FDA.rain.setSim(this.value || null).then(refreshAll); });
+  window.addEventListener("fda:rain", function () { refreshAll(); });
+
+  /* Phone: the sidebar opens over the map */
+  var side = $("#map-sidebar"), toggle = $("#sidebar-toggle");
+  function closeSidebar() { side.classList.remove("is-open"); toggle.setAttribute("aria-expanded", "false"); }
+  toggle.addEventListener("click", function () { var open = side.classList.toggle("is-open"); toggle.setAttribute("aria-expanded", String(open)); });
+
+  /* ---------- Search ---------- */
+  function fillPlaces() {
+    var names = FDA.geo.barangays(CITY).concat(FDA.geo.landmarks().map(function (l) { return l.name; }));
+    if (streetData) names = streetData.streets.map(function (s) { return s.name; }).concat(names);
+    $("#map-places").innerHTML = names.map(function (n) { return '<option value="' + esc(n) + '">'; }).join("");
+  }
+  function focusStreet(s) {
+    state.pinStreet = s; renderCard();
+    var pts = []; s.lines.forEach(function (l) { pts = pts.concat(l); });
+    map.fitBounds(L.latLngBounds(pts), { padding: [60, 60], maxZoom: 18 });
+    styleStreet(s, true); setTimeout(function () { styleStreet(s, false); }, 2500);
+  }
+  function search(text) {
+    text = String(text || "").trim(); if (!text || !map) return;
+    var k = text.toLowerCase();
+    if (streetData) {
+      var hit = streetData.streets.filter(function (s) { return s.name.toLowerCase() === k; })[0] || streetData.streets.filter(function (s) { return s.name.toLowerCase().indexOf(k) === 0; })[0];
+      if (hit) return focusStreet(hit);
+    }
+    var r = FDA.geo.resolve(text);
+    if (r && r.barangay && FDA.hazard.get(r.barangay)) {
+      var landmark = FDA.geo.landmarks().filter(function (l) { return l.name === r.name; })[0];
+      select(r.barangay, !landmark);
+      if (landmark) { map.setView([r.lat, r.lng], 16); if (tempMarker) map.removeLayer(tempMarker); tempMarker = L.marker([r.lat, r.lng], { title: r.name }).addTo(map).bindPopup(esc(r.name)).openPopup(); }
+      return;
+    }
+    say("We could not find “" + text + "”. Try a barangay name, or open a barangay first to search its streets.", 5000);
+  }
+  $("#map-search").addEventListener("change", function () { search(this.value); });
+  $("#map-search").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); search(this.value); } });
+
+  /* ---------- Draw everything that depends on rain, hour or data ---------- */
+  function refreshAll() {
+    recompute(); drawBanner(); drawList();
+    if (map) { restyleAll(); drawRain(); drawLegend(); }
+    renderCard();
+  }
+
+  /* ---------- Start ---------- */
+  fillPlaces(); recompute(); drawBanner(); drawList(); drawLegend();
+  FDA.rain.load().then(refreshAll);
+
+  FDA.mapkit.create($("#map")).then(function (m) {
+    map = m; L = window.L;
+    polyGroup = L.geoJSON(FDA.hazard.geojson(), {
+      style: function (f) { return polyStyle(f.properties.name); },
+      onEachFeature: function (f, layer) {
+        var name = f.properties.name; polys[name] = layer;
+        layer.bindTooltip(name, { sticky: true, direction: "top" });
+        layer.on({
+          mouseover: function () { setHover(name); }, mouseout: function () { setHover(null); },
+          click: function (e) { L.DomEvent.stopPropagation(e); select(name); }
+        });
+      }
+    }).addTo(map);
+    map.fitBounds(polyGroup.getBounds());
+    map.on("click", function () { if (state.pinStreet) { state.pinStreet = null; renderCard(); } });
+    map.on("zoomend", function () { drawReports(); });
+    drawSpots(); drawReports(); drawRain(); drawLegend();
+
+    var hashB = /[#&]b=([^&]+)/.exec(location.hash), qB = FDA.ui.param("b");
+    var rep = wantReport && FDA.store.db().reports.filter(function (r) { return r.id === wantReport; })[0];
+    var start = qB || (hashB && decodeURIComponent(hashB[1])) || (rep && rep.barangay);
+    if (rep) { state.statuses[rep.status] = true; $$("#report-filters .chip").forEach(function (b) { b.setAttribute("aria-pressed", String(state.statuses[b.dataset.status])); }); if (Date.now() - rep.ts > 24 * 3600000) { state.windowH = 168; $("#map-time").value = "168"; } drawReports(); }
+    if (start && FDA.hazard.get(start)) select(start);
+    if (rep && wantMarker) { map.setView([rep.lat, rep.lng], 16); wantMarker.openPopup(); }
+    if (state.layers.evac) loadEvac();
+  }).catch(function (err) {
+    var f = $("#map-fallback"); f.hidden = false; f.textContent = err.message + " The lists on the left still work.";
+  });
 })();

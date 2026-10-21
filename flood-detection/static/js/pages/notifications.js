@@ -5,13 +5,13 @@
   var user = FDA.auth.current();
 
   var box = $(".notice-list"), filters = $$(".filter-chip");
-  var ICON = { route: ["alert", FDA.ui.icon["flood-warning"]], confirm: ["confirmed", $(".notice__icon--confirmed svg").innerHTML], comment: ["comment", FDA.ui.icon.comment], dup: ["duplicate", FDA.ui.icon.duplicate], schedule: ["schedule", FDA.ui.icon.schedule], clear: ["confirmed", $(".notice__icon--confirmed svg").innerHTML] };
-  var KINDS = ["all", "route", "schedule", "report"];
-  var LABEL = { route: "Route alert", schedule: "Travel schedule", report: "My report" };
+  var ICON = { route: ["alert", FDA.ui.icon["flood-warning"]], area: ["alert", FDA.ui.icon["possible-flood"]], confirm: ["confirmed", $(".notice__icon--confirmed svg").innerHTML], comment: ["comment", FDA.ui.icon.comment], dup: ["duplicate", FDA.ui.icon.duplicate], schedule: ["schedule", FDA.ui.icon.schedule], clear: ["confirmed", $(".notice__icon--confirmed svg").innerHTML] };
+  var KINDS = ["all", "route", "area", "schedule", "report"];
+  var LABEL = { route: "Route alert", area: "Area alert", schedule: "Travel schedule", report: "My report" };
   var active = "all";
 
   function iconFor(n) {
-    var key = n.kind === "route" ? "route" : n.kind === "schedule" ? (/^clear/.test(n.key) || /^No recent/.test(n.title) ? "clear" : "schedule") : /^confirm/.test(n.key) ? "confirm" : /^comment/.test(n.key) ? "comment" : /^dup/.test(n.key) ? "dup" : "comment";
+    var key = n.kind === "route" ? "route" : n.kind === "area" ? "area" : n.kind === "schedule" ? (/^clear/.test(n.key) || /^No recent/.test(n.title) ? "clear" : "schedule") : /^confirm/.test(n.key) ? "confirm" : /^comment/.test(n.key) ? "comment" : /^dup/.test(n.key) ? "dup" : "comment";
     return ICON[key];
   }
 
@@ -27,7 +27,7 @@
     var all = FDA.notify.forUser(user.id);
     var counts = { all: all.length };
     KINDS.slice(1).forEach(function (k) { counts[k] = all.filter(function (n) { return n.kind === k; }).length; });
-    var names = { all: "All", route: "Route alerts", schedule: "Travel schedule", report: "My reports" };
+    var names = { all: "All", route: "Route alerts", area: "Area alerts", schedule: "Travel schedule", report: "My reports" };
     filters.forEach(function (b, i) { b.textContent = names[KINDS[i]] + " · " + counts[KINDS[i]]; b.setAttribute("aria-pressed", String(KINDS[i] === active)); });
 
     var rows = active === "all" ? all : all.filter(function (n) { return n.kind === active; });
@@ -53,7 +53,7 @@
   });
 
   /* Settings */
-  var map = { "set-route": "route", "set-schedule": "schedule", "set-reports": "reports", "set-clear": "clear" };
+  var map = { "set-route": "route", "set-area": "area", "set-schedule": "schedule", "set-reports": "reports", "set-clear": "clear" };
   var settings = FDA.notify.settings(user.id);
   $$(".settings-list .switch").forEach(function (sw) {
     var key = map[sw.getAttribute("aria-labelledby")];

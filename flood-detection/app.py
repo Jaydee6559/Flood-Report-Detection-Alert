@@ -3,7 +3,9 @@
 Run:   pip install -r requirements.txt
        flask --app app run --debug        (then open http://127.0.0.1:5000)
 """
-from flask import Flask, render_template
+import os
+
+from flask import Flask, abort, render_template
 
 app = Flask(__name__)  # templates/ and static/ sit next to this file
 
@@ -44,6 +46,11 @@ def map_view():
     return render_template("map.html")
 
 
+@app.route("/areas")
+def areas():
+    return render_template("areas.html")
+
+
 # ---- Signed-in pages --------------------------------------------------------
 @app.route("/routes")
 def routes():
@@ -75,6 +82,16 @@ def login():
 @app.route("/auth/register")
 def register():
     return render_template("auth/register.html")
+
+
+# ---- The pages link to each other with ".html" names (so they also open from disk) ----
+# Serve those links too: /map.html, /areas.html, /auth/login.html ...
+@app.route("/<path:page>.html")
+def html_page(page):
+    path = os.path.normpath(os.path.join(app.root_path, "templates", page + ".html"))
+    if not path.startswith(os.path.join(app.root_path, "templates") + os.sep) or not os.path.isfile(path):
+        abort(404)
+    return render_template(page + ".html")
 
 
 if __name__ == "__main__":

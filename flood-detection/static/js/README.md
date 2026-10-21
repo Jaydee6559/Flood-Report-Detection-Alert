@@ -106,11 +106,24 @@ PAGASA's levels (yellow 7.5, orange 15, red 30 mm/h) and is labelled as an
 estimate, **not** an official PAGASA advisory. If the API cannot be reached the
 page keeps its sample data and says so.
 
+## Flood map, areas and the agent rules
+
+| File | What it does |
+| --- | --- |
+| `core/hazard.js` | Barangay polygons, hazard level, point-in-polygon, recurring flood spots (the H and S inputs) |
+| `core/rain.js` | Rain now and +1..+3 h per district from Open-Meteo, PAGASA levels, demo storm (the R input) |
+| `core/areas.js` | Rule 2 area risk for all 142 barangays every 15 min, decision log, "Alert me" watch list |
+| `core/agent.js` | Rule 1 (`checkPhoto`, cut-offs 0.80 / 0.50 / 0.30) and Rule 2 (`areaRisk`) |
+| `core/mapkit.js`, `core/streets.js` | Leaflet loader and street exposure from OpenStreetMap |
+| `pages/map.js`, `pages/areas.js` | Flood map and Flood areas pages |
+
 ## Known limits of this prototype
 
 - Data lives in one browser; other people and devices cannot see it.
 - Pre-departure checks and reminders only run while a page is open.
-- The map is the design's illustration, so markers are relative, not geographic.
+- The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).
+- Hazard levels and recurring flood spots are SAMPLE data until UP NOAH and real sightings are added (`static/data/`, rebuild with `scripts/build_barangays.py`).
+- Three barangays (Capri, Greater Lagro, North Fairview) have approximate squares instead of real boundaries.
 - Photos are shrunk to ~800 px and stored in the browser (about 5 MB total).
 - Moderators reach the moderation page from the header on desktop; there is no phone link to it yet.
 - Password reset, real email/SMS needs the backend. The location list covers Quezon City only.

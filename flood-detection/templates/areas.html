@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flood areas · Flood Detection &amp; Alert</title>
+  <link rel="icon" href="../static/img/favicon.svg" type="image/svg+xml">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../static/css/base/variables.css">
+  <link rel="stylesheet" href="../static/css/base/reset.css">
+  <link rel="stylesheet" href="../static/css/base/typography.css">
+  <link rel="stylesheet" href="../static/css/components/icons.css">
+  <link rel="stylesheet" href="../static/css/components/brand.css">
+  <link rel="stylesheet" href="../static/css/components/buttons.css">
+  <link rel="stylesheet" href="../static/css/components/forms.css">
+  <link rel="stylesheet" href="../static/css/components/cards.css">
+  <link rel="stylesheet" href="../static/css/components/badges.css">
+  <link rel="stylesheet" href="../static/css/components/hazard.css">
+  <link rel="stylesheet" href="../static/css/components/switch.css">
+  <link rel="stylesheet" href="../static/css/components/page-header.css">
+  <link rel="stylesheet" href="../static/css/layout/container.css">
+  <link rel="stylesheet" href="../static/css/layout/header.css">
+  <link rel="stylesheet" href="../static/css/layout/bottom-nav.css">
+  <link rel="stylesheet" href="../static/css/layout/footer.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="../static/css/pages/areas.css">
+</head>
+<body class="areas-page">
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="../static/img/logo.svg" alt="">
+        <span class="brand__name">Flood Detection &amp; Alert</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Main">
+        <a class="site-nav__link" href="map.html">Flood map</a>
+        <a class="site-nav__link" href="weather.html">Weather report</a>
+        <a class="site-nav__link" href="reports.html">Reports</a>
+        <a class="site-nav__link site-nav__link--active" href="areas.html" aria-current="page">Flood areas</a>
+        <a class="site-nav__link" href="routes.html">My routes</a>
+      </nav>
+
+      <div class="site-header__actions">
+          <a class="icon-button" href="notifications.html" aria-label="Notifications, 3 unread">
+            <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+            <span class="icon-button__count">3</span>
+          </a>
+        <a class="btn btn--primary site-header__report" href="report.html">Report a flood</a>
+        <a class="avatar" href="auth/login.html" title="Sign out" aria-label="Sign out">MS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container areas">
+    <!-- Index: all barangays -->
+    <section id="area-index">
+      <div class="areas__head">
+        <div>
+          <p class="eyebrow">Quezon City</p>
+          <h1>Flood areas</h1>
+          <p class="text-muted">All 142 barangays with their flood hazard, rain now and the agent's area risk. Hazard levels are <strong>sample data</strong> until the UP NOAH layer is added.</p>
+        </div>
+      </div>
+      <div class="areas__filters">
+        <label class="sr-only" for="area-search">Search barangay</label>
+        <input class="form-input" id="area-search" type="search" list="area-names" placeholder="Search a barangay" autocomplete="off">
+        <datalist id="area-names"></datalist>
+        <label class="sr-only" for="area-district">District</label>
+        <select class="form-select" id="area-district"><option value="">All districts</option></select>
+        <label class="sr-only" for="area-sort">Sort</label>
+        <select class="form-select" id="area-sort">
+          <option value="risk">Highest risk first</option>
+          <option value="hazard">Highest hazard first</option>
+          <option value="name">A to Z</option>
+        </select>
+      </div>
+      <p class="text-muted text-sm" id="area-count" aria-live="polite"></p>
+      <ul class="area-grid" id="area-grid"></ul>
+    </section>
+
+    <!-- Profile of one barangay -->
+    <section id="area-profile" hidden>
+      <p><a href="areas.html" class="back-link" id="area-back">&larr; All flood areas</a></p>
+      <div class="areas__head">
+        <div>
+          <p class="eyebrow" id="p-eyebrow"></p>
+          <h1 id="p-title"></h1>
+        </div>
+        <div class="areas__actions">
+          <a class="btn btn--outline" id="p-map" href="map.html">On map</a>
+          <a class="btn btn--outline" id="p-report" href="report.html">Report a flood</a>
+          <button class="btn btn--primary" id="p-watch" type="button" aria-pressed="false">Alert me</button>
+        </div>
+      </div>
+
+      <div class="areas__cards">
+        <article class="card"><h2 class="card__title">Flood hazard</h2><p id="p-hazard"></p><p class="text-muted text-sm" id="p-hazard-note"></p></article>
+        <article class="card"><h2 class="card__title">Rain now</h2><p id="p-rain"></p><p class="text-muted text-sm" id="p-rain-note"></p></article>
+        <article class="card"><h2 class="card__title">Area risk</h2><p id="p-risk"></p><p class="text-muted text-sm" id="p-risk-note"></p></article>
+      </div>
+
+      <div class="areas__two">
+        <article class="card">
+          <h2 class="card__title" id="p-why-title">Why the risk is</h2>
+          <ul class="why-list" id="p-why"></ul>
+          <div class="seg" role="group" aria-label="Hour" id="p-hours"></div>
+        </article>
+        <article class="card areas__map-card"><div class="areas__minimap" id="p-minimap" role="img" aria-label="Map of this barangay"></div></article>
+      </div>
+
+      <article class="card">
+        <h2 class="card__title">Recurring flood spots</h2>
+        <div class="table-wrap"><table class="table" id="p-spots">
+          <thead><tr><th>Corner</th><th>Times</th><th>Worst depth</th><th>Who can pass</th><th>Last seen</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <p class="text-muted text-sm" id="p-spots-empty" hidden>No recurring spots logged here yet.</p>
+      </article>
+
+      <article class="card">
+        <h2 class="card__title">Find another barangay</h2>
+        <input class="form-input" id="p-find" type="search" list="area-names" placeholder="Type a barangay name" autocomplete="off">
+      </article>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main">
+    <a class="bottom-nav__item" href="map.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+      Map
+    </a>
+    <a class="bottom-nav__item" href="weather.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>
+      Weather
+    </a>
+    <a class="bottom-nav__item" href="reports.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
+      Reports
+    </a>
+    <a class="bottom-nav__item" href="report.html">
+      <span class="bottom-nav__report-circle">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>
+      </span>
+      Report
+    </a>
+    <a class="bottom-nav__item bottom-nav__item--active" aria-current="page" href="areas.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0"/><path d="M3 14c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0"/><path d="M3 19c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0"/></svg>
+      Areas
+    </a>
+    <a class="bottom-nav__item" href="routes.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
+      Routes
+    </a>
+    <a class="bottom-nav__item" href="auth/login.html">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/></svg>
+      Login
+    </a>
+  </nav>
+
+  <script src="../static/js/app.js"></script>
+</body>
+</html>

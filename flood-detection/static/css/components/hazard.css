@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Hazard, rain level and area-risk labels (flood map, flood areas, report, result, weather pages)
+   Always an icon or words with the colour, never colour alone.
+   ========================================================================== */
+
+:root {
+  --hz-high: #d64532; --hz-medium: #ef9a3c; --hz-low: #f2cf5b; --hz-none: #e8eef3;
+  --lvl-yellow: #e0b400; --lvl-orange: #d8730f; --lvl-red: #c0281c;
+}
+
+.badge--hz-high    { background: var(--color-danger-light);  color: var(--color-danger-text); }
+.badge--hz-medium  { background: var(--color-advisory-light); color: var(--color-advisory-text); }
+.badge--hz-low     { background: #fdf6d6; color: #7a6000; }
+.badge--hz-none    { background: var(--color-neutral-light); color: var(--color-neutral-text); }
+
+.badge--lvl-yellow { background: #fff6c9; color: #6e5700; }
+.badge--lvl-orange { background: var(--lvl-orange); color: #fff; }
+.badge--lvl-red    { background: var(--lvl-red); color: #fff; }
+.badge--lvl-none   { background: var(--color-neutral-light); color: var(--color-neutral-text); }
+
+.badge--risk-high     { background: var(--color-danger-light);   color: var(--color-danger-text); }
+.badge--risk-elevated { background: var(--color-advisory-light); color: var(--color-advisory-text); }
+.badge--risk-low      { background: var(--color-success-light);  color: var(--color-success); }
+
+.text-risk-high     { color: var(--color-danger-text); font-weight: 700; }
+.text-risk-elevated { color: var(--color-advisory-text); font-weight: 700; }
+.text-risk-low      { color: var(--color-success); font-weight: 700; }
+
+/* Left colour bar on list rows */
+.risk-bar { display: inline-block; width: 4px; align-self: stretch; border-radius: 3px; background: var(--color-border-strong); flex: none; }
+.risk-bar--high { background: var(--hz-high); }
+.risk-bar--elevated { background: var(--hz-medium); }
+.risk-bar--low { background: #9fd0ae; }
+
+/* "Why the risk is ..." list (Rule 2 reasons) */
+.why-list { list-style: none; margin: 0; padding: 0; }
+.why-list li { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--color-border); }
+.why-list li:first-child { border-top: 0; }
+.why-list__title { font-weight: 600; color: var(--color-navy); font-size: var(--font-size-md); }
+.why-list__detail { display: block; font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px; }
+.why-list__tag { font-size: var(--font-size-xs); font-weight: 700; color: var(--color-text-faint); white-space: nowrap; }
+.why-list li.is-on .why-list__tag { color: var(--color-danger-text); }
+.why-list li.is-off .why-list__title { color: var(--color-text-muted); font-weight: 500; }
+
+/* Hint under the pin on the report form */
+.hazard-hint { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: var(--font-size-sm); background: var(--color-neutral-light); color: var(--color-neutral-text); }
+.hazard-hint--high { background: var(--color-danger-light); color: var(--color-danger-text); }
+.hazard-hint--medium { background: var(--color-advisory-light); color: var(--color-advisory-text); }
+.hazard-hint .icon { flex: none; margin-top: 1px; }
+
+/* Leaflet pins used on several pages */
+.fda-pin { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35); color: #fff; font: 700 11px/1 var(--font-sans); }
+.fda-pin--flood-warning { background: #b8291f; }
+.fda-pin--possible-flood { background: #c2570c; }
+.fda-pin--unclear-photo { background: #5f7385; }
+.fda-pin--no-flood { background: #1d6b3a; }
+.fda-pin--cluster { width: 34px; height: 34px; font-size: 13px; }
+.fda-spot { position: relative; display: grid; place-items: center; width: 28px; height: 28px; background: #0b5d98; border: 2px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.fda-spot span { transform: rotate(45deg); color: #fff; font: 700 11px/1 var(--font-sans); }
+.fda-label { background: #fff; border: 2px solid var(--color-border-strong); border-radius: 999px; padding: 2px 8px; font: 700 11px/1.4 var(--font-sans); color: var(--color-navy); white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.fda-label--yellow { border-color: var(--lvl-yellow); }
+.fda-label--orange { border-color: var(--lvl-orange); color: #8a3f06; }
+.fda-label--red { border-color: var(--lvl-red); color: var(--lvl-red); }
+.fda-evac { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 4px; border: 2px solid #fff; background: #1d6b3a; color: #fff; font: 700 11px/1 var(--font-sans); box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.leaflet-container { font-family: var(--font-sans); background: #e9eef2; }

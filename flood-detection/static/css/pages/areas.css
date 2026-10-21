@@ -1,0 +1,44 @@
+/* Flood areas: index of all barangays and a profile page for one barangay */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.areas { padding-top: var(--space-6); padding-bottom: calc(var(--space-8) + var(--bottom-nav-height, 0px)); }
+.areas__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+.areas__head h1 { margin: 2px 0 6px; }
+.areas__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.areas__filters { display: grid; grid-template-columns: minmax(0, 1fr) 170px 190px; gap: 10px; margin-bottom: var(--space-3); }
+.areas__cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4); }
+.areas__cards .card p:first-of-type { font-size: var(--font-size-lg); font-weight: 800; color: var(--color-navy); margin: 4px 0; }
+.areas__two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
+.areas__map-card { padding: 0; overflow: hidden; min-height: 280px; }
+.areas__minimap { width: 100%; height: 100%; min-height: 280px; background: #e9eef2; }
+.card + .card { margin-top: 0; }
+.areas > section > .card { margin-bottom: var(--space-4); }
+
+.area-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.area-tile { display: flex; gap: 10px; width: 100%; padding: 10px 12px 10px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); text-align: left; text-decoration: none; color: inherit; }
+.area-tile:hover { border-color: var(--color-navy); background: var(--color-primary-lighter); }
+.area-tile strong { display: block; color: var(--color-navy); }
+.area-tile small { display: block; color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: 2px; }
+.area-empty { padding: 24px; text-align: center; color: var(--color-text-muted); }
+
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+.table th, .table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+.table th { font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
+
+.seg { display: inline-flex; gap: 6px; margin-top: var(--space-3); }
+.seg button { min-height: 30px; padding: 0 12px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface); font-weight: 700; font-size: var(--font-size-xs); color: var(--color-navy); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--color-navy); border-color: var(--color-navy); color: #fff; }
+
+@media (max-width: 899px) {
+  .areas__filters { grid-template-columns: 1fr 1fr; }
+  .areas__filters input { grid-column: 1 / -1; }
+  .areas__cards, .areas__two { grid-template-columns: 1fr; }
+}
+
+.areas .card { padding: var(--space-5); }
+.areas .areas__map-card { padding: 0; }
+.areas .card__title { margin-bottom: 4px; }
+.areas .card p { margin: 4px 0 0; }
+.areas .why-list .icon { width: 18px; height: 18px; }
+.areas .why-list li.is-on .icon { color: var(--color-danger-text); }
+.areas .back-link { display: inline-block; margin-bottom: 8px; }

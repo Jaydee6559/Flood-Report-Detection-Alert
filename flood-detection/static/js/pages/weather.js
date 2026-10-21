@@ -220,6 +220,27 @@
     }).catch(function (err) { FDA.ui.toast(err.message, "error"); }).then(function () { b.disabled = false; });
   });
 
+  /* ---------- Rain by district (the R input of the agent) ---------- */
+  (function districtCard() {
+    var anchor = $(".forecast-card"); if (!anchor) return;
+    var card = document.createElement("section");
+    card.className = "card card--padded"; card.setAttribute("aria-labelledby", "district-rain-title"); card.style.marginTop = "16px";
+    anchor.insertAdjacentElement("beforebegin", card);
+    function draw() {
+      var LV = { yellow: "Yellow", orange: "Orange", red: "Red" }, by = FDA.areas.compute(0).byName, snap = FDA.rain.get();
+      var rows = FDA.geo.districts("Quezon City").map(function (d) {
+        var mm = FDA.rain.mm(d.id, 0), lvl = FDA.rain.level(d.id, 0), hi = 0, el = 0;
+        Object.keys(by).forEach(function (n) { if (by[n].district === d.id) { if (by[n].level === "high") hi++; else if (by[n].level === "elevated") el++; } });
+        return "<tr><td>District " + d.id + "</td><td>" + mm + " mm/h</td><td>" + (lvl ? LV[lvl] : "None") + "</td><td>" + hi + " high · " + el + " elevated</td></tr>";
+      }).join("");
+      card.innerHTML = '<h2 class="card__title" id="district-rain-title">Rain by district now</h2>' +
+        '<div class="table-wrap" style="overflow-x:auto"><table class="table" style="width:100%;border-collapse:collapse"><thead><tr><th align="left">District</th><th align="left">Rain</th><th align="left">PAGASA level</th><th align="left">Barangays at risk</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+        '<p class="text-muted text-sm" style="margin-top:8px">' + ({ live: "Live from Open-Meteo.", simulated: "Demo storm (simulated).", sample: "Sample rain: live data could not be loaded." }[snap.source]) +
+        ' Levels are an estimate using PAGASA\'s thresholds, not an official warning. <a class="link" href="map.html">Open the flood map</a></p>';
+    }
+    draw(); window.addEventListener("fda:rain", draw); FDA.rain.load();
+  })();
+
   load();
   setInterval(load, 30 * 60000); // forecast refreshes every 30 minutes while the page is open
 })();
