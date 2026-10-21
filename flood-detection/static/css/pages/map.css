@@ -121,7 +121,8 @@
   .map-sidebar { position: fixed; z-index: 700; left: 0; right: 0; top: 56px; bottom: var(--bottom-nav-height); transform: translateX(-102%); transition: transform .2s ease; padding: var(--space-4); border-right: 0; }
   .map-sidebar.is-open { transform: none; }
   .map-sidebar-toggle { display: inline-flex; }
-  .map-card { top: auto; right: 8px; left: 8px; bottom: 8px; width: auto; max-width: none; border-radius: var(--radius-lg) var(--radius-lg) var(--radius-md) var(--radius-md); max-height: 55%; overflow-y: auto; }
+  .map-page .leaflet-control-zoom { display: none; } /* pinch to zoom; frees the top-left corner for "Layers & areas" */
+  .map-card { top: auto; right: 8px; left: 8px; bottom: 24px; /* sits above the map credit */ width: auto; max-width: none; border-radius: var(--radius-lg) var(--radius-lg) var(--radius-md) var(--radius-md); max-height: 55%; overflow-y: auto; }
   .map-legend { display: none; }
   .rain-slider { top: 12px; bottom: auto; left: auto; right: 12px; transform: none; padding: 4px 8px; }
   .rain-slider__label, .rain-slider__note { display: none; }

@@ -112,7 +112,8 @@
   border-radius: var(--radius-md);
   background: #eef1f4;
 }
-.route-map svg { width: 100%; height: 100%; }
+/* Only the illustration SVG fills the box. Without ">" this also stretched Leaflet's own SVGs (the flag in the map credit, route lines). */
+.route-map > svg { width: 100%; height: 100%; }
 
 /* Reports near the route */
 .near-head {

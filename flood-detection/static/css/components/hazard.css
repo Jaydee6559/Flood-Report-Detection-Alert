@@ -55,11 +55,19 @@
 .fda-pin--unclear-photo { background: #5f7385; }
 .fda-pin--no-flood { background: #1d6b3a; }
 .fda-pin--cluster { width: 34px; height: 34px; font-size: 13px; }
-.fda-spot { position: relative; display: grid; place-items: center; width: 28px; height: 28px; background: #0b5d98; border: 2px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 1px 4px rgba(0,0,0,.35); }
-.fda-spot span { transform: rotate(45deg); color: #fff; font: 700 11px/1 var(--font-sans); }
+/* Leaflet moves markers with an inline transform on the outer element, so the teardrop rotation lives on an inner element */
+.fda-spot { display: grid; place-items: start center; background: none; border: 0; }
+.fda-spot__drop { display: grid; place-items: center; width: 26px; height: 26px; margin-top: 1px; background: #0b5d98; border: 2px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.fda-spot__drop span { transform: rotate(45deg); color: #fff; font: 700 11px/1 var(--font-sans); }
 .fda-label { background: #fff; border: 2px solid var(--color-border-strong); border-radius: 999px; padding: 2px 8px; font: 700 11px/1.4 var(--font-sans); color: var(--color-navy); white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
 .fda-label--yellow { border-color: var(--lvl-yellow); }
 .fda-label--orange { border-color: var(--lvl-orange); color: #8a3f06; }
 .fda-label--red { border-color: var(--lvl-red); color: var(--lvl-red); }
 .fda-evac { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 4px; border: 2px solid #fff; background: #1d6b3a; color: #fff; font: 700 11px/1 var(--font-sans); box-shadow: 0 1px 3px rgba(0,0,0,.35); }
 .leaflet-container { font-family: var(--font-sans); background: #e9eef2; }
+
+/* Map credit: required by OpenStreetMap, kept small and on one line so it does not cover the map */
+.leaflet-container .leaflet-control-attribution { margin: 0; padding: 1px 6px; border-radius: 6px 0 0 0; background: rgba(255,255,255,.72); font: 10px/1.5 var(--font-sans); color: var(--color-text-muted); white-space: nowrap; }
+.leaflet-container .leaflet-control-attribution a { color: inherit; text-decoration: underline; }
+/* Safety net: page CSS like "x svg { width: 100% }" must never stretch Leaflet's attribution flag */
+.leaflet-control-attribution svg { width: 12px !important; height: 8px !important; display: inline !important; }

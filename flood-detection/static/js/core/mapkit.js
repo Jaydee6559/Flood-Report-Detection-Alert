@@ -38,8 +38,11 @@
       options = options || {};
       return ready().then(function (L) {
         var map = L.map(el, { preferCanvas: true, zoomControl: !options.minimal, attributionControl: true, minZoom: 11, maxZoom: 19, zoomSnap: 0.5, maxBounds: [[14.45, 120.85], [14.9, 121.25]] });
+        // OSM requires a visible credit, so it stays, but kept to one short line so it never covers the map.
+        // The "Leaflet" prefix is optional and removed; "sample data" is already shown by the SAMPLE DATA badge.
+        map.attributionControl.setPrefix(false);
         L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19, attribution: "© <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">OpenStreetMap</a> contributors · Hazard levels: sample data"
+          maxZoom: 19, attribution: "© <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">OpenStreetMap</a>"
         }).addTo(map);
         if (options.center) map.setView(options.center, options.zoom || 14); else map.fitBounds(QC);
         return map;
@@ -49,7 +52,7 @@
       return L.divIcon({ className: "fda-pin fda-pin--" + status, html: "<span>" + (label || "") + "</span>", iconSize: [26, 26], iconAnchor: [13, 13] });
     },
     dropIcon: function (L, n) {
-      return L.divIcon({ className: "fda-spot", html: "<span>" + n + "</span>", iconSize: [28, 34], iconAnchor: [14, 32] });
+      return L.divIcon({ className: "fda-spot", html: '<span class="fda-spot__drop"><span>' + n + "</span></span>", iconSize: [28, 34], iconAnchor: [14, 32] });
     }
   };
 })();

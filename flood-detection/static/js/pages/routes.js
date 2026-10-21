@@ -34,6 +34,40 @@
     }).join("") : '<li class="card card--soft card--padded text-small">You have no saved routes yet. Add one below to get flood alerts.</li>';
   }
 
+  /* ---------- Real map of the route (Leaflet): start, end, hazard zones and the reports near it ---------- */
+  var rmaps = [];
+  $$(".route-map").forEach(function (el) {
+    el.innerHTML = '<div class="route-map__canvas" role="img" aria-label="Map of the route with nearby flood reports"></div>';
+    var rec = { el: el.firstChild, map: null, layer: null, pending: null };
+    rmaps.push(rec);
+    FDA.mapkit.create(rec.el).then(function (m) {
+      var L = window.L; rec.map = m; rec.layer = L.layerGroup().addTo(m);
+      L.geoJSON(FDA.hazard.geojson(), { interactive: false, style: function (f) { var h = f.properties.hazard; return { color: "#fff", weight: 0.5, fillColor: FDA.mapkit.HAZARD[h], fillOpacity: h === "none" ? 0 : 0.28 }; } }).addTo(m);
+      if (rec.pending) paintMap(rec, rec.pending.route, rec.pending.res);
+    }).catch(function () { rec.el.innerHTML = '<p class="text-small text-muted" style="padding:16px">The map could not be loaded. The list below still works.</p>'; });
+  });
+  function paintMap(rec, route, res) {
+    var L = window.L, a = FDA.geo.resolve(route.start), b = FDA.geo.resolve(route.end), pts = [];
+    rec.layer.clearLayers();
+    if (a && b) { L.polyline([[a.lat, a.lng], [b.lat, b.lng]], { color: "#0b5d98", weight: 5, opacity: 0.85, dashArray: "8 8" }).addTo(rec.layer); }
+    [[a, "Start: " + route.start, "A"], [b, "Destination: " + route.end, "B"]].forEach(function (x) {
+      if (!x[0]) return; pts.push([x[0].lat, x[0].lng]);
+      L.marker([x[0].lat, x[0].lng], { title: x[1], icon: L.divIcon({ className: "fda-pin fda-pin--route", html: "<span>" + x[2] + "</span>", iconSize: [26, 26], iconAnchor: [13, 13] }) }).addTo(rec.layer);
+    });
+    res.items.forEach(function (i) {
+      var r = i.report; if (r.lat == null) return; pts.push([r.lat, r.lng]);
+      L.marker([r.lat, r.lng], { icon: FDA.mapkit.statusIcon(L, r.status, ""), opacity: i.recent ? 1 : 0.55, title: "#" + r.id + " " + FDA.agent.label(r.status) })
+        .bindPopup("<strong>#" + r.id + " " + esc(FDA.agent.label(r.status)) + "</strong><br>" + esc(r.street) + "<br>" + i.where + " · " + FDA.ui.timeAgo(r.ts) + '<br><a href="report-details.html?id=' + r.id + '">Open report</a>').addTo(rec.layer);
+    });
+    rec.map.invalidateSize();
+    if (pts.length) rec.map.fitBounds(pts, { padding: [40, 40], maxZoom: 16 });
+  }
+  function drawMaps(route) {
+    var res = check(route);
+    rmaps.forEach(function (rec) { if (rec.map) paintMap(rec, route, res); else rec.pending = { route: route, res: res }; });
+  }
+  window.addEventListener("resize", function () { rmaps.forEach(function (r) { if (r.map) r.map.invalidateSize(); }); });
+
   function drawDetail() {
     var route = byId(selectedId);
     detail.hidden = !route;
@@ -65,6 +99,7 @@
         '<span class="near-item__street">' + esc(i.report.street) + '</span></span><span class="near-item__meta">' + i.where + " · " + FDA.ui.timeAgo(i.report.ts) + (i.recent ? "" : " · may be outdated") + "</span></a></li>";
     }).join("") : '<li class="text-small text-muted">No reports near this route.</li>';
 
+    drawMaps(route);
     FDA.ui.bindSwitchOnce($(".alert-toggle .switch"), route.alert, function (v) { route.alert = v; FDA.store.save(); FDA.ui.toast(v ? "Route alerts on." : "Route alerts off."); drawEditor(); });
   }
 
