@@ -15,6 +15,9 @@
     if (note) note.textContent = "· demo data";
   }
 
+  /* Quezon City weather card */
+  FDA.weather.mount($("#wx-card"));
+
   /* Saved-route card */
   var card = $(".route-card");
   if (!card) return;

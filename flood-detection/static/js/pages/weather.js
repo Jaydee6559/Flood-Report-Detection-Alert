@@ -199,6 +199,9 @@
     });
   }
 
+  /* ---------- Quezon City weather card (core/weather.js) ---------- */
+  FDA.weather.mount($("#wx-card"));
+
   /* ---------- Load ---------- */
   function load() {
     var a = current();

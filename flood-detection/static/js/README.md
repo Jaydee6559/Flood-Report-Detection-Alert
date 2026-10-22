@@ -112,6 +112,7 @@ page keeps its sample data and says so.
 | --- | --- |
 | `core/hazard.js` | Barangay polygons, hazard level, point-in-polygon, recurring flood spots (the H and S inputs) |
 | `core/rain.js` | Rain now and +1..+3 h per district from Open-Meteo, PAGASA levels, demo storm (the R input) |
+| `core/weather.js` | Quezon City weather card and flood risk (low / moderate / high / severe from mm/h, 15 min cache); also drives the moderate-or-higher banner on the flood map |
 | `core/areas.js` | Rule 2 area risk for all 142 barangays every 15 min, decision log, "Alert me" watch list |
 | `core/agent.js` | Rule 1 (`checkPhoto`, cut-offs 0.80 / 0.50 / 0.30) and Rule 2 (`areaRisk`) |
 | `core/mapkit.js`, `core/streets.js` | Leaflet loader and street exposure from OpenStreetMap |

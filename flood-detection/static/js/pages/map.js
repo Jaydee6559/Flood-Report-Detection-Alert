@@ -346,6 +346,20 @@
   fillPlaces(); recompute(); drawBanner(); drawList(); drawLegend();
   FDA.rain.load().then(refreshAll);
 
+  /* ---------- Weather banner: shown when the QC flood risk is moderate or higher ---------- */
+  var wxBanner = $("#wx-banner");
+  function drawWeatherBanner() {
+    var w = FDA.weather.get();
+    if (!w || w.risk === "low") { wxBanner.hidden = true; return; }
+    wxBanner.hidden = false;
+    wxBanner.className = "wx-banner wx-banner--" + w.risk;
+    wxBanner.innerHTML = "<strong>" + FDA.ui.svg("possible-flood", "md") + FDA.weather.words[w.risk] + " flood risk · Quezon City</strong>" +
+      "<small>" + w.soonMm + " mm/h of rain in the next few hours · " + w.next24mm + " mm expected in 24 h" + (w.stale ? " · offline copy from " + FDA.ui.clock(w.at) : "") + "</small>" +
+      "<small>Estimate from forecast rain using PAGASA-style levels, not an official warning.</small>";
+  }
+  window.addEventListener("fda:weather", drawWeatherBanner);
+  FDA.weather.load();
+
   FDA.mapkit.create($("#map")).then(function (m) {
     map = m; L = window.L;
     polyGroup = L.geoJSON(FDA.hazard.geojson(), {

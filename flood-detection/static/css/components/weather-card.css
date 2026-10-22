@@ -1,0 +1,60 @@
+/* ==========================================================================
+   Quezon City weather card and flood-risk badge / map banner
+   (core/weather.js). Risk: low, moderate, high, severe.
+   ========================================================================== */
+
+.badge--wx-low      { background: var(--color-success-light); color: var(--color-success); }
+.badge--wx-moderate { background: #fff6c9; color: #6e5700; }
+.badge--wx-high     { background: var(--color-advisory-light); color: var(--color-advisory-text); }
+.badge--wx-severe   { background: var(--color-danger); color: #fff; }
+
+.wx-card {
+  max-width: 480px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  font-size: var(--font-size-sm);
+}
+.wx-card--moderate { border-color: #ecd267; }
+.wx-card--high { border-color: var(--color-advisory-border); }
+.wx-card--severe { border-color: #eca59f; }
+
+.wx-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.wx-card__time { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.wx-card__main { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+.wx-card__icon { width: 40px; height: 40px; stroke-width: 1.5; color: var(--color-navy); flex: none; }
+.wx-card__temp { font-size: 36px; font-weight: 700; line-height: 1; color: var(--color-navy); }
+.wx-card__cond { display: grid; gap: 4px; justify-items: start; }
+.wx-card__cond strong { color: var(--color-navy); font-size: var(--font-size-md); }
+
+.wx-card__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin: var(--space-3) 0 0; }
+.wx-card__stats div { padding: 8px; border-radius: var(--radius-md); background: var(--color-surface-soft); }
+.wx-card__stats dt { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.wx-card__stats dd { margin: 2px 0 0; font-weight: 700; color: var(--color-navy); }
+
+.wx-card__peak { margin: var(--space-3) 0 0; }
+.wx-card__note { margin: var(--space-2) 0 0; font-size: var(--font-size-xs); color: var(--color-text-muted); }
+
+/* Loading and error states */
+.wx-card__state { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-4) 0 var(--space-2); color: var(--color-text-muted); }
+.wx-card__state--error { color: var(--color-danger-text); }
+.wx-card__spinner { width: 16px; height: 16px; border: 2px solid var(--color-border-strong); border-top-color: var(--color-navy); border-radius: 50%; animation: wx-spin .8s linear infinite; }
+@keyframes wx-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wx-card__spinner { animation: none; } }
+
+/* Banner on the flood map (shown when risk is moderate or higher) */
+.wx-banner { padding: 12px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); }
+.wx-banner[hidden] { display: none; }
+.wx-banner strong { display: flex; align-items: center; gap: 6px; font-size: var(--font-size-md); color: var(--color-navy); }
+.wx-banner small { display: block; margin-top: 4px; color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.wx-banner--moderate { background: #fff9dc; border-color: #ecd267; }
+.wx-banner--high { background: var(--color-advisory-light); border-color: var(--color-advisory-border); }
+.wx-banner--high strong { color: var(--color-advisory-text); }
+.wx-banner--severe { background: var(--color-danger-light); border-color: #eca59f; }
+.wx-banner--severe strong { color: var(--color-danger-text); }
+
+@media (max-width: 480px) {
+  .wx-card { max-width: none; }
+  .wx-card__stats { grid-template-columns: 1fr 1fr; }
+}
