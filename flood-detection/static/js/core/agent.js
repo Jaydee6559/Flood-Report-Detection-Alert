@@ -33,7 +33,8 @@
     reportMin: 120,     // ... and this recent (minutes) count
     duplicateMeters: 200,
     duplicateMin: 30,
-    onRouteMeters: 300,
+    onRouteMeters: 50,       // a report this close to the route path is "On route"
+    sameStreetMeters: 150,   // ... or this close when it is on the same street in the same barangay
     nearRouteMeters: 800
   };
 
@@ -59,6 +60,21 @@
   }
 
   function ageMin(r, now) { return ((now || Date.now()) - r.ts) / 60000; }
+  /* Street names without the road type, so "Tandang Sora Ave." and "Tandang Sora Avenue" match */
+  function streetKey(name) {
+    return String(name || "").toLowerCase().replace(/ñ/g, "n").replace(/[^a-z0-9 ]/g, " ")
+      .replace(/\b(avenue|ave|street|st|road|rd)\b/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function barangayKey(name) { return String(name || "").split(",")[0].toLowerCase().replace(/ñ/g, "n").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
+  /** Meters from a point to a polyline of [lat, lng] points. */
+  function toPolyline(p, pts) {
+    var best = Infinity;
+    for (var i = 1; i < pts.length; i++) {
+      var d = FDA.geo.toSegment(p, { lat: pts[i - 1][0], lng: pts[i - 1][1] }, { lat: pts[i][0], lng: pts[i][1] });
+      if (d < best) best = d;
+    }
+    return best;
+  }
   function isRecent(r, now) { return ageMin(r, now) <= config.recentMin; }
   function clock(ts) { return new Date(ts).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" }); }
 
@@ -221,32 +237,53 @@
     areaLabel: function (level) { return { high: "High", elevated: "Elevated", low: "Low" }[level] || level; },
 
     /**
-     * Check a saved route against the reports.
-     * @returns {{warnings:Array, possible:Array, near:Array, level:"warning"|"possible"|"clear"}}
-     * Each item: {report, meters, where:"On route"|"Near route"}
+     * Check a saved route against the reports, using the street geometry stored on the route (see core/routing.js).
+     * @returns {{items:Array, warnings:Array, possible:Array, level:"warning"|"possible"|"clear"|"unplaced", resolved:boolean}}
+     * Each item: {report, meters, where:"On route"|"Near route"|"Barangay on route", recent, street, barangay, seg, approximate}
+     *   On route   within onRouteMeters of the path, or on the same street in the same barangay within sameStreetMeters
+     *   Near route within nearRouteMeters of the path
+     *   Barangay on route   the report's position is only approximate (the barangay centre) and the route passes through its barangay;
+     *                       shown in the list, never counted as a warning
+     * A route with no stored geometry is "unplaced": nothing is guessed from text.
      */
     routeCheck: function (route, reports, now) {
       now = now || Date.now();
-      var a = FDA.geo.resolve(route.start), b = FDA.geo.resolve(route.end);
+      var segs = route.segments || [], geo = route.geometry;
+      if (!geo || geo.length < 2 || !segs.length) return { items: [], warnings: [], possible: [], level: "unplaced", resolved: false };
+
       var items = [];
       reports.forEach(function (r) {
-        if (r.removed || r.dupOf) return;
-        var meters = null;
-        if (a && b) meters = FDA.geo.toSegment(r, a, b);
-        else if (a || b) meters = FDA.geo.distance(r, a || b);
-        var txt = (route.start + " " + route.end).toLowerCase();
-        var sameText = txt.indexOf(String(r.barangay).toLowerCase()) >= 0 || txt.indexOf(String(r.street).toLowerCase()) >= 0;
-        if (meters === null && !sameText) return;
-        if (meters === null) meters = config.onRouteMeters;
-        if (meters > config.nearRouteMeters) return;
-        items.push({ report: r, meters: meters, where: meters <= config.onRouteMeters ? "On route" : "Near route", recent: isRecent(r, now) });
+        if (r.removed || r.dupOf || r.lat == null) return;
+        var approximate = r.location === "approximate";
+        var brgy = barangayKey(r.barangay), st = streetKey(r.street);
+        var best = { meters: Infinity, seg: -1 }, sameStreet = { meters: Infinity, seg: -1 };
+        segs.forEach(function (sg, i) {
+          var d = toPolyline(r, sg.lines);
+          if (d < best.meters) best = { meters: d, seg: i };
+          if (st && streetKey(sg.street) === st && barangayKey(sg.barangay) === brgy && d < sameStreet.meters) sameStreet = { meters: d, seg: i };
+        });
+        var where = null, at = best;
+        if (approximate) {
+          // a barangay centre says nothing about the street, so only list it when the route passes through that barangay
+          var through = segs.map(function (sg, i) { return barangayKey(sg.barangay) === brgy ? i : -1; }).filter(function (i) { return i >= 0; })[0];
+          if (through === undefined) return;
+          where = "Barangay on route"; at = { meters: best.meters, seg: through };
+        } else if (sameStreet.meters <= config.sameStreetMeters) { where = "On route"; at = sameStreet; }   // name the street the report is actually on
+        else if (best.meters <= config.onRouteMeters) where = "On route";
+        else if (best.meters <= config.nearRouteMeters) where = "Near route";
+        else return;
+        var sg = segs[at.seg];
+        items.push({ report: r, meters: Math.round(at.meters), where: where, recent: isRecent(r, now), street: sg.street, barangay: sg.barangay, seg: at.seg, approximate: approximate });
       });
       items.sort(function (x, y) { return y.report.ts - x.report.ts; });
-      var live = items.filter(function (i) { return i.recent && i.report.status !== "no-flood" && i.report.status !== "unclear-photo"; });
+      var live = items.filter(function (i) { return i.recent && !i.approximate && i.report.status !== "no-flood" && i.report.status !== "unclear-photo"; });
       var warnings = live.filter(function (i) { return i.report.status === "flood-warning" && i.where === "On route"; });
       var possible = live.filter(function (i) { return i.report.status === "possible-flood" || (i.report.status === "flood-warning" && i.where === "Near route"); });
-      return { items: items, warnings: warnings, possible: possible, level: warnings.length ? "warning" : possible.length ? "possible" : "clear", resolved: !!(a || b) };
+      return { items: items, warnings: warnings, possible: possible, level: warnings.length ? "warning" : possible.length ? "possible" : "clear", resolved: true };
     },
+
+    /** True when two street names are the same road ("Tandang Sora Ave." = "Tandang Sora Avenue"). */
+    sameStreet: function (a, b) { var k = streetKey(a); return !!k && k === streetKey(b); },
 
     /** Flood-risk outlook for the weather page: forecast rain + recent warnings in the area. */
     outlook: function (opts) {

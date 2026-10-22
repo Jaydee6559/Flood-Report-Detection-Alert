@@ -45,6 +45,8 @@ The sample reports, Maria's home (Tandang Sora) and her three routes are all in 
 | `scheduler.js` | Pre-departure route checks. Runs while a page is open (a server would use APScheduler). |
 | `ui.js`        | Badges, toasts, dialogs, form errors. |
 | `layout.js`    | Runs on every page: sign-in guards, header avatar, bell count, bottom bar. |
+| `routing.js`   | Street routes for My routes: OSRM public demo (driving), segments by street and barangay, 24 h cache. Change `FDA.routing.CONFIG.OSRM_URL` to use another server. |
+| `routeDraft.js` | The map on My routes: shows the suggested street route and lets the person tap points to correct it, or draw freehand. Used by `pages/routes.js`. |
 
 ## Locations (`static/data/`)
 

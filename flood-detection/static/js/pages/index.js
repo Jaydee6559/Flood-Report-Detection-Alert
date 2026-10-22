@@ -42,9 +42,9 @@
     var route = routes[0], res = FDA.agent.routeCheck(route, db.reports);
     var top = res.warnings[0] || res.possible[0];
     title.textContent = "My route · " + route.name;
-    setStatus(top
-      ? res.warnings.length + " flood warning" + (res.warnings.length === 1 ? "" : "s") + " on your route · " + FDA.ui.timeAgo(top.report.ts)
-      : "No recent flood reports on your route");
+    setStatus(res.level === "unplaced" ? "Route not placed on the streets yet. Open it to find the route."
+      : top ? res.warnings.length + " flood warning" + (res.warnings.length === 1 ? "" : "s") + " on " + top.street + ", " + top.barangay + " · " + FDA.ui.timeAgo(top.report.ts)
+        : "No recent flood reports on your route");
     link.href = "routes.html?id=" + route.id;
   }
 })();

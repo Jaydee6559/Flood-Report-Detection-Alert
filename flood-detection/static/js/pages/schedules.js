@@ -130,10 +130,11 @@
     var html = on.map(function (s) {
       var r = routeOf(s), res = FDA.agent.routeCheck(r, db.reports), top = res.warnings[0] || res.possible[0];
       var dep = S.clockText(s.time);
+      if (res.level === "unplaced") return '<section class="card sched-alert sched-alert--clear">' + clearIcon + "<div><strong>Before your " + dep + " trip · " + esc(r.name) + "</strong><span>This route is not placed on the streets yet, so it cannot be checked. Open My routes to find it.</span></div></section>";
       if (top) {
         var word = res.warnings.length ? "flood warning" : "possible flood";
         return '<section class="card sched-alert sched-alert--warning"><div class="sched-alert__head">' + warnHead + " Before your " + dep + " trip · " + esc(r.name) + '<span class="sched-alert__time">Checked just now</span></div>' +
-          '<div class="sched-alert__body"><p>1 ' + word + " along your route: <strong>" + esc(top.report.street + ", " + top.report.barangay.replace(/, .*/, "")) + "</strong> — reported " + FDA.ui.timeAgo(top.report.ts) + ", " + top.report.still + ' still-flooded confirmation' + (top.report.still === 1 ? "" : "s") + '.</p>' +
+          '<div class="sched-alert__body"><p>1 ' + word + " along your route: <strong>" + esc((top.street || top.report.street) + ", " + (top.barangay || top.report.barangay.replace(/, .*/, ""))) + "</strong> — reported " + FDA.ui.timeAgo(top.report.ts) + ", " + top.report.still + ' still-flooded confirmation' + (top.report.still === 1 ? "" : "s") + '.</p>' +
           '<div class="sched-alert__actions"><a class="btn btn--primary btn--sm" href="routes.html?id=' + r.id + '">View on route</a><a class="btn btn--outline btn--sm" href="report-details.html?id=' + top.report.id + '">View report</a></div></div></section>';
       }
       return '<section class="card sched-alert sched-alert--clear">' + clearIcon + "<div><strong>Before your " + dep + " trip · " + esc(r.name) + "</strong><span>No recent flood reports along this route. Check local conditions before leaving.</span></div></section>";
@@ -155,7 +156,7 @@
     }
     if (!first) return;
     $(".trip-card__thumb").src = first.top.report.photo;
-    $(".trip-card__title").textContent = first.top.report.street + ", " + first.top.report.barangay.replace(/, .*/, "");
+    $(".trip-card__title").textContent = (first.top.street || first.top.report.street) + ", " + (first.top.barangay || first.top.report.barangay.replace(/, .*/, ""));
     $(".trip-card__meta").textContent = FDA.ui.timeAgo(first.top.report.ts) + " · " + first.top.where.toLowerCase();
     $(".trip-card .badge").outerHTML = FDA.ui.badge(first.top.report.status);
     $(".trip-actions a").href = "routes.html?id=" + first.r.id;

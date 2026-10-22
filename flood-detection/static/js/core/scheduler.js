@@ -35,13 +35,14 @@
       var route = routeOverride || db.routes.filter(function (r) { return r.id === s.routeId; })[0];
       if (!route) return null;
       var result = FDA.agent.routeCheck(route, db.reports.filter(function (r) { return !r.removed; }));
+      if (result.level === "unplaced") return result;   // a route that is not on the streets yet cannot be checked, so say nothing rather than "all clear"
       var dep = FDA.scheduler.clockText(s.time), chk = FDA.scheduler.checkTimeText(s);
       var top = result.warnings[0] || result.possible[0];
       if (top) {
         FDA.notify.push(s.userId, {
           kind: "schedule", key: "check:" + s.id + ":" + ymd(new Date()),
           title: (result.warnings.length ? "Flood warning" : "Possible flood") + " before your " + dep + " trip · " + route.name,
-          text: top.report.street + ", " + top.report.barangay + " · reported " + FDA.ui.timeAgo(top.report.ts),
+          text: (top.street || top.report.street) + ", " + (top.barangay || top.report.barangay) + " · reported " + FDA.ui.timeAgo(top.report.ts),
           href: "routes.html?id=" + route.id, cta: "View on route →"
         });
       } else {

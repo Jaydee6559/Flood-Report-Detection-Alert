@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 .venv/
 flood-detection/scripts/source/
+flood-detection/__pycache__/

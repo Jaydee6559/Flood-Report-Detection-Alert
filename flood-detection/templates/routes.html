@@ -139,36 +139,9 @@
             Saved routes are private to your account.
           </p>
 
-          <ul class="route-list">
-            <li>
-              <a class="route-card route-card--selected" href="routes.html" aria-current="true">
-                <span class="route-card__title">
-                  <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
-                  Home → School
-                </span>
-                <span class="route-card__places">Tandang Sora → UP Diliman</span>
-                <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>1 flood warning on route</span>
-              </a>
-              <button class="route-card__edit" type="button" aria-label="Edit Home → School">
-                <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
-              </button>
-            </li>
-            <li>
-              <a class="route-card" href="routes.html">
-                <span class="route-card__title">
-                  <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6"/></svg>
-                  School → Part-time job
-                </span>
-                <span class="route-card__places">UP Diliman → SM North EDSA</span>
-                <span class="badge badge--no-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.8 2.8 5.2-5.4"/></svg>No recent reports</span>
-              </a>
-              <button class="route-card__edit" type="button" aria-label="Edit School → Part-time job">
-                <svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
-              </button>
-            </li>
-          </ul>
+          <ul class="route-list"></ul>
 
-          <!-- Add a route (static form) -->
+          <!-- Add or edit a route: District, Barangay, Street pickers are built by pages/routes.js -->
           <form class="card card--soft add-route" aria-labelledby="add-route-title">
             <h2 class="heading-sm" id="add-route-title">Add a route</h2>
             <div class="add-route__fields">
@@ -176,26 +149,17 @@
                 <label class="form-label" for="route-name">Route name</label>
                 <input class="form-input" id="route-name" type="text" placeholder="e.g. Home → Work">
               </div>
-              <div>
-                <label class="form-label" for="route-start">Start point</label>
-                <div class="input-group">
-                  <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0C5.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></svg>
-                  <input class="form-input form-input--with-icon" id="route-start" type="text" placeholder="Barangay or landmark">
-                </div>
-              </div>
-              <div>
-                <label class="form-label" for="route-end">Destination</label>
-                <div class="input-group">
-                  <svg class="icon icon--md input-group__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0C5.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></svg>
-                  <input class="form-input form-input--with-icon" id="route-end" type="text" placeholder="Barangay or landmark">
-                </div>
-              </div>
+              <div data-point="start"></div>
+              <div data-point="end"></div>
               <button class="btn btn--primary btn--block" type="button">Save route</button>
+              <button class="btn btn--outline btn--block" type="button" data-act="cancel" hidden>Cancel</button>
+              <button class="btn btn--danger-outline btn--block" type="button" data-act="delete" hidden>Delete route</button>
             </div>
           </form>
         </aside>
 
-        <!-- Right: selected route -->
+        <!-- Right: route draft (map to adjust the route) + selected route. One grid cell, so the draft never pushes the detail under the list. -->
+        <div class="routes-main">
         <section class="route-detail" aria-labelledby="route-title">
           <div class="route-detail__head">
             <div>
@@ -231,26 +195,7 @@
               <h3 class="heading-sm">Reports near this route (2)</h3>
               <span class="text-xs text-muted">Faded: outside time filter</span>
             </div>
-            <ul class="near-list">
-              <li>
-                <a class="near-item" href="report-details.html">
-                  <span class="near-item__top">
-                    <span class="badge badge--flood-warning"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>Flood warning</span>
-                    <span class="near-item__street">Tandang Sora Ave.</span>
-                  </span>
-                  <span class="near-item__meta">On route · 6 min ago</span>
-                </a>
-              </li>
-              <li>
-                <a class="near-item" href="report-details.html">
-                  <span class="near-item__top">
-                    <span class="badge badge--possible-flood"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.6 4.6 6 7.9 6 11.1a6 6 0 0 1-12 0C6 10.9 8.4 7.6 12 3z"/></svg>Possible flood</span>
-                    <span class="near-item__street">Congressional Ave.</span>
-                  </span>
-                  <span class="near-item__meta">Near route · 31 min ago</span>
-                </a>
-              </li>
-            </ul>
+            <ul class="near-list"></ul>
           </div>
 
           <div class="card alert-toggle">
@@ -261,6 +206,7 @@
             <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="alert-label"></button>
           </div>
         </section>
+        </div>
       </div>
 
       <!-- ===== Phone: "New route" form ===== -->
@@ -282,21 +228,8 @@
         </div>
 
         <div class="card route-points">
-          <div class="route-point">
-            <span class="route-point__dot" aria-hidden="true"></span>
-            <div>
-              <p class="route-point__label">Start point</p>
-              <p class="route-point__value">Tandang Sora</p>
-            </div>
-          </div>
-          <span class="route-point__link" aria-hidden="true"></span>
-          <div class="route-point">
-            <span class="route-point__dot route-point__dot--end" aria-hidden="true"></span>
-            <div>
-              <p class="route-point__label">Destination</p>
-              <p class="route-point__value">UP Diliman</p>
-            </div>
-          </div>
+          <div data-point="m-start"></div>
+          <div data-point="m-end"></div>
         </div>
 
         <div class="route-map">

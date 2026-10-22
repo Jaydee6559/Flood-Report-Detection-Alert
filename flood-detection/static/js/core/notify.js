@@ -50,11 +50,11 @@
       FDA.store.db().routes.forEach(function (route) {
         if (!route.alert) return;
         var check = FDA.agent.routeCheck(route, [report]);
-        if (!check.items.length || check.level === "clear") return;
+        if (!check.items.length || check.level === "clear" || check.level === "unplaced") return;
         FDA.notify.push(route.userId, {
           kind: "route", key: "route:" + report.id + ":" + route.id,
           title: FDA.agent.label(report.status) + " on " + route.name,
-          text: report.street + ", " + report.barangay + " · reported just now",
+          text: (check.items[0].street || report.street) + ", " + (check.items[0].barangay || report.barangay) + " · reported just now",
           href: "routes.html?id=" + route.id, cta: "View route →"
         });
       });

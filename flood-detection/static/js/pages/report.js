@@ -193,13 +193,16 @@
 
     FDA.classifier.predict(state.img).then(function (out) {
       var db = FDA.store.db(), me = FDA.auth.current();
-      var p = state.gps || state.pin || FDA.geo.point(CITY, brgySel.value, street.value.trim());
+      var centre = FDA.hazard.get(brgySel.value);   // the barangay centre; a street name is never used to invent a position
+      var p = state.gps || state.pin || (centre ? { lat: centre.lat, lng: centre.lng } : FDA.geo.point(CITY, brgySel.value));
+      // with no GPS, no street found on the map and no moved pin, the report only knows its barangay
+      var approximate = !state.gps && (!state.pin || !centre || FDA.geo.distance(state.pin, { lat: centre.lat, lng: centre.lng }) < 2);
       var loc = { city: CITY, barangay: brgySel.value, street: street.value.trim(), lat: p.lat, lng: p.lng };
       var verdict = FDA.agent.checkPhoto({ prob: out.prob, loc: loc, reports: db.reports });
 
       var report = {
         id: FDA.store.nextId("nextReport"), ownerId: me ? me.id : FDA.store.deviceId(), ownerName: me ? me.name : "Guest",
-        ts: Date.now(), city: loc.city, barangay: loc.barangay, street: loc.street || "Street not given", lat: loc.lat, lng: loc.lng,
+        ts: Date.now(), city: loc.city, barangay: loc.barangay, street: loc.street || "Street not given", lat: loc.lat, lng: loc.lng, location: approximate ? "approximate" : "precise",
         desc: desc.value.trim(), photo: state.photo, prob: out.prob, depthCm: out.depthCm, model: out.source,
         status: verdict.status, note: verdict.note, recommendation: verdict.recommendation, evidence: verdict.evidence,
         dupCandidate: verdict.dupCandidate, startStatus: verdict.startStatus, reasons: verdict.reasons, inputs: verdict.inputs, dupOf: null, flags: 0, removed: false, review: null, still: 0, not: 0, lastConfirmTs: null
