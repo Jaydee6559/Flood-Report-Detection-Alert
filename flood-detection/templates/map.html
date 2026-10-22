@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="../static/css/components/badges.css">
   <link rel="stylesheet" href="../static/css/components/weather-card.css">
   <link rel="stylesheet" href="../static/css/components/hazard.css">
+  <link rel="stylesheet" href="../static/css/components/hazard-layer.css">
   <link rel="stylesheet" href="../static/css/components/switch.css">
   <link rel="stylesheet" href="../static/css/layout/container.css">
   <link rel="stylesheet" href="../static/css/layout/header.css">
@@ -98,7 +99,8 @@
       <section aria-labelledby="layers-title">
         <h2 class="eyebrow" id="layers-title">Map layers</h2>
         <ul class="layer-list" id="layer-list">
-          <li><span class="layer-list__swatch" style="--c: var(--hz-high)"></span><span class="layer-list__text"><strong id="l-hazard">Flood hazard zones</strong><small>Sample levels · UP NOAH 100-year layer later</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-hazard" data-layer="hazard"></button></li>
+          <li><span class="layer-list__swatch" style="--c: #d64532"></span><span class="layer-list__text"><strong id="l-qchazard">Flood hazard (100-year)</strong><small id="l-qchazard-sub">UP DREAM / Phil-LiDAR 1 · per barangay</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-qchazard" data-layer="qchazard"></button></li>
+          <li><span class="layer-list__swatch" style="--c: var(--hz-high)"></span><span class="layer-list__text"><strong id="l-hazard">Flood hazard zones <span class="badge badge--sample">SAMPLE</span></strong><small>Invented levels for the demo, not real data</small></span><button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="l-hazard" data-layer="hazard"></button></li>
           <li><span class="layer-list__swatch" style="--c: var(--lvl-orange)"></span><span class="layer-list__text"><strong id="l-rain">Rain now (area risk)</strong><small id="l-rain-sub">Open-Meteo · every 15 min</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-rain" data-layer="rain"></button></li>
           <li><span class="layer-list__swatch" style="--c: #0b5d98"></span><span class="layer-list__text"><strong id="l-streets">Streets</strong><small>OpenStreetMap · load a barangay first</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-streets" data-layer="streets"></button></li>
           <li><span class="layer-list__swatch" style="--c: #0b5d98"></span><span class="layer-list__text"><strong id="l-spots">Recurring flood spots</strong><small>QCDRRMO / MMDA log (sample)</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-spots" data-layer="spots"></button></li>
@@ -140,6 +142,7 @@
       <article class="map-card" id="map-card" hidden aria-live="polite"></article>
 
       <div class="map-legend" id="map-legend" aria-label="Legend"></div>
+      <div class="qc-legend" id="qc-legend" aria-label="Flood hazard legend"></div>
 
       <div class="rain-slider" id="rain-slider" role="group" aria-label="Rain forecast hour">
         <span class="rain-slider__label"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 7.5a3.5 3.5 0 0 1 .5 7z"/><path d="M9 18v2M15 18v2"/></svg>Rain</span>

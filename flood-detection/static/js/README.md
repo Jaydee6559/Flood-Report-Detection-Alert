@@ -118,6 +118,27 @@ page keeps its sample data and says so.
 | `core/mapkit.js`, `core/streets.js` | Leaflet loader and street exposure from OpenStreetMap |
 | `pages/map.js`, `pages/areas.js` | Flood map and Flood areas pages |
 
+## Flood hazard layer (real data)
+
+| File | What it does |
+| --- | --- |
+| `static/data/qc-flood-hazard.geojson` | Per barangay: `name`, `district`, `risk`, `source`, `low` / `moderate` / `high` (% of the covered area), `coverage` |
+| `static/data/qc-flood-hazard.js` | Generated script copy of the GeoJSON (a page opened from disk cannot read a .geojson file) |
+| `core/hazardLayer.js` | Loads the data, draws the Leaflet layer, popup, tooltip and legend; shows an error if the data fails to load |
+| `scripts/build_qc_flood_hazard.js` | Builds both data files from the LiPAD shapefile (Node, no packages) |
+
+Source: UP DREAM / Phil-LiDAR 1 (LiPAD), City of Quezon 100 Year Flood Hazard Map (2016), 481.2 mm scenario.
+`Var` 1 = Low, 2 = Medium (shown as Moderate), 3 = High; 0, -1 and -2 are never counted as hazard. Overlaps: highest class wins.
+`risk` is the highest class covering at least 20% of the barangay's covered area (`RISK_SHARE` in the script).
+`unknown` = too little of the barangay is covered by the data; `below-threshold` = covered, but no class reaches 20%.
+To rebuild, put the shapefile (.shp .dbf .shx .prj) in `scripts/source/` (not committed) and run, from this `flood-detection` folder:
+
+```
+node scripts/build_qc_flood_hazard.js
+```
+
+The older "Flood hazard zones" layer (from `barangays.js`) has invented levels, is labelled SAMPLE and is off by default.
+
 ## Known limits of this prototype
 
 - Data lives in one browser; other people and devices cannot see it.

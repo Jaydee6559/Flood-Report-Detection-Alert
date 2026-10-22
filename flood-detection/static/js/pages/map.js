@@ -18,12 +18,12 @@
   var RISK_RANK = { high: 3, elevated: 2, low: 1 }, HAZ_RANK = { high: 3, medium: 2, low: 1, none: 0 };
 
   var state = {
-    hours: 0, layers: { hazard: true, rain: true, streets: true, spots: true, reports: true },
+    hours: 0, layers: { hazard: false, qchazard: true, rain: true, streets: true, spots: true, reports: true },
     selected: null, hover: null, hoverStreet: null, pinStreet: null, areas: null,
     statuses: { "flood-warning": true, "possible-flood": true, "unclear-photo": false, "no-flood": false }, windowH: 24, outdated: true
   };
   var L = null, map = null, polys = {}, polyGroup = null, streetGroup = null, streetData = null, streetFor = null;
-  var spotGroup = null, reportGroup = null, rainGroup = null, tempMarker = null;
+  var spotGroup = null, reportGroup = null, rainGroup = null, qcGroup = null, tempMarker = null;
 
   var card = $("#map-card"), listUl = $("#risk-list"), banner = $("#rain-banner"), legend = $("#map-legend"), toastEl = $("#map-toast");
 
@@ -259,11 +259,24 @@
   /* ---------- Legend ---------- */
   function drawLegend() {
     var h = "";
-    if (state.layers.hazard) h += "<h3>Flood hazard</h3><ul>" + ["high", "medium", "low"].map(function (k) { return '<li><i style="background:' + HAZ[k] + '"></i>' + FDA.hazard.label(k) + "</li>"; }).join("") + "</ul>";
+    if (state.layers.hazard) h += "<h3>Flood hazard · SAMPLE</h3><ul>" + ["high", "medium", "low"].map(function (k) { return '<li><i style="background:' + HAZ[k] + '"></i>' + FDA.hazard.label(k) + "</li>"; }).join("") + "</ul>";
     else if (state.layers.rain) h += "<h3>Area risk</h3><ul>" + ["high", "elevated", "low"].map(function (k) { return '<li><i style="background:' + RISK[k] + '"></i>' + FDA.agent.areaLabel(k) + "</li>"; }).join("") + "</ul>";
     if (state.layers.rain) h += "<h3" + (h ? ' style="margin-top:8px"' : "") + ">Outline = area risk " + hourText(state.hours) + '</h3><ul><li><i style="background:#fff;border:3px solid #8f1d14"></i>High</li><li><i style="background:#fff;border:2.5px solid #b45309"></i>Elevated</li></ul>';
     if (streetData && state.layers.streets) h += '<h3 style="margin-top:8px">Street in hazard zone</h3><ul><li><i class="line" style="background:' + FDA.streets.COLORS.over50 + '"></i>Over 50%</li><li><i class="line" style="background:' + FDA.streets.COLORS.mid + '"></i>20–50%</li><li><i class="line" style="background:' + FDA.streets.COLORS.under20 + '"></i>Under 20%</li><li><i class="line" style="background:' + FDA.streets.COLORS.none + '"></i>Outside</li></ul>';
     legend.innerHTML = h; legend.hidden = !h;
+  }
+
+  /* ---------- Flood hazard layer (LiPAD 100-year, per barangay) ---------- */
+  function drawQcHazard() {
+    var box = $("#qc-legend"), sub = $("#l-qchazard-sub");
+    box.hidden = !state.layers.qchazard;
+    FDA.hazardLayer.create(map).then(function (layer) {
+      qcGroup = layer; if (state.layers.qchazard) layer.addTo(map);
+      FDA.hazardLayer.renderLegend(box);
+    }).catch(function (err) {
+      FDA.hazardLayer.renderLegend(box, err.message); sub.textContent = "Could not be loaded";
+      say(err.message, 6000);
+    });
   }
 
   /* ---------- Layers ---------- */
@@ -271,8 +284,9 @@
     state.layers[key] = on;
     var sw = $('[data-layer="' + key + '"]'); if (sw) sw.setAttribute("aria-checked", String(on));
     if (!map) return;
-    var g = { streets: streetGroup, spots: spotGroup, reports: reportGroup, rain: rainGroup }[key];
+    var g = { streets: streetGroup, spots: spotGroup, reports: reportGroup, rain: rainGroup, qchazard: qcGroup }[key];
     if (g) { if (on) g.addTo(map); else map.removeLayer(g); }
+    if (key === "qchazard") $("#qc-legend").hidden = !on;
     if (key === "streets" && on && streetGroup) keepStreetsOnTop();
     if (key === "hazard" || key === "rain") { restyleAll(); drawLegend(); }
   }
@@ -377,6 +391,7 @@
     map.on("click", function () { if (state.pinStreet) { state.pinStreet = null; renderCard(); } });
     map.on("zoomend", function () { drawReports(); });
     drawSpots(); drawReports(); drawRain(); drawLegend();
+    drawQcHazard();
 
     var hashB = /[#&]b=([^&]+)/.exec(location.hash), qB = FDA.ui.param("b");
     var rep = wantReport && FDA.store.db().reports.filter(function (r) { return r.id === wantReport; })[0];
