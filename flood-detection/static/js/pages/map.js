@@ -18,7 +18,7 @@
   var RISK_RANK = { high: 3, elevated: 2, low: 1 }, HAZ_RANK = { high: 3, medium: 2, low: 1, none: 0 };
 
   var state = {
-    hours: 0, layers: { hazard: false, qchazard: true, rain: true, streets: true, spots: true, reports: true },
+    hours: 0, layers: { hazard: false, qchazard: false, possible: true, rain: true, streets: true, spots: true, reports: true },
     selected: null, hover: null, hoverStreet: null, pinStreet: null, areas: null,
     statuses: { "flood-warning": true, "possible-flood": true, "unclear-photo": false, "no-flood": false }, windowH: 24, outdated: true
   };
@@ -287,6 +287,7 @@
     var g = { streets: streetGroup, spots: spotGroup, reports: reportGroup, rain: rainGroup, qchazard: qcGroup }[key];
     if (g) { if (on) g.addTo(map); else map.removeLayer(g); }
     if (key === "qchazard") $("#qc-legend").hidden = !on;
+    if (key === "possible") FDA.possibleFloodingLayer.setEnabled(on);
     if (key === "streets" && on && streetGroup) keepStreetsOnTop();
     if (key === "hazard" || key === "rain") { restyleAll(); drawLegend(); }
   }
@@ -392,6 +393,10 @@
     map.on("zoomend", function () { drawReports(); });
     drawSpots(); drawReports(); drawRain(); drawLegend();
     drawQcHazard();
+    FDA.possibleFloodingLayer.init(map, {
+      legend: $("#pf-legend"), list: $("#pf-list"), sub: $("#l-possible-sub"),
+      pick: function (name) { select(name); FDA.possibleFloodingLayer.openPopup(name); }
+    });
 
     var hashB = /[#&]b=([^&]+)/.exec(location.hash), qB = FDA.ui.param("b");
     var rep = wantReport && FDA.store.db().reports.filter(function (r) { return r.id === wantReport; })[0];

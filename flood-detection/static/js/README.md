@@ -139,6 +139,18 @@ node scripts/build_qc_flood_hazard.js
 
 The older "Flood hazard zones" layer (from `barangays.js`) has invented levels, is labelled SAMPLE and is off by default.
 
+## Possible flooding (rain forecast x hazard map)
+
+| File | What it does |
+| --- | --- |
+| `core/possibleFlooding.js` | The rules. Edit the `RULES` table at the top to change the thresholds' result. No map code. |
+| `core/possibleFloodingLayer.js` | Map layer, popup, legend and the "highest level now" list (hidden below moderate) |
+
+Rain = the peak mm/hour from now to the next 24 hours from `core/weather.js` (same cut-offs as the weather badge: 2.5 / 7.5 / 15),
+one city-wide value for every barangay. Hazard = the barangay's level in `qc-flood-hazard.js`.
+`unknown` hazard always gives `unknown`, never `low`. If the forecast or the hazard data cannot be loaded, the layer stays off and says why.
+It is an estimate from a rule table, not a prediction and not an official warning.
+
 ## Known limits of this prototype
 
 - Data lives in one browser; other people and devices cannot see it.
