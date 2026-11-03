@@ -4,8 +4,11 @@
  *   FDA.streets.load("Culiat") -> Promise<{streets:[{name, highway, lines, lengthM, pct, highPct, max}], source}>
  *   FDA.streets.names("Culiat") -> Promise<string[]>   street names for the report form
  *
- * "pct" is the share of a street's length that lies in a medium or high hazard zone (sample hazard
- * levels until UP NOAH is added). Streets are loaded only for the barangay you open, which keeps the map fast.
+ * "pct" is the share of a street's length that lies in a barangay with a medium or high hazard level
+ * (FDA.hazard: one level per barangay, from the UP DREAM / Phil-LiDAR 1 100-year flood hazard map; see
+ * scripts/apply_qc_hazard.py). So a street gets one colour inside one barangay; only a street that crosses
+ * into a barangay with another level is split. Streets are loaded only for the barangay you open, which
+ * keeps the map fast.
  * OSM street names are patchy in places; if the service is busy the call fails with a readable message.
  */
 (function () {
