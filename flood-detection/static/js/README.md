@@ -3,9 +3,9 @@
 This folder makes the pages work in the browser. **Accounts, flood reports,
 confirmations, comments, flags, saved routes, travel schedules and
 notifications are on the Flask server** (`accounts.py`, `reports_api.py`,
-`community_api.py`, `routes_api.py`, `notifications_api.py`, SQLite). Only
-"Remind me" reminders and the area-risk log are still kept
-in `localStorage` (see `DATABASE.md`).
+`community_api.py`, `routes_api.py`, `notifications_api.py`, `spots_api.py`, SQLite),
+and so are "Remind me" reminders, the flood-spot log and the area-risk log. The server also
+runs the timed checks (`jobs.py`), so alerts go out with no page open (see `DATABASE.md`).
 
 ## How it is loaded
 
@@ -36,7 +36,7 @@ Reporting, confirming, commenting, flagging, routes, schedules and notifications
 moderation needs a moderator account. Passwords are hashed on the server (Werkzeug), sessions use
 Flask-Login, and every POST carries a CSRF token (Flask-WTF), which `core/api.js` adds.
 There are no sample reports any more: report numbers start at #1 in the database.
-To clear this browser's own data (reminders, the area-risk log), run `FDA.store.reset()` in the browser console.
+To clear this browser's own copy (anything still waiting to be sent to the server), run `FDA.store.reset()` in the browser console.
 Everything else stays on the server.
 
 ## Core files (`core/`)
@@ -170,8 +170,8 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 
 ## Known limits of this prototype
 
-- Everything people share is on the server, including the flood-spot log. "Remind me" and the area-risk log still live in one browser.
-- Pre-departure checks also run on the server once a minute (`jobs.py`); the 15-minute area rain check still needs a page open.
+- Everything is on the server. The pre-departure check, reminders and the 15-minute area rain check run there too (`jobs.py`).
+- A "Simulated storm" (map) only exists in one browser; its area alerts are made by that page and say so.
 - The photo check and the agent's Rule 1 run in the page; the server checks the values it is sent but does not re-run them.
 - Pre-departure checks and reminders only run while a page is open.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).

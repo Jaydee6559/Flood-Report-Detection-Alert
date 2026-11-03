@@ -14,6 +14,8 @@ Reading and settings:
     POST /api/notifications/read         {ids: [...]} or {all: true}
     POST /api/notifications/settings     {route, area, schedule, reports, clear}: true / false
     POST /api/watch                      {barangay, on}: the "Alert me" list on the Flood areas page
+    POST /api/reminders                  {at (ms), title, text, href}: a "Remind me"; the server's minute job
+                                         (jobs.run_reminders) turns it into a notification when it is due
 /api/my.js (routes_api.py) also carries notifications, settings and watch for the page to start with.
 
 Every notification has a dedupe key: the same key again refreshes that notification (new
@@ -22,14 +24,14 @@ text, unread again) instead of adding another one. Turned-off kinds are not save
 import math
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
 import accounts
 import limits
-from database import NOTICE_KINDS, Notification, NotificationSettings, Route, User, WatchedBarangay, db
+from database import NOTICE_KINDS, Notification, NotificationSettings, Reminder, Route, User, WatchedBarangay, db
 
 bp = Blueprint("notifications_api", __name__)
 
@@ -209,6 +211,36 @@ def watch():
         db.session.delete(row)
     db.session.commit()
     return jsonify(ok=True, watch=[w.barangay for w in WatchedBarangay.query.filter_by(user_id=current_user.id).order_by(WatchedBarangay.created_at)])
+
+
+MAX_REMINDERS = 20             # waiting reminders per person
+
+
+@bp.post("/api/reminders")
+@login_required
+def add_reminder():
+    stop = limits.too_many("notice", current_user.id)
+    if stop:
+        return stop
+    data = request.get_json(silent=True) or {}
+    title = " ".join(str(data.get("title") or "").split())[:160]
+    try:
+        at = datetime.fromtimestamp(float(data.get("at")) / 1000, tz=timezone.utc)
+    except (TypeError, ValueError, OverflowError, OSError):
+        return jsonify(ok=False, error="Choose when to be reminded."), 400
+    now = datetime.now(timezone.utc)
+    if not title:
+        return jsonify(ok=False, error="The reminder needs a title."), 400
+    if at < now - timedelta(minutes=5) or at > now + timedelta(days=7):
+        return jsonify(ok=False, error="A reminder can be set for the next 7 days."), 400
+    if Reminder.query.filter_by(user_id=current_user.id, done=False).count() >= MAX_REMINDERS:
+        return jsonify(ok=False, error="You have %d reminders waiting already." % MAX_REMINDERS), 400
+    href = str(data.get("href") or "")
+    m = Reminder(user_id=current_user.id, due_at=max(at, now), title=title, text=str(data.get("text") or "")[:300] or None,
+                 link=href if LINK.match(href) else None)
+    db.session.add(m)
+    db.session.commit()
+    return jsonify(ok=True, reminder={"id": m.id, "at": _ms(m.due_at), "title": m.title})
 
 
 def init_app(app):

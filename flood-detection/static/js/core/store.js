@@ -20,8 +20,8 @@
  * server too (notifications_api.py, in the same /api/my.js): db.notifications,
  * db.settings, db.watch. Change them through FDA.notify and FDA.areas.
  *
- * Only small things stay in this browser's localStorage: "Remind me" reminders,
- * the area-risk log and the flood-spot log (core/areas.js, core/hazard.js).
+ * Reminders, the area-risk log and the flood-spot log are on the server too, so
+ * localStorage only keeps the signed-in user's copy and what is waiting to be sent once.
  */
 (function () {
   "use strict";
@@ -80,11 +80,17 @@
     db.settings = mine.settings || null;     // the signed-in person's notification settings (null for a guest)
     db.watch = mine.watch || [];             // the signed-in person's "Alert me" barangays
     FDA.store.save();
+    if (db.reminders || db.decisions || db.areaState) {
+      // reminders, the area log and the area levels moved to the server too: reminders still to come are sent once
+      var soon = (db.reminders || []).filter(function (m) { return !m.done && m.at > Date.now(); });
+      if (soon.length) db.pendingReminders = (db.pendingReminders || []).concat(soon);
+      delete db.reminders; delete db.decisions; delete db.areaState; FDA.store.save();
+    }
     if (db.spots) {   // a moderator's flood-spot log from before it moved to the server: sent once (see importOld)
       if (db.spots.length) db.pendingSpots = (db.pendingSpots || []).concat(db.spots);
       delete db.spots; FDA.store.save();
     }
-    if (db.pendingImport || db.pendingWatch || db.pendingSpots) setTimeout(importOld, 0);
+    if (db.pendingImport || db.pendingWatch || db.pendingSpots || db.pendingReminders) setTimeout(importOld, 0);
   }
 
   /** Send the routes, schedules and watched barangays this browser saved before steps 5-6 to the server. */
@@ -96,6 +102,15 @@
       spots.forEach(function (s) {
         FDA.api.post("/api/spots", { barangay: s.barangay, corner: s.corner, street: s.street || "", date: s.last, depth: s.depth, pass: s.pass || "all",
           url: s.sourceUrl || "", source: s.source || "Moderator log", lat: s.lat, lng: s.lng }).then(function () {}, function () {});
+      });
+    }
+    var mineSoon = (db.pendingReminders || []).filter(function (m) { return m.userId === me.id; });
+    if (mineSoon.length) {
+      db.pendingReminders = db.pendingReminders.filter(function (m) { return m.userId !== me.id; });
+      if (!db.pendingReminders.length) delete db.pendingReminders;
+      FDA.store.save();
+      mineSoon.forEach(function (m) {
+        FDA.api.post("/api/reminders", { at: m.at, title: m.title, text: m.text || "", href: "routes.html" }).then(function () {}, function () {});
       });
     }
     var w = db.pendingWatch && db.pendingWatch[me.id];
@@ -198,7 +213,7 @@
       });
     },
 
-    /** Throw away this browser's own data (reminders, the area and flood-spot logs). Everything else stays on the server. */
+    /** Throw away this browser's own data. Everything that matters is on the server. */
     reset: function () { try { window.localStorage.removeItem(KEY); } catch (e) {} db = null; load(); },
     nextId: function (name) { var m = FDA.store.db().meta; var id = m[name] || 1; m[name] = id + 1; return id; }
   };

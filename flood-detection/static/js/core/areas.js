@@ -3,18 +3,20 @@
  *
  *   FDA.areas.compute(hours)   -> {byName, counts, rain}  Rule 2 for every barangay, at now (0) or +1..+3 h
  *   FDA.areas.get(name, hours) -> one barangay's {level, text, reasons, hazard, rain, mm, spots, reports, district}
- *   FDA.areas.refresh()        -> loads rain, runs Rule 2, logs changes in db.decisions, sends area rain alerts
+ *   FDA.areas.refresh()        -> loads rain and runs Rule 2 again (pages redraw with it every 15 minutes)
  *
- * The browser runs this job every 15 minutes while a page is open. With the Flask backend this moves
- * to APScheduler and the same code becomes agent.py. Later, a small rain-to-flood model trained on the
- * decision log replaces the fixed table inside FDA.agent.areaRisk.
+ * The server runs the same Rule 2 every 15 minutes with live rain (jobs.run_area_check): it keeps the area
+ * log (agent_decisions, kind "area"; area_state) and sends the area rain alerts, also when no page is open.
+ * The only alerts made here are for a "Simulated storm" chosen on the map, which only exists in this browser.
+ * Later, a small rain-to-flood model trained on the decision log replaces the fixed table inside FDA.agent.areaRisk.
  */
 (function () {
   "use strict";
   var FDA = (window.FDA = window.FDA || {});
   var CITY = "Quezon City", TWO_H = 2 * 3600000;
 
-  function db() { var d = FDA.store.db(); d.decisions = d.decisions || []; d.watch = d.watch || []; d.areaState = d.areaState || {}; return d; }
+  function db() { var d = FDA.store.db(); d.watch = d.watch || []; return d; }
+  var simState = {};   // levels seen under a simulated storm (this page only), to tell when a barangay becomes High
   function isMe(userId) { return !!(window.FDA_ME && window.FDA_ME.id === userId); }
 
   function recentReports(name, now) {
@@ -56,35 +58,23 @@
       }, function () { throw new Error("The server can't be reached, so nothing was saved."); });
     },
 
-    /** Add a line to the agent_decisions log (kept to the latest 500). It is the training data for the learning phase. */
-    logDecision: function (entry) {
-      var d = db(); entry.ts = Date.now(); d.decisions.push(entry);
-      if (d.decisions.length > 500) d.decisions.splice(0, d.decisions.length - 500);
-      FDA.store.save();
-    },
+    /** The agent decision log is kept on the server now (agent_decisions); kept so older callers do not break. */
+    logDecision: function () {},
 
     refresh: function () {
       return FDA.rain.load().then(function () {
-        var res = FDAareas.compute(0), d = db(), changed = false;
+        var res = FDAareas.compute(0), u = window.FDA_ME;
+        if (FDA.rain.mode() !== "simulated") { simState = {}; return res; }   // live rain: the server logs and alerts
+        // A simulated storm only exists in this browser, so its alerts are made here, and say they are simulated
         FDA.hazard.barangays().forEach(function (b) {
-          var r = res.byName[b.name], before = d.areaState[b.name];
-          if (before === r.level) return;
-          d.areaState[b.name] = r.level; changed = true;
-          if (before !== undefined || r.level !== "low") {
-            d.decisions.push({ ts: Date.now(), kind: "area", barangay: b.name, level: r.level, hazard: r.hazard, rain: r.rain, mm: r.mm, spots: r.spots, reports: r.reports, rainMode: FDA.rain.mode() });
-          }
-          // Area rain alert: the barangay just became High and the signed-in person watches it
-          // (one alert per barangay per hour, so several open pages or devices don't repeat it)
-          var u = window.FDA_ME;
-          if (r.level === "high" && FDA.notify && u && FDAareas.watched(u.id).indexOf(b.name) >= 0) {
-            FDA.notify.push(u.id, { kind: "area", key: "area:" + b.name + ":" + Math.floor(Date.now() / 3600000),
-              title: FDA.rain.names[r.rain] + " rain over District " + r.district + " · " + (u.homeBarangay === b.name ? "your home barangay" : b.name) + " is high risk",
-              text: r.mm + " mm/h now · " + b.name + " is a " + r.hazard + "-hazard zone with " + r.spots + " recurring flood spot" + (r.spots === 1 ? "" : "s"),
-              href: "areas.html?b=" + encodeURIComponent(b.name), cta: "See area risk →" });
-          }
+          var r = res.byName[b.name], before = simState[b.name];
+          simState[b.name] = r.level;
+          if (before === r.level || r.level !== "high" || !FDA.notify || !u || FDAareas.watched(u.id).indexOf(b.name) < 0) return;
+          FDA.notify.push(u.id, { kind: "area", key: "sim-area:" + b.name + ":" + Math.floor(Date.now() / 3600000),
+            title: "Simulated storm: " + FDA.rain.names[r.rain] + " rain over District " + r.district + " · " + (u.homeBarangay === b.name ? "your home barangay" : b.name) + " is high risk",
+            text: r.mm + " mm/h (simulated) · " + b.name + " is a " + r.hazard + "-hazard zone with " + r.spots + " recurring flood spot" + (r.spots === 1 ? "" : "s"),
+            href: "areas.html?b=" + encodeURIComponent(b.name), cta: "See area risk →" });
         });
-        if (d.decisions.length > 500) d.decisions.splice(0, d.decisions.length - 500);
-        if (changed) FDA.store.save();
         return res;
       });
     }

@@ -58,7 +58,7 @@
     runDue: function () {
       var user = FDA.auth.current();
       if (!user) return;
-      var db = FDA.store.db(), now = new Date(), changed = false;
+      var db = FDA.store.db(), now = new Date();
       db.schedules.forEach(function (s) {
         if (s.userId !== user.id || !s.enabled || s.days.indexOf(now.getDay()) < 0 || s.lastCheck === ymd(now)) return;
         var dep = at(s.time, now), due = new Date(dep.getTime() - s.before * 60000);
@@ -67,14 +67,7 @@
         FDA.store.markChecked(s).catch(function () { /* offline: today's check may run once more on another page */ });
         if (now.getTime() <= dep.getTime() + 60 * 60000) FDA.scheduler.runCheck(s); // skip stale checks after the trip
       });
-      // one-off reminders set with "Remind me"
-      (db.reminders || []).forEach(function (m) {
-        if (m.userId === user.id && !m.done && m.at <= now.getTime()) {
-          m.done = true; changed = true;
-          FDA.notify.push(user.id, { kind: "schedule", title: m.title, text: m.text, href: "routes.html", cta: "View routes →" });
-        }
-      });
-      if (changed) FDA.store.save();
+      // "Remind me" reminders are kept and sent by the server (jobs.run_reminders)
     }
   };
 })();

@@ -170,10 +170,15 @@
     var remindAt = new Date(new Date().setHours(+first.s.time.split(":")[0], +first.s.time.split(":")[1] - 10, 0, 0));
     var rb = $(".trip-actions button");
     rb.textContent = "Remind " + remindAt.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" }).replace(/\s?[AP]M/, "");
-    rb.onclick = function () {
+    rb.onclick = function () {   // saved on the server, which sends it when due (jobs.run_reminders), even with the app closed
       var at = remindAt.getTime() > Date.now() ? remindAt.getTime() : Date.now() + 10 * 60000;
-      (db.reminders = db.reminders || []).push({ userId: user.id, at: at, title: "Time to leave soon: " + first.r.name, text: "Check the flood report on " + first.top.report.street + " before you go.", done: false });
-      FDA.store.save(); FDA.ui.toast("We'll remind you at " + FDA.ui.clock(at) + " while the app is open.", "success");
+      rb.disabled = true;
+      FDA.api.post("/api/reminders", { at: at, title: "Time to leave soon: " + first.r.name, text: "Check the flood report on " + first.top.report.street + " before you go.", href: "routes.html?id=" + first.r.id })
+        .then(function (res) {
+          rb.disabled = false;
+          if (!res.ok) return FDA.ui.toast(res.data.error || "The reminder could not be saved. Please try again.", "error");
+          FDA.ui.toast("We'll remind you at " + FDA.ui.clock(res.data.reminder.at) + ".", "success");
+        }, function () { rb.disabled = false; FDA.ui.toast("The server can't be reached, so the reminder was not saved.", "error"); });
     };
   }
 

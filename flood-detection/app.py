@@ -45,6 +45,7 @@ app.config["UPLOAD_FOLDER"] = os.environ.get("UPLOAD_FOLDER", os.path.join(app.r
 db.init_app(app)
 with app.app_context():
     add_missing_columns()   # an older flood.db gets the newer columns; nothing is deleted
+    db.create_all()         # ... and any newer tables (e.g. reminders); existing tables and rows are not touched
 
 
 def _secret_key():

@@ -214,16 +214,22 @@ Over the limit, the server answers 429 with a message the pages show. `app.confi
 
 ## Timed jobs
 
-`jobs.py` runs the **pre-departure check** on the server once a minute (it starts with `flask run`; the terminal shows
-"Pre-departure checks run on the server once a minute"). It is the same check as `core/scheduler.js`, with the same
-notification keys and day format, so a check that an open page already ran is not sent twice. `FDA_JOBS=0` turns it off.
+`jobs.py` runs on the server, so alerts go out even when nobody has the site open. It starts with `flask run`; the
+terminal shows "Timed jobs on: …". `FDA_JOBS=0` turns it off.
 
-## Still in the browser
+| Job | How often | What it does |
+|---|---|---|
+| Pre-departure check | every minute | The same check as `core/scheduler.js` (same notification keys and day format, so a check an open page already ran is not sent twice) |
+| Reminders | every minute | "Remind me" reminders that are due become notifications (`reminders` table) |
+| Area rain check (Rule 2) | every 15 minutes | Live rain from Open-Meteo for the 6 districts, Rule 2 for all 142 barangays (hazard level, recurring spots, recent reports). A level change is saved in `area_state` and logged in `agent_decisions` (kind `area`); a barangay that becomes **High** alerts everyone who watches it or lives there. With no live rain it skips that run: the server never uses made-up rain |
 
-- **"Remind me"** reminders and the **area-risk log** (Rule 2 level changes) are still kept in `localStorage`; the
-  `agent_decisions` (kind `area`) and `area_state` tables are ready for them.
-- The **15-minute area rain check** (`core/areas.js`) still runs only while a page is open, because the rain forecast is only
-  fetched in the browser for now.
+`POST /api/reminders` `{at (ms), title, text, href}` saves a reminder (signed in; within the next 7 days; up to 20 waiting).
+
+A "Simulated storm" chosen on the map only exists in that browser, so its area alerts are made by the page and say
+"Simulated storm". Reminders a browser saved before this are sent to the server once; its old area log is dropped
+(the server's `agent_decisions` is the log now).
+
+The `reminders` table is new. The app creates missing tables when it starts, so an older `flood.db` needs no reset.
 
 ## Tests
 

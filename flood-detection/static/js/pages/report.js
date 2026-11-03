@@ -220,7 +220,7 @@
       return FDA.api.post("/api/reports", form).then(function (res) {
         if (!res.ok) throw new Error(res.status === 401 ? "Please sign in again, then send the report." : res.data.error || "The report could not be saved. Please try again.");
         var report = FDA.store.putReport(res.data.report);
-        FDA.areas.logDecision({ kind: "photo", reportId: report.id, barangay: report.barangay, prob: report.prob, startStatus: verdict.startStatus, status: verdict.status, inputs: verdict.inputs });
+        // the server logged the agent's decision (agent_decisions) when it saved the report
         // route alerts for everyone whose saved route passes near it are made on the server
         location.href = "result.html?id=" + report.id;
       }, function () { throw new Error("The server can't be reached, so the report was not saved. Check your connection and try again."); });

@@ -281,6 +281,20 @@ class Notification(db.Model):
     read: Mapped[bool] = mapped_column(default=False)
 
 
+class Reminder(db.Model):
+    """A one-off "Remind me" (Travel schedules page). The server's minute job turns it into a notification when due."""
+    __tablename__ = "reminders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    due_at: Mapped[datetime] = mapped_column(index=True)
+    title: Mapped[str] = mapped_column(String(160))
+    text: Mapped[str | None] = mapped_column(String(300))
+    link: Mapped[str | None] = mapped_column(String(200))
+    done: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+
 # ---- Agent log and moderators (Modules 7, 13) ---------------------------------
 class AgentDecision(db.Model):
     """Every agent decision with its inputs (the agent_decisions log, PDF p. 3). Never trimmed."""
