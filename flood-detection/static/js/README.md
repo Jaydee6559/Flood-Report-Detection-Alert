@@ -1,10 +1,10 @@
 # Flood Detection & Alert — JavaScript
 
 This folder makes the pages work in the browser. **Accounts, flood reports,
-confirmations, comments and flags are on the Flask server** (`accounts.py`,
-`reports_api.py`, `community_api.py`, SQLite). Routes, schedules and
-notifications are still kept in `localStorage` until the next steps move them
-to the database (see `DATABASE.md`).
+confirmations, comments, flags, saved routes and travel schedules are on the
+Flask server** (`accounts.py`, `reports_api.py`, `community_api.py`,
+`routes_api.py`, SQLite). Notifications and their settings are still kept in
+`localStorage` until the next step moves them to the database (see `DATABASE.md`).
 
 ## How it is loaded
 
@@ -16,8 +16,8 @@ Every page has one line before `</body>`:
 ```
 
 `app.js` first loads `/api/auth/me.js` from the server (who is signed in: `window.FDA_ME`, and the CSRF token:
-`window.FDA_CSRF`) and `/api/reports.js` (the flood reports: `window.FDA_REPORTS`), then `data/locations.js` and
-`core/*.js` in order, then `pages/<this-page-name>.js`.
+`window.FDA_CSRF`), `/api/reports.js` (the flood reports: `window.FDA_REPORTS`) and `/api/my.js` (your routes and
+schedules: `window.FDA_MY`), then `data/locations.js` and `core/*.js` in order, then `pages/<this-page-name>.js`.
 Plain scripts (no modules). A page opened from disk (`file://`) still opens, but as a guest with no reports:
 signing in and reports need the server.
 
@@ -35,14 +35,14 @@ Reporting, confirming, commenting, flagging, routes, schedules and notifications
 moderation needs a moderator account. Passwords are hashed on the server (Werkzeug), sessions use
 Flask-Login, and every POST carries a CSRF token (Flask-WTF), which `core/api.js` adds.
 There are no sample reports any more: report numbers start at #1 in the database.
-To clear this browser's data (routes, schedules, notifications...), run `FDA.store.reset()` in the browser console.
-Reports and comments stay on the server.
+To clear this browser's data (notifications, settings...), run `FDA.store.reset()` in the browser console.
+Reports, comments, routes and schedules stay on the server.
 
 ## Core files (`core/`)
 
 | File           | What it does |
 |----------------|--------------|
-| `store.js`     | `db().reports` = the server's reports (in memory), with their counts and your own `myVote` / `myFlag`. Browser data (localStorage) for routes, schedules and notifications. `putReport()` takes a report the server sent back. |
+| `store.js`     | `db().reports`, `db().routes`, `db().schedules` come from the server (in memory). Change routes and schedules only with `saveRoute`, `setRouteAlert`, `deleteRoute`, `saveSchedule`, `setScheduleEnabled`, `markChecked`, `deleteSchedule` (each returns a Promise). Browser data (localStorage) for notifications and settings. |
 | `api.js`       | `FDA.api.get / post` to the Flask server. Adds the CSRF token to every POST. |
 | `geo.js`       | Reads the location list (see below), then does lookups, distances and "use my location". Add a geocoder for street-level addresses later. |
 | `agent.js`     | **The intelligent agent**: thresholds, status, recommendation, duplicate check, route check, flood-risk outlook. Edit `FDA.agent.config` to tune. |
@@ -169,7 +169,7 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 
 ## Known limits of this prototype
 
-- Accounts, reports, confirmations and comments are shared through the server, but routes, schedules and notifications still live in one browser until they move to the database.
+- Accounts, reports, confirmations, comments, routes and schedules are on the server, but notifications still live in one browser until they move to the database.
 - The photo check and the agent's Rule 1 run in the page; the server checks the values it is sent but does not re-run them.
 - Pre-departure checks and reminders only run while a page is open.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).

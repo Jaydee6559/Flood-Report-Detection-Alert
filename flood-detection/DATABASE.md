@@ -15,6 +15,7 @@ flask --app app create-user --moderator    # the first moderator (prompts for na
 ```
 
 `flask --app app init-db --reset` deletes everything and starts again with empty tables. It asks first.
+Columns added in later steps are added to an existing `flood.db` automatically when the app starts, so you don't need to reset.
 
 ## Decisions
 
@@ -39,7 +40,7 @@ flask --app app create-user --moderator    # the first moderator (prompts for na
 | `confirmations` | "Still flooded" / "Not flooded", one per user per report | 9 |
 | `comments` | Comments on a report; moderators can remove them | 9, 13 |
 | `flags` | A user reporting a report or a comment to moderators, one per user per item | 9, 13 |
-| `routes` | Saved routes: start and end, the street route as GeoJSON, segments, points added on the map | 10 |
+| `routes` | Saved routes: start and end (label, position, the place picked), the street route as `[[lat, lng], ...]`, segments, points added on the map | 10 |
 | `schedules` | Departure days and time for a route, and how long before to check | 11 |
 | `notifications` | In-app notifications; `dedupe_key` stops the same alert being sent twice | 12 |
 | `agent_decisions` | Every Rule 1 (photo) and Rule 2 (area) decision with its inputs. Never trimmed: it is the training data for the learning phase | 7 |
@@ -116,9 +117,36 @@ Confirmations, comments and flags go through `community_api.py` and the `confirm
 - `flags` only counts flags made after the moderator's last review, so an approved report, or a kept comment, comes back to
   the queue only if people report it again.
 
+## Routes and schedules (connected)
+
+Saved routes and travel schedules go through `routes_api.py` and the `routes` and `schedules` tables. Everyone only ever
+sees and changes their own.
+
+| Route | What it does |
+|---|---|
+| `GET /api/my.js` | A small script for the pages: `window.FDA_MY = {routes, schedules}` of the signed-in person (empty for a guest) |
+| `POST /api/routes` | A new route: name, start and end (label, position and the barangay / street / landmark picked), the street line, its streets, points added on the map, snap or freehand, distance |
+| `POST /api/routes/<id>` | Save changes. Moving the start or end makes today's schedule check run again |
+| `POST /api/routes/<id>/alert` | `{alert: true \| false}` |
+| `POST /api/routes/<id>/delete` | Also deletes the route's schedules |
+| `POST /api/schedules` | `{routeId, days: [0-6, 0 = Sunday], time: "06:45", before: 15 \| 30 \| 45 \| 60}` |
+| `POST /api/schedules/<id>` | Save changes (today's check runs again) |
+| `POST /api/schedules/<id>/enabled` | `{enabled: true \| false}` |
+| `POST /api/schedules/<id>/checked` | The page ran today's pre-departure check |
+| `POST /api/schedules/<id>/delete` | |
+| `POST /api/my/import` | Once: the routes and schedules a browser saved before this step |
+
+- Positions must be inside Metro Manila. A route can have up to 30 added points; a person up to 50 routes and 100 schedules.
+- `routes.start_place` and `routes.end_place` were added in this step. **An older `flood.db` gets them automatically** when
+  the app starts (`add_missing_columns()` in `database.py`); nothing is deleted.
+- The first time someone opens the site signed in after this step, the routes and schedules saved in that browser are
+  sent to the server once, then the page reloads.
+- The pre-departure check still runs in the page while a page is open (`core/scheduler.js`); the server remembers that
+  it ran today, so another page or device doesn't run it again.
+
 ## Not connected yet
 
-Routes, schedules and notifications still save to the browser (`static/js/core/store.js`). Notifications to a reporter
-(their report was confirmed, commented on or removed) only appear in the browser where the action happened, until the
-notifications step.
+Notifications and notification settings still save to the browser (`static/js/core/store.js`). Notifications to a
+reporter (their report was confirmed, commented on or removed) and route alerts only appear in the browser where the
+action happened, until the notifications step.
 If you change a table before then, run `flask --app app init-db --reset`. There is no migration tool yet.

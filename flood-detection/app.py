@@ -11,7 +11,8 @@ The trained model goes in  models/flood_model.keras  (see models/README.md).
 Without it, or without TensorFlow installed, the site still runs and the
 report page falls back to the demo estimate.
 The tables are in database.py and described in DATABASE.md; accounts are in accounts.py,
-flood reports in reports_api.py, confirmations, comments and flags in community_api.py.
+flood reports in reports_api.py, confirmations, comments and flags in community_api.py,
+saved routes and travel schedules in routes_api.py.
 """
 import io
 import os
@@ -23,7 +24,8 @@ from flask import Flask, abort, jsonify, render_template, request
 import accounts
 import community_api
 import reports_api
-from database import NotificationSettings, User, db
+import routes_api
+from database import NotificationSettings, User, add_missing_columns, db
 
 app = Flask(__name__)  # templates/ and static/ sit next to this file
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # photos up to 10 MB
@@ -36,6 +38,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", "sqlite:///" + os.path.join(app.instance_path, "flood.db"))
 app.config["UPLOAD_FOLDER"] = os.environ.get("UPLOAD_FOLDER", os.path.join(app.root_path, "uploads"))
 db.init_app(app)
+with app.app_context():
+    add_missing_columns()   # an older flood.db gets the newer columns; nothing is deleted
 
 
 def _secret_key():
@@ -58,6 +62,8 @@ accounts.init_app(app)
 reports_api.init_app(app)
 # ---- Community (Modules 9, 13): confirmations, comments, flags ---------------
 community_api.init_app(app)
+# ---- Routes and travel schedules (Modules 10-11) -----------------------------
+routes_api.init_app(app)
 
 
 @app.cli.command("init-db")

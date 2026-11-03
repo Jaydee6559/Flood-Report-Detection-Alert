@@ -45,6 +45,28 @@ def utcnow():
     return datetime.now(timezone.utc)
 
 
+# Columns added after the first release. create_all() makes new tables but never changes an
+# existing one, so these are added here, once, without touching the rows already saved.
+ADDED_COLUMNS = {
+    "routes": {"start_place": "JSON", "end_place": "JSON"},
+}
+
+
+def add_missing_columns():
+    """Bring an older database up to date by adding the columns in ADDED_COLUMNS (safe to run every start)."""
+    from sqlalchemy import inspect, text
+    insp = inspect(db.engine)
+    names = insp.get_table_names()
+    with db.engine.begin() as conn:
+        for table, cols in ADDED_COLUMNS.items():
+            if table not in names:
+                continue      # create_all() will make it with every column
+            have = {c["name"] for c in insp.get_columns(table)}
+            for col, sql_type in cols.items():
+                if col not in have:
+                    conn.execute(text('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (table, col, sql_type)))
+
+
 def _one_of(column, values):
     return CheckConstraint("%s IN (%s)" % (column, ", ".join("'%s'" % v for v in values)), name="ck_%s" % column)
 
@@ -213,10 +235,12 @@ class Route(db.Model):
     start_label: Mapped[str] = mapped_column(String(120))
     start_lat: Mapped[float]
     start_lng: Mapped[float]
+    start_place: Mapped[dict | None] = mapped_column(db.JSON)  # {barangay, street, name}: what the person picked
     end_label: Mapped[str] = mapped_column(String(120))
     end_lat: Mapped[float]
     end_lng: Mapped[float]
-    geometry: Mapped[dict | None] = mapped_column(db.JSON)    # GeoJSON LineString of the street route
+    end_place: Mapped[dict | None] = mapped_column(db.JSON)
+    geometry: Mapped[list | None] = mapped_column(db.JSON)    # the street route as [[lat, lng], ...]
     segments: Mapped[list | None] = mapped_column(db.JSON)    # streets and barangays along it
     vias: Mapped[list | None] = mapped_column(db.JSON)        # points the user added on the map
     mode: Mapped[str | None] = mapped_column(String(20))      # "snap" (follows streets) or "free" (drawn by hand)

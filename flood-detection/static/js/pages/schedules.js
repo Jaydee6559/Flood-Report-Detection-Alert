@@ -69,21 +69,26 @@
     if (!v.routeId) return FDA.ui.fieldError(routeSel, "Save a route first. Travel schedules check a saved route.");
     if (!v.days.length) return FDA.ui.toast("Pick at least one day.", "error");
     if (!v.time) return FDA.ui.fieldError(timeIn, "Set the usual departure time.");
-    var s = editingId ? db.schedules.filter(function (x) { return x.id === editingId; })[0] : null;
-    if (s) { s.routeId = v.routeId; s.days = v.days; s.time = v.time; s.before = v.before; s.lastCheck = null; }
-    else { s = { id: FDA.store.nextId("nextSchedule"), userId: user.id, routeId: v.routeId, days: v.days, time: v.time, before: v.before, enabled: true, lastCheck: null }; db.schedules.push(s); }
-    FDA.store.save();
-    var route = routeOf(s);
-    FDA.notify.push(user.id, { kind: "schedule", key: "set:" + s.id, title: "Travel check for " + S.clockText(s.time) + " is set", text: S.describeDays(s.days) + " · " + route.name + " · check at " + S.checkTimeText(s), href: "schedules.html", cta: "Edit schedule →" });
-    FDA.ui.toast("Schedule saved.", "success"); FDA.layout.refresh();
-    loadForm(null); render();
+    if (saveBtn.disabled) return;
+    saveBtn.disabled = true;
+    // saved on the server (routes_api.py); db.schedules is updated when it answers
+    FDA.store.saveSchedule({ id: editingId, routeId: v.routeId, days: v.days, time: v.time, before: v.before }).then(function (s) {
+      saveBtn.disabled = false;
+      var route = routeOf(s);
+      FDA.notify.push(user.id, { kind: "schedule", key: "set:" + s.id + ":" + s.time + ":" + s.days.join(""), title: "Travel check for " + S.clockText(s.time) + " is set", text: S.describeDays(s.days) + " · " + route.name + " · check at " + S.checkTimeText(s), href: "schedules.html", cta: "Edit schedule →" });
+      FDA.ui.toast("Schedule saved.", "success"); FDA.layout.refresh();
+      loadForm(null); render();
+    }, function (err) { saveBtn.disabled = false; FDA.ui.toast(err.message, "error"); });
   }
 
   function removeSchedule() {
+    var s = db.schedules.filter(function (x) { return x.id === editingId; })[0];
+    if (!s) return;
     FDA.ui.dialog({ title: "Delete this schedule?", text: "The agent will stop checking this route before you leave.", confirm: "Delete", danger: true }).then(function (ok) {
       if (!ok) return;
-      db.schedules = db.schedules.filter(function (s) { return s.id !== editingId; });
-      FDA.store.save(); loadForm(null); render(); FDA.ui.toast("Schedule deleted.");
+      FDA.store.deleteSchedule(s).then(function () {
+        loadForm(null); render(); FDA.ui.toast("Schedule deleted.");
+      }, function (err) { FDA.ui.toast(err.message, "error"); });
     });
   }
 
@@ -114,8 +119,12 @@
   $(".my-schedules__list").addEventListener("click", function (e) {
     var sw = e.target.closest(".switch"); if (!sw) return;
     var s = db.schedules.filter(function (x) { return x.id === +sw.dataset.id; })[0];
-    s.enabled = sw.getAttribute("aria-checked") !== "true"; sw.setAttribute("aria-checked", String(s.enabled));
-    FDA.store.save(); drawList(); drawChecks();
+    if (!s || sw.disabled) return;
+    var on = sw.getAttribute("aria-checked") !== "true";
+    sw.setAttribute("aria-checked", String(on)); sw.disabled = true;
+    FDA.store.setScheduleEnabled(s, on).then(function () { drawList(); drawChecks(); }, function (err) {
+      FDA.ui.toast(err.message, "error"); drawList(); drawChecks();   // redraw shows what is saved
+    });
   });
   [$(".schedules-head .btn"), $(".travel-mobile > .btn")].forEach(function (b) {
     b.addEventListener("click", function () { loadForm(null); form.scrollIntoView({ behavior: "smooth", block: "center" }); routeSel.focus(); });

@@ -254,7 +254,18 @@
       }).join("") : '<li class="text-small text-muted">No reports near this route.</li>';
 
     drawMaps(route);
-    FDA.ui.bindSwitchOnce($(".alert-toggle .switch"), route.alert, function (v) { route.alert = v; FDA.store.save(); FDA.ui.toast(v ? "Route alerts on." : "Route alerts off."); drawEditor(); });
+    FDA.ui.bindSwitchOnce($(".alert-toggle .switch"), route.alert, function (v) { setAlert(route, v); });
+  }
+
+  /** Route alerts on/off, saved on the server. If that fails, the switches go back to what is saved. */
+  function setAlert(route, on) {
+    FDA.store.setRouteAlert(route, on).then(function () {
+      FDA.ui.toast(on ? "Route alerts on." : "Route alerts off.");
+      drawDetail(); drawEditor();
+    }, function (err) {
+      FDA.ui.toast(err.message, "error");
+      drawDetail(); drawEditor();
+    });
   }
 
   /* ---------- Placing routes that have no street geometry yet (saved before street routing) ---------- */
@@ -281,7 +292,7 @@
       mName.value = route ? route.name : "";
       if (route) { mStart.set(route.startPoint, route.start); mEnd.set(route.endPoint, route.end); mDraft.load(route); } else { mStart.clear(); mEnd.clear(); mDraft.reset(); }
     }
-    FDA.ui.bindSwitchOnce(mSwitch, route ? route.alert : true, function (v) { if (route) { route.alert = v; FDA.store.save(); drawDetail(); } });
+    FDA.ui.bindSwitchOnce(mSwitch, route ? route.alert : true, function (v) { if (route) setAlert(route, v); });
     var strong = mNow.querySelector("strong").outerHTML;
     if (route) {
       var res = check(route), top = res.warnings[0] || res.possible[0];
@@ -313,20 +324,26 @@
     if (b.error) { bad = true; ctx.end.error(b.error); }
     if (bad) return;
 
+    /* Saved on the server (routes_api.py); db.routes is updated when it answers */
     function commit(p) {
-      if (!existing) { existing = { id: FDA.store.nextId("nextRoute"), userId: user.id, alert: true }; db.routes.push(existing); }
-      existing.name = name; existing.start = label(a.point); existing.end = label(b.point);
-      existing.startPoint = a.point; existing.endPoint = b.point;
-      existing.geometry = p.geometry; existing.segments = p.segments; existing.distanceM = p.distanceM;
-      var st = ctx.draft.state(); existing.vias = st.vias; existing.mode = st.mode;   // the points added on the map and snapped / freehand
-      delete planState[existing.id];
-      FDA.store.save(); selectedId = existing.id;
-      resetAddForm();
-      FDA.ui.toast("Route saved.", "success"); render();
+      var st = ctx.draft.state();   // the points added on the map and snapped / freehand
+      var route = {
+        id: existing ? existing.id : null, name: name, start: label(a.point), end: label(b.point),
+        startPoint: a.point, endPoint: b.point, geometry: p.geometry, segments: p.segments, distanceM: p.distanceM,
+        vias: st.vias, mode: st.mode
+      };
+      return FDA.store.saveRoute(route).then(function (saved) {
+        delete planState[saved.id];
+        selectedId = saved.id;
+        resetAddForm();
+        FDA.ui.toast("Route saved.", "success"); render();
+      });
     }
     setBusy(true);
     ctx.draft.setEnds(a.point, b.point);   // unchanged start and destination keep the points added on the map
-    ctx.draft.ready().then(function (p) { setBusy(false); commit(p); }, function (err) {
+    ctx.draft.ready().then(function (p) {
+      return commit(p).then(function () { setBusy(false); }, function (err) { setBusy(false); FDA.ui.toast(err.message, "error"); });
+    }, function (err) {
       setBusy(false);
       ctx.end.error(err.message);
       FDA.ui.toast(err.message + " You can switch to freehand drawing on the map.", "error");   // nothing is saved, and no straight line is drawn for a street route
@@ -355,9 +372,9 @@
     var route = byId(editingId); if (!route) return;
     FDA.ui.dialog({ title: "Delete “" + route.name + "”?", text: "Its travel schedules will be deleted too.", confirm: "Delete", danger: true }).then(function (ok) {
       if (!ok) return;
-      db.routes = db.routes.filter(function (r) { return r.id !== route.id; });
-      db.schedules = db.schedules.filter(function (s) { return s.routeId !== route.id; });
-      FDA.store.save(); if (selectedId === route.id) selectedId = null; resetAddForm(); render(); FDA.ui.toast("Route deleted.");
+      FDA.store.deleteRoute(route).then(function () {
+        if (selectedId === route.id) selectedId = null; resetAddForm(); render(); FDA.ui.toast("Route deleted.");
+      }, function (err) { FDA.ui.toast(err.message, "error"); });
     });
   });
 

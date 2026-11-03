@@ -63,8 +63,8 @@
         if (s.userId !== user.id || !s.enabled || s.days.indexOf(now.getDay()) < 0 || s.lastCheck === ymd(now)) return;
         var dep = at(s.time, now), due = new Date(dep.getTime() - s.before * 60000);
         if (now < due) return;
-        s.lastCheck = ymd(now);
-        changed = true;
+        s.lastCheck = ymd(now);   // right away, so the next minute's run doesn't check again while the server answers
+        FDA.store.markChecked(s).catch(function () { /* offline: today's check may run once more on another page */ });
         if (now.getTime() <= dep.getTime() + 60 * 60000) FDA.scheduler.runCheck(s); // skip stale checks after the trip
       });
       // one-off reminders set with "Remind me"

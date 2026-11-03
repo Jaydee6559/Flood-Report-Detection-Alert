@@ -196,8 +196,7 @@
       return FDA.routing.plan(stops).then(function (p) {
         route.startPoint = stops[0]; route.endPoint = stops[1];
         route.geometry = p.geometry; route.segments = p.segments; route.distanceM = p.distanceM;
-        FDA.store.save();
-        return route;
+        return route.id ? FDA.store.saveRoute(route) : route;   // saved routes keep their street line on the server
       });
     }
   };
