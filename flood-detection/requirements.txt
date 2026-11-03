@@ -1,1 +1,7 @@
 Flask>=3.0
+Pillow>=10.0
+numpy>=1.26
+# The photo classifier. TensorFlow needs a Python version it supports:
+# use Python 3.12 (3.13 / 3.14 may have no TensorFlow build yet).
+# Without TensorFlow the site still runs and the report page uses the demo estimate.
+tensorflow>=2.16

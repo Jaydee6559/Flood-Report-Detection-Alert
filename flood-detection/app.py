@@ -1,13 +1,81 @@
-"""Flood Detection & Alert: Flask app (Step 0: templates only, sample data).
+"""Flood Detection & Alert: Flask app (templates, sample data, and the photo classifier).
 
 Run:   pip install -r requirements.txt
        flask --app app run --debug        (then open http://127.0.0.1:5000)
-"""
-import os
 
-from flask import Flask, abort, render_template
+The trained model goes in  models/flood_model.keras  (see models/README.md).
+Without it, or without TensorFlow installed, the site still runs and the
+report page falls back to the demo estimate.
+"""
+import io
+import os
+import threading
+
+from flask import Flask, abort, jsonify, render_template, request
 
 app = Flask(__name__)  # templates/ and static/ sit next to this file
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # photos up to 10 MB
+
+
+# ---- Image classifier (Module 6) ---------------------------------------------
+# MobileNetV2 fine-tuned on Flood10K. The model has one sigmoid output, P(flood),
+# and does its own [-1, 1] scaling (a Rescaling layer), so it is given raw
+# 0-255 RGB pixels at 224 x 224. Do not scale the pixels here as well.
+MODEL_PATH = os.environ.get("FLOOD_MODEL", os.path.join(app.root_path, "models", "flood_model.keras"))
+IMG_SIZE = (224, 224)
+_model = {"net": None, "error": None, "loaded": False}
+_model_lock = threading.Lock()
+
+
+def get_model():
+    """Load the model once, on first use. Returns None (and remembers why) if it cannot be loaded."""
+    with _model_lock:
+        if not _model["loaded"]:
+            _model["loaded"] = True
+            if not os.path.isfile(MODEL_PATH):
+                _model["error"] = "Model file not found: " + MODEL_PATH
+            else:
+                try:
+                    import tensorflow as tf  # imported here so the site runs without TensorFlow
+                    _model["net"] = tf.keras.models.load_model(MODEL_PATH)
+                except Exception as exc:  # TensorFlow missing, wrong version, damaged file...
+                    _model["error"] = "Could not load the model: %s" % exc
+                    app.logger.error(_model["error"])
+        return _model["net"]
+
+
+def prepare_photo(data):
+    """Bytes of an uploaded photo -> a (1, 224, 224, 3) float32 array of 0-255 RGB pixels."""
+    import numpy as np
+    from PIL import Image, ImageOps
+
+    img = Image.open(io.BytesIO(data))
+    img = ImageOps.exif_transpose(img)  # phone photos are often stored sideways
+    img = img.convert("RGB").resize(IMG_SIZE, Image.BILINEAR)
+    return np.asarray(img, dtype="float32")[None, ...]
+
+
+@app.get("/api/model-status")
+def model_status():
+    net = get_model()
+    return jsonify(ready=net is not None, error=None if net is not None else _model["error"])
+
+
+@app.post("/api/classify")
+def classify():
+    """Form field 'photo' (an image file) -> {"prob": P(flood) from 0 to 1, "source": "server"}."""
+    net = get_model()
+    if net is None:
+        return jsonify(error=_model["error"]), 503
+    photo = request.files.get("photo")
+    if photo is None:
+        return jsonify(error="Send the image as the form field 'photo'."), 400
+    try:
+        x = prepare_photo(photo.read())
+    except Exception:
+        return jsonify(error="That file could not be read as a photo."), 400
+    prob = float(net.predict(x, verbose=0).ravel()[0])
+    return jsonify(prob=min(1.0, max(0.0, prob)), source="server")
 
 
 # ---- Public pages -----------------------------------------------------------

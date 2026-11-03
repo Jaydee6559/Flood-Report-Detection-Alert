@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 flood-detection/scripts/source/
 flood-detection/__pycache__/
+flood-detection/models/*.keras

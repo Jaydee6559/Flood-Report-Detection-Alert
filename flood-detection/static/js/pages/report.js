@@ -198,7 +198,7 @@
       // with no GPS, no street found on the map and no moved pin, the report only knows its barangay
       var approximate = !state.gps && (!state.pin || !centre || FDA.geo.distance(state.pin, { lat: centre.lat, lng: centre.lng }) < 2);
       var loc = { city: CITY, barangay: brgySel.value, street: street.value.trim(), lat: p.lat, lng: p.lng };
-      var verdict = FDA.agent.checkPhoto({ prob: out.prob, loc: loc, reports: db.reports });
+      var verdict = FDA.agent.checkPhoto({ prob: out.prob, source: out.source, loc: loc, reports: db.reports });
 
       var report = {
         id: FDA.store.nextId("nextReport"), ownerId: me ? me.id : FDA.store.deviceId(), ownerName: me ? me.name : "Guest",

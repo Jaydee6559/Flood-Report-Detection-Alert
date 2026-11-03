@@ -113,7 +113,7 @@
 
     /**
      * Gather the five inputs for a place.
-     * percept: {prob, loc:{barangay,lat,lng}, reports, now?, hazard?, rain?, spots?}  (hazard/rain/spots are looked up when left out)
+     * percept: {prob, source?, loc:{barangay,lat,lng}, reports, now?, hazard?, rain?, spots?}  (source = classifier source: "server", "tfjs" or "demo")  (hazard/rain/spots are looked up when left out)
      */
     inputs: function (percept) {
       var now = percept.now || Date.now(), loc = percept.loc, here = loc.lat != null ? loc : null;
@@ -165,7 +165,7 @@
       var changeable = start === "possible-flood" || start === "unclear-photo";
 
       function eff(on, present) { return raised ? (raise[on] ? "raise" : "info") : present ? (changeable ? "info" : "support") : "none"; }
-      var model = percept.source === "tfjs" ? "MobileNetV2" : "Demo estimate (trained model not loaded)";
+      var model = FDA.classifier && FDA.classifier.isTrained(percept.source) ? "MobileNetV2 (Flood10K)" : "Demo estimate (trained model not loaded)";
       var bandText = { "flood-warning": "0.80 or more", "possible-flood": "0.50–0.79", "unclear-photo": "0.30–0.49", "no-flood": "under 0.30" }[start];
       var reasons = [
         { key: "P", title: "Photo: " + Math.round(prob * 100) + "% flood probability", detail: model + " · starts as " + RECOMMENDATIONS[start].label + " (" + bandText + ")", effect: "start" }

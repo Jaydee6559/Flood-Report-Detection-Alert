@@ -68,7 +68,7 @@
 
   // Be honest about which estimate this is
   var badge = $(".page-heading__aside .badge--sample");
-  if (r.model === "tfjs") badge.remove();
+  if (FDA.classifier.isTrained(r.model)) badge.remove();
   else { badge.textContent = "DEMO ESTIMATE"; badge.title = "The trained model is not loaded, so this is a rough colour-based estimate."; }
 
   if (r.dupCandidate) {
