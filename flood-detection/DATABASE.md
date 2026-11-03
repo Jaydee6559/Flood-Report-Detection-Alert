@@ -12,6 +12,7 @@ From the `flood-detection` folder, with the virtual environment active:
 pip install -r requirements.txt
 flask --app app init-db                    # creates the empty tables (safe to run again)
 flask --app app create-user --moderator    # the first moderator (prompts for name, login, password)
+flask --app app set-password               # reset someone's password (prompts; there is no email reset yet)
 ```
 
 `flask --app app init-db --reset` deletes everything and starts again with empty tables. It asks first.
@@ -173,10 +174,64 @@ Notifications, notification settings and the "Alert me" barangays go through `no
 - A kind that is switched off is not saved at all.
 - `/api/my.js` also carries `notifications`, `settings` and `watch`, so pages start with them.
 
+## Flood-spot log (connected)
+
+The moderators' flood-spot log goes through `spots_api.py` and the `flood_spots` table, so every page uses the same
+recurring spots for the agent's S input.
+
+| Route | What it does |
+|---|---|
+| `GET /api/spots.js` | `window.FDA_SPOTS_LOG`, for everyone (app.js loads it). The seed spots in `static/data/flood-spots.js` are added on top |
+| `POST /api/spots` | Moderators. `{barangay, corner, street?, date, depth, pass, url?, lat, lng}`. The same barangay + corner again is one more time: `times + 1`, the worst depth, the latest date |
+| `POST /api/spots/<id>/delete` | Moderators |
+
+A moderator's sightings saved in the browser before this are sent to the server once, the next time they sign in.
+
+## Agent dashboard
+
+`GET /api/moderation/stats` (moderators) sums up the last 30 days for the "How the agent did" card on the moderation page:
+reports per status, how many were raised a step and by which input (hazard, rain, spots, nearby reports), what moderators
+did with them, the community's still / not-flooded votes, and which photo check was used.
+
+## Server photo re-check
+
+When the trained model is loaded, the server runs it on every new report's photo (`PHOTO_CHECK` in `app.py`). The report
+is refused if the page's starting status is not the band the server's probability gives; otherwise the server's probability
+is saved (the page's is kept in `inputs.pageProb`). Without the model, the page's value is saved as before.
+
+## Rate limits
+
+`limits.py` stops one account or connection from flooding the site (counted in memory per server process):
+
+| What | Limit |
+|---|---|
+| Wrong passwords | 10 per email/number and 50 per connection, per 15 minutes |
+| New accounts | 10 per connection per hour |
+| Reports | 10 per account per 10 minutes (only saved reports count) |
+| Comments / confirmations / flags | 20 / 60 per 10 minutes, 30 per hour |
+
+Over the limit, the server answers 429 with a message the pages show. `app.config["RATE_LIMITS"] = False` turns them off.
+
+## Timed jobs
+
+`jobs.py` runs the **pre-departure check** on the server once a minute (it starts with `flask run`; the terminal shows
+"Pre-departure checks run on the server once a minute"). It is the same check as `core/scheduler.js`, with the same
+notification keys and day format, so a check that an open page already ran is not sent twice. `FDA_JOBS=0` turns it off.
+
 ## Still in the browser
 
-- **"Remind me"** reminders, the **area-risk log** (Rule 2 level changes) and the moderators' **flood-spot log** are still
-  kept in `localStorage`; the `agent_decisions` (kind `area`), `area_state` and `flood_spots` tables are ready for them.
-- **Timed jobs still run only while a page is open**: the pre-departure check (`core/scheduler.js`) and the 15-minute area
-  rain check (`core/areas.js`). Moving them to a server timer (APScheduler) would make them run with no page open.
-If you change a table before then, run `flask --app app init-db --reset`. There is no migration tool yet.
+- **"Remind me"** reminders and the **area-risk log** (Rule 2 level changes) are still kept in `localStorage`; the
+  `agent_decisions` (kind `area`) and `area_state` tables are ready for them.
+- The **15-minute area rain check** (`core/areas.js`) still runs only while a page is open, because the rain forecast is only
+  fetched in the browser for now.
+
+## Tests
+
+```
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+The tests (`tests/`) use a temporary database and uploads folder, so `instance/flood.db` and `uploads/` are never touched.
+They cover accounts, reports, community, routes and schedules, notifications, the flood-spot log, the photo re-check,
+the rate limits, the agent dashboard and the server's pre-departure check.

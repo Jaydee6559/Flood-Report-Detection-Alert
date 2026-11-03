@@ -35,6 +35,7 @@
   // A page opened from disk has no server, so it is a guest and sees no reports.
   if (location.protocol === "http:" || location.protocol === "https:") {
     var want = /[?&]id=(\d+)/.exec(location.search);
+    tags.unshift('<script src="/api/spots.js"><\/script>'); // the moderators' flood-spot log (window.FDA_SPOTS_LOG)
     tags.unshift('<script src="/api/my.js"><\/script>');   // the signed-in person's routes and schedules (window.FDA_MY)
     tags.unshift('<script src="/api/reports.js' + (want ? "?id=" + want[1] : "") + '"><\/script>');
     tags.unshift('<script src="/api/auth/me.js"><\/script>');

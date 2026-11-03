@@ -20,6 +20,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
+import limits
 from database import Comment, Confirmation, Flag, Report, User, db
 from notifications_api import notify
 from reports_api import counts_for, naive_utc, public
@@ -68,6 +69,7 @@ def _reason(data):
 @login_required
 def confirm(report_id):
     r, err = _report_or_error(report_id)
+    err = err or limits.too_many("confirm", current_user.id)
     if err:
         return err
     kind = (request.get_json(silent=True) or {}).get("kind")
@@ -115,6 +117,7 @@ def _flag(target, target_id, owner_id):
 @login_required
 def flag_report(report_id):
     r, err = _report_or_error(report_id)
+    err = err or limits.too_many("flag", current_user.id)
     if err:
         return err
     already = Flag.query.filter_by(target="report", target_id=r.id, user_id=current_user.id).first() is not None
@@ -127,6 +130,9 @@ def flag_report(report_id):
 @bp.post("/api/comments/<int:comment_id>/flag")
 @login_required
 def flag_comment(comment_id):
+    stop = limits.too_many("flag", current_user.id)
+    if stop:
+        return stop
     c = db.session.get(Comment, comment_id)
     if c is None or c.removed:
         return jsonify(ok=False, error="That comment was removed."), 404
@@ -163,6 +169,7 @@ def list_comments(report_id):
 @login_required
 def add_comment(report_id):
     r, err = _report_or_error(report_id)
+    err = err or limits.too_many("comment", current_user.id)
     if err:
         return err
     text = " ".join(str((request.get_json(silent=True) or {}).get("text") or "").split())

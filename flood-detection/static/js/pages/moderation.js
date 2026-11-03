@@ -245,7 +245,9 @@
     }
     $("#sp-body").addEventListener("click", function (e) {
       var b = e.target.closest("[data-rm]"); if (!b) return;
-      FDA.hazard.removeSpot(b.dataset.rm); draw(); FDA.ui.toast("Sighting removed.");
+      b.disabled = true;
+      FDA.hazard.removeSpot(b.dataset.rm).then(function () { draw(); FDA.ui.toast("Sighting removed."); },
+        function (err) { b.disabled = false; FDA.ui.toast(err.message, "error"); });
     });
     $("#spot-form").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -254,10 +256,45 @@
       if (!FDA.hazard.get(b)) { err.textContent = "Choose a barangay from the list."; err.hidden = false; return; }
       if (!c) { err.textContent = "Enter the corner or street."; err.hidden = false; return; }
       if (url && !/^https?:\/\//i.test(url)) { err.textContent = "The source link must start with http:// or https://."; err.hidden = false; return; }
-      FDA.hazard.addSpot({ barangay: b, corner: c, date: $("#sp-date").value, depth: $("#sp-d").value, pass: $("#sp-p").value, url: url, source: "Moderator log" });
-      $("#sp-c").value = ""; $("#sp-u").value = ""; draw(); FDA.ui.toast("Added to the flood-spot log.", "success");
+      var add = $("#spot-form [type=submit]"); add.disabled = true;
+      FDA.hazard.addSpot({ barangay: b, corner: c, date: $("#sp-date").value, depth: $("#sp-d").value, pass: $("#sp-p").value, url: url, source: "Moderator log" }).then(function (spot) {
+        add.disabled = false;
+        $("#sp-c").value = ""; $("#sp-u").value = ""; draw();
+        FDA.ui.toast(spot.times > 1 ? "Added: " + spot.corner + " has now flooded " + spot.times + " times." : "Added to the flood-spot log.", "success");
+      }, function (e) { add.disabled = false; err.textContent = e.message; err.hidden = false; });
     });
     draw();
+  })();
+
+  /* ---------- Agent dashboard: how Rule 1 did in the last 30 days (from the server) ---------- */
+  (function agentStats() {
+    var sec = document.createElement("section");
+    sec.className = "card card--padded"; sec.id = "agent-stats"; sec.setAttribute("aria-labelledby", "stats-title"); sec.style.marginTop = "16px";
+    sec.innerHTML = '<h2 class="heading-sm" id="stats-title">How the agent did</h2><p class="text-muted text-sm" id="stats-body">Loading…</p>';
+    $("#spot-log").insertAdjacentElement("afterend", sec);
+    var NAMES = { "flood-warning": "Flood warning", "possible-flood": "Possible flood", "unclear-photo": "Unclear photo", "no-flood": "No flood" };
+    var INPUT = { H: "hazard zone", R: "heavy rain", S: "recurring flood spot", N: "nearby reports" };
+    function pct(a, b) { return b ? Math.round(a / b * 100) + "%" : "–"; }
+    FDA.api.get("/api/moderation/stats").then(function (res) {
+      var body = $("#stats-body");
+      if (!res.ok) { body.textContent = res.data.error || "The numbers could not be loaded."; return; }
+      var d = res.data;
+      if (!d.total) { body.textContent = "No reports in the last " + d.days + " days yet."; return; }
+      var th = 'style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--color-border, #ddd)"', td = 'style="padding:6px 8px"';
+      var rows = Object.keys(NAMES).map(function (k) {
+        var s = d.byStatus[k], reviewed = s.approved + s.duplicate + s.removed;
+        return "<tr><td " + td + ">" + FDA.ui.badge(k, "badge--sm") + "</td><td " + td + ">" + s.reports + "</td><td " + td + ">" + s.raised + "</td><td " + td + ">" +
+          s.approved + " / " + s.duplicate + " / " + s.removed + "</td><td " + td + ">" + pct(s.removed, reviewed) + "</td><td " + td + ">" + s.still + " / " + s.not + "</td><td " + td + ">" + s.waiting + "</td></tr>";
+      }).join("");
+      var raised = Object.keys(INPUT).filter(function (k) { return d.raisedBy[k]; }).map(function (k) { return INPUT[k] + " " + d.raisedBy[k] + "×"; });
+      var model = Object.keys(d.models).map(function (k) { return (k === "server" ? "trained model" : k === "tfjs" ? "model in the browser" : "rough estimate") + " " + d.models[k]; });
+      body.outerHTML = '<p class="text-muted text-sm">' + d.total + " report" + (d.total === 1 ? "" : "s") + " in the last " + d.days + " days · photo checked by " + esc(model.join(", ")) + "." +
+        (raised.length ? " Raised a step by: " + esc(raised.join(", ")) + "." : " No report was raised a step by hazard, rain, spots or nearby reports.") + "</p>" +
+        '<div style="overflow-x:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse;font-size:var(--font-size-sm)"><thead><tr>' +
+        "<th " + th + ">Agent said</th><th " + th + ">Reports</th><th " + th + ">Raised a step</th><th " + th + ">Moderators: approved / duplicate / removed</th><th " + th + ">Removed</th><th " + th + ">People: still / not flooded</th><th " + th + ">Waiting</th>" +
+        "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+        '<p class="text-muted text-xs" style="margin-top:8px">A high "removed" share or many "not flooded" votes for a status means its cut-off may need tuning (FDA.agent.config).</p>';
+    }, function () { $("#stats-body").textContent = "The numbers could not be loaded."; });
   })();
 
   render();

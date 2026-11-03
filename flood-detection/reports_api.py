@@ -26,6 +26,7 @@ from flask import Blueprint, Response, abort, current_app, jsonify, request, sen
 from flask_login import current_user, login_required
 
 import accounts
+import limits
 import notifications_api
 from database import STATUSES, AgentDecision, Confirmation, Flag, Report, db, utcnow
 
@@ -200,11 +201,37 @@ def _clean_reasons(reasons):
     return out
 
 
-def _save_photo(file):
-    """Re-save the upload as a JPEG (this also drops EXIF data such as GPS). Returns the file name."""
+# Starting cut-offs of the agent's Rule 1 (static/js/core/agent.js config: floodAt, possibleAt, unclearAt)
+FLOOD_AT, POSSIBLE_AT, UNCLEAR_AT = 0.80, 0.50, 0.30
+
+
+def status_from_probability(p):
+    if p >= FLOOD_AT:
+        return "flood-warning"
+    if p >= POSSIBLE_AT:
+        return "possible-flood"
+    if p >= UNCLEAR_AT:
+        return "unclear-photo"
+    return "no-flood"
+
+
+def _server_probability(data):
+    """P(flood) from the trained model on the server, or None when it is not loaded (or fails)."""
+    check = current_app.config.get("PHOTO_CHECK")
+    if not check:
+        return None
+    try:
+        return check(data)
+    except Exception as exc:   # an unreadable photo is caught by _save_photo; anything else: fall back to the page's value
+        current_app.logger.warning("Server photo re-check failed: %s", exc)
+        return None
+
+
+def _save_photo(data):
+    """Re-save the upload (bytes) as a JPEG (this also drops EXIF data such as GPS). Returns the file name."""
     from PIL import Image, ImageOps
     try:
-        img = Image.open(io.BytesIO(file.read()))
+        img = Image.open(io.BytesIO(data))
         img = ImageOps.exif_transpose(img).convert("RGB")
     except Exception:
         raise Bad("That file could not be read as a photo.")
@@ -219,6 +246,9 @@ def _save_photo(file):
 @bp.post("/api/reports")
 @login_required
 def create_report():
+    stop = limits.blocked("report", current_user.id)
+    if stop:
+        return stop
     photo_file = None
     try:
         try:
@@ -254,7 +284,16 @@ def create_report():
         if depth is not None:
             inputs["depthCm"] = depth
 
-        photo_file = _save_photo(request.files["photo"])
+        photo_bytes = request.files["photo"].read()
+        # With the trained model loaded, the server checks the photo itself instead of trusting the page:
+        # the starting status must be the one the server's probability gives, and the server's P is saved.
+        server_p = _server_probability(photo_bytes)
+        if server_p is not None:
+            if status_from_probability(server_p) != start:
+                raise Bad("The photo check on the server gave a different result. Please check the photo again, then send the report.")
+            inputs["pageProb"] = prob
+            prob, source = server_p, "server"
+        photo_file = _save_photo(photo_bytes)
         report = Report(
             user_id=current_user.id, barangay=barangay, street=_text(data, "street", 120), lat=lat, lng=lng,
             location_precise=data.get("location") == "precise", description=_text(data, "desc", 500),
@@ -271,6 +310,7 @@ def create_report():
         ))
         notifications_api.route_alerts(report)   # everyone whose saved route passes near it
         db.session.commit()
+        limits.count("report", current_user.id)
     except Bad as e:
         db.session.rollback()
         if photo_file:
@@ -328,6 +368,42 @@ def review_report(report_id):
         notifications_api.notify(r.user_id, "report", "removed:%d" % r.id, "Your report #%d was removed" % r.id, r.remove_reason, link, "Open report →")
     db.session.commit()
     return jsonify(ok=True, report=public(r, counts_for([r], current_user)[r.id], current_user))
+
+
+# ---- Agent dashboard (moderators) ---------------------------------------------------------------
+STATS_DAYS = 30
+
+
+@bp.get("/api/moderation/stats")
+@login_required
+def agent_stats():
+    """How the agent's Rule 1 did over the last STATS_DAYS days: what it decided, what raised a status,
+    and what moderators and the community said afterwards. For the moderation page."""
+    if not current_user.is_moderator:
+        return jsonify(ok=False, error="Only moderators can see this."), 403
+    since = utcnow() - timedelta(days=STATS_DAYS)
+    rows = Report.query.filter(Report.created_at >= since).all()
+    counts = counts_for(rows)
+    by_status = {s: {"reports": 0, "raised": 0, "approved": 0, "duplicate": 0, "removed": 0, "waiting": 0, "still": 0, "not": 0}
+                 for s in STATUSES}
+    raised_by = {"H": 0, "R": 0, "S": 0, "N": 0}
+    models = {}
+    for r in rows:
+        b = by_status[r.status]
+        b["reports"] += 1
+        if r.start_status != r.status:
+            b["raised"] += 1
+            for x in r.reasons or []:
+                if x.get("effect") == "raise" and x.get("key") in raised_by:
+                    raised_by[x["key"]] += 1
+        if r.review in ("approved", "duplicate", "removed"):
+            b[r.review] += 1
+        elif r.review is None and (r.dup_candidate_id or counts[r.id]["flags"]):
+            b["waiting"] += 1
+        b["still"] += counts[r.id]["still"]
+        b["not"] += counts[r.id]["not"]
+        models[r.model_source] = models.get(r.model_source, 0) + 1
+    return jsonify(ok=True, days=STATS_DAYS, total=len(rows), byStatus=by_status, raisedBy=raised_by, models=models)
 
 
 def init_app(app):

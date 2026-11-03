@@ -28,6 +28,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
 import accounts
+import limits
 from database import NOTICE_KINDS, Notification, NotificationSettings, Route, User, WatchedBarangay, db
 
 bp = Blueprint("notifications_api", __name__)
@@ -152,6 +153,9 @@ def list_notices():
 @login_required
 def push_own():
     """A notification the page made for the signed-in person themself (never for anyone else)."""
+    stop = limits.too_many("notice", current_user.id)
+    if stop:
+        return stop
     data = request.get_json(silent=True) or {}
     kind = data.get("kind")
     if kind not in NOTICE_KINDS or not str(data.get("title") or "").strip():

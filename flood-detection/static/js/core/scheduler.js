@@ -2,9 +2,9 @@
  * Travel-schedule checks
  *
  * Before each saved departure the agent checks the reports along the route and
- * leaves an in-app notification. A real server would run this on a timer
- * (APScheduler); the prototype runs it whenever a page is open: on load, then
- * once a minute.
+ * leaves an in-app notification. The server runs the same check once a minute
+ * (jobs.py), so it happens with no page open; a page that is open runs it too,
+ * and the shared day key stops the same alert being sent twice.
  */
 (function () {
   "use strict";

@@ -4,6 +4,7 @@ First time:
     pip install -r requirements.txt
     flask --app app init-db                       (creates instance/flood.db, empty)
     flask --app app create-user --moderator       (the first moderator account)
+    flask --app app set-password                  (reset someone's password; there is no email reset yet)
 Run:
     flask --app app run --debug                   (then open http://127.0.0.1:5000)
 
@@ -12,7 +13,8 @@ Without it, or without TensorFlow installed, the site still runs and the
 report page falls back to the demo estimate.
 The tables are in database.py and described in DATABASE.md; accounts are in accounts.py,
 flood reports in reports_api.py, confirmations, comments and flags in community_api.py,
-saved routes and travel schedules in routes_api.py, notifications in notifications_api.py.
+saved routes and travel schedules in routes_api.py, notifications in notifications_api.py,
+the flood-spot log in spots_api.py, rate limits in limits.py, timed jobs in jobs.py.
 """
 import io
 import os
@@ -23,9 +25,11 @@ from flask import Flask, abort, jsonify, render_template, request
 
 import accounts
 import community_api
+import jobs
 import notifications_api
 import reports_api
 import routes_api
+import spots_api
 from database import NotificationSettings, User, add_missing_columns, db
 
 app = Flask(__name__)  # templates/ and static/ sit next to this file
@@ -67,6 +71,10 @@ community_api.init_app(app)
 routes_api.init_app(app)
 # ---- Notifications, their settings and watched barangays (Module 12) ---------
 notifications_api.init_app(app)
+# ---- The flood-spot log (Modules 3, 13) ---------------------------------------
+spots_api.init_app(app)
+# ---- Timed jobs: pre-departure checks once a minute, even with no page open --
+jobs.start(app)
 
 
 @app.cli.command("init-db")
@@ -101,6 +109,21 @@ def create_user(name, login, password, moderator):
     db.session.add(user)
     db.session.commit()
     click.echo("Created %s #%d: %s" % (user.role, user.id, user.login))
+
+
+@app.cli.command("set-password")
+@click.option("--login", prompt="Email or mobile number of the account")
+@click.password_option("--password", prompt="New password")
+def set_password(login, password):
+    """Reset someone's password (there is no email reset yet). Asks for the new password; nothing is shown."""
+    user = User.query.filter_by(login=accounts.norm_login(login)).first()
+    if user is None:
+        raise click.ClickException("No account with that email or number.")
+    if not accounts.password_is_strong(password):
+        raise click.ClickException("Use at least 8 characters, a number, and upper and lower case letters.")
+    user.set_password(password)
+    db.session.commit()
+    click.echo("New password set for %s #%d (%s). Tell them to sign in with it." % (user.role, user.id, user.login))
 
 
 # ---- Image classifier (Module 6) ---------------------------------------------
@@ -139,6 +162,17 @@ def prepare_photo(data):
     img = ImageOps.exif_transpose(img)  # phone photos are often stored sideways
     img = img.convert("RGB").resize(IMG_SIZE, Image.BILINEAR)
     return np.asarray(img, dtype="float32")[None, ...]
+
+
+def photo_probability(data):
+    """P(flood) for the bytes of a photo, from the trained model; None when the model is not loaded."""
+    net = get_model()
+    if net is None:
+        return None
+    return min(1.0, max(0.0, float(net.predict(prepare_photo(data), verbose=0).ravel()[0])))
+
+
+app.config.setdefault("PHOTO_CHECK", photo_probability)   # reports_api re-checks every new report with it
 
 
 @app.get("/api/model-status")
@@ -249,4 +283,6 @@ def html_page(page):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    os.environ.setdefault("FDA_JOBS", "1")
+    jobs.start(app)
+    app.run(debug=True, use_reloader=False)

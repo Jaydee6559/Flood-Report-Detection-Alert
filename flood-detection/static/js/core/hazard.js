@@ -4,7 +4,8 @@
  * Data:
  *   static/data/barangays.js    142 barangay polygons with a hazard level (SAMPLE levels until the
  *                               UP NOAH layer is plugged in; see scripts/build_barangays.py)
- *   static/data/flood-spots.js  the flood-spot log seed (SAMPLE). Moderators add more in the browser.
+ *   static/data/flood-spots.js  the flood-spot log seed (SAMPLE). Moderators add more; those are saved on the
+ *                               server (spots_api.py) and arrive as window.FDA_SPOTS_LOG (/api/spots.js).
  *
  * Everything here is read-only lookups, so it can move to the Flask API later without changing callers:
  *   FDA.hazard.at(lat, lng)            -> {barangay, hazard} for a point
@@ -66,7 +67,8 @@
 
   /* ---------- Flood spots ---------- */
   var cache = null, cacheKey = "";
-  function logged() { var db = FDA.store.db(); return (db.spots = db.spots || []); }
+  /** The moderators' log, from the server (/api/spots.js). */
+  function logged() { return (window.FDA_SPOTS_LOG = window.FDA_SPOTS_LOG || []); }
 
   function metersToDeg(dn, de, lat) { return { lat: dn / 111320, lng: de / (111320 * Math.cos(lat * Math.PI / 180)) }; }
 
@@ -127,19 +129,29 @@
       return best;
     },
 
-    /** Moderators: add a sighting to the log. Returns the new spot. */
+    /** Moderators: add a sighting to the log (saved on the server; the same corner again counts as another time).
+        Resolves with the spot; rejects with a readable Error. */
     addSpot: function (o) {
-      var b = byName[o.barangay]; if (!b) throw new Error("Choose a barangay from the list.");
+      var b = byName[o.barangay];
+      if (!b) return Promise.reject(new Error("Choose a barangay from the list."));
       var p = FDA.geo.point("Quezon City", o.barangay, o.corner) || { lat: b.lat, lng: b.lng };
-      var db = FDA.store.db(), spot = {
-        id: "L" + Date.now().toString(36), barangay: o.barangay, corner: o.corner, street: o.street || o.corner.split(/ cor\.? /i)[0],
-        times: 1, depth: o.depth, pass: o.pass || "all", last: o.date, lat: p.lat, lng: p.lng, source: o.source || "Moderator log", sourceUrl: o.url || ""
-      };
-      // the same corner seen again counts as another time instead of a second row
-      var same = logged().filter(function (s) { return s.barangay === spot.barangay && s.corner.toLowerCase() === spot.corner.toLowerCase(); })[0];
-      if (same) { same.times += 1; same.last = spot.last > same.last ? spot.last : same.last; if (FDA.hazard.depth(spot.depth).rank > FDA.hazard.depth(same.depth).rank) same.depth = spot.depth; FDA.store.save(); cache = null; return same; }
-      db.spots.push(spot); FDA.store.save(); cache = null; return spot;
+      return FDA.api.post("/api/spots", { barangay: o.barangay, corner: o.corner, street: o.street || "", date: o.date, depth: o.depth,
+        pass: o.pass || "all", url: o.url || "", source: o.source || "Moderator log", lat: p.lat, lng: p.lng }).then(function (res) {
+        if (!res.ok) throw new Error(res.data.error || "The sighting could not be saved. Please try again.");
+        var list = logged(), spot = res.data.spot, i = -1;
+        list.forEach(function (s, k) { if (s.id === spot.id) i = k; });
+        if (i >= 0) list[i] = spot; else list.push(spot);
+        cache = null;
+        return spot;
+      }, function () { throw new Error("The server can't be reached, so the sighting was not saved."); });
     },
-    removeSpot: function (id) { var db = FDA.store.db(); db.spots = logged().filter(function (s) { return s.id !== id; }); FDA.store.save(); cache = null; }
+    /** Moderators: remove a logged spot. Resolves when the server removed it. */
+    removeSpot: function (id) {
+      return FDA.api.post("/api/spots/" + String(id).replace(/^L/, "") + "/delete", {}).then(function (res) {
+        if (!res.ok && res.status !== 404) throw new Error(res.data.error || "The sighting could not be removed.");
+        window.FDA_SPOTS_LOG = logged().filter(function (s) { return s.id !== id; });
+        cache = null;
+      }, function () { throw new Error("The server can't be reached, so nothing was removed."); });
+    }
   };
 })();

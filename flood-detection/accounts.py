@@ -20,6 +20,7 @@ from flask import Blueprint, Response, current_app, jsonify, request
 from flask_login import LoginManager, current_user, login_user, logout_user
 from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
 
+import limits
 from database import NotificationSettings, User, db
 
 bp = Blueprint("accounts", __name__)
@@ -110,6 +111,9 @@ def who_am_i_script():
 
 @bp.post("/api/auth/register")
 def register():
+    stop = limits.blocked("register", request.remote_addr)
+    if stop:
+        return stop
     data = request.get_json(silent=True) or {}
     name = str(data.get("name") or "").strip()
     login = str(data.get("login") or "").strip()
@@ -141,6 +145,7 @@ def register():
     user.settings = NotificationSettings()
     db.session.add(user)
     db.session.commit()
+    limits.count("register", request.remote_addr)
     login_user(user, remember=True)
     return jsonify(ok=True, user=public(user), csrf=generate_csrf())
 
@@ -148,8 +153,14 @@ def register():
 @bp.post("/api/auth/login")
 def sign_in():
     data = request.get_json(silent=True) or {}
-    user = User.query.filter_by(login=norm_login(data.get("login"))).first()
+    ip, login = request.remote_addr, norm_login(data.get("login"))
+    stop = limits.blocked("login", (ip, login)) or limits.blocked("login-ip", ip)   # too many wrong passwords
+    if stop:
+        return stop
+    user = User.query.filter_by(login=login).first()
     if user is None or not user.check_password(str(data.get("password") or "")):
+        limits.count("login", (ip, login))
+        limits.count("login-ip", ip)
         return jsonify(ok=False, error=MSG_BAD_LOGIN), 401
     login_user(user, remember=bool(data.get("remember")))
     return jsonify(ok=True, user=public(user), csrf=generate_csrf())

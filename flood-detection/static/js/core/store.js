@@ -80,13 +80,24 @@
     db.settings = mine.settings || null;     // the signed-in person's notification settings (null for a guest)
     db.watch = mine.watch || [];             // the signed-in person's "Alert me" barangays
     FDA.store.save();
-    if (db.pendingImport || db.pendingWatch) setTimeout(importOld, 0);
+    if (db.spots) {   // a moderator's flood-spot log from before it moved to the server: sent once (see importOld)
+      if (db.spots.length) db.pendingSpots = (db.pendingSpots || []).concat(db.spots);
+      delete db.spots; FDA.store.save();
+    }
+    if (db.pendingImport || db.pendingWatch || db.pendingSpots) setTimeout(importOld, 0);
   }
 
   /** Send the routes, schedules and watched barangays this browser saved before steps 5-6 to the server. */
   function importOld() {
     var me = window.FDA_ME;
     if (!me || !FDA.api || !FDA.api.available()) return;   // try again when the owner is signed in
+    if (db.pendingSpots && me.role === "moderator") {   // only a moderator can add to the shared log
+      var spots = db.pendingSpots; delete db.pendingSpots; FDA.store.save();
+      spots.forEach(function (s) {
+        FDA.api.post("/api/spots", { barangay: s.barangay, corner: s.corner, street: s.street || "", date: s.last, depth: s.depth, pass: s.pass || "all",
+          url: s.sourceUrl || "", source: s.source || "Moderator log", lat: s.lat, lng: s.lng }).then(function () {}, function () {});
+      });
+    }
     var w = db.pendingWatch && db.pendingWatch[me.id];
     if (w) {
       delete db.pendingWatch[me.id];
