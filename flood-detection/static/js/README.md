@@ -39,7 +39,7 @@ The sample reports, Maria's home (Tandang Sora) and her three routes are all in 
 | `store.js`     | The "database" (localStorage) and the sample data. Swap for the API later. |
 | `geo.js`       | Reads the location list (see below), then does lookups, distances and "use my location". Add a geocoder for street-level addresses later. |
 | `agent.js`     | **The intelligent agent**: thresholds, status, recommendation, duplicate check, route check, flood-risk outlook. Edit `FDA.agent.config` to tune. |
-| `classifier.js`| Photo → flood probability. Uses a TensorFlow.js model if present, otherwise a **demo estimate** (see below). |
+| `classifier.js`| Photo → flood probability. Uses the trained model through Flask (`/api/classify`) first, then a TensorFlow.js copy if present, otherwise a **demo estimate** (see below). |
 | `auth.js`      | Register, sign in/out, roles. Toy password hash, **demo only**. |
 | `notify.js`    | In-app notifications and per-user settings. |
 | `scheduler.js` | Pre-departure route checks. Runs while a page is open (a server would use APScheduler). |
@@ -83,22 +83,29 @@ centre of their district and carry `"approx": true`.
 
 ## The image model
 
-`classifier.js` looks for a TensorFlow.js model at `static/model/model.json`.
-To use your trained MobileNetV2:
+`classifier.js` tries these in order and uses the first one that works:
 
-```bash
-pip install tensorflowjs
-tensorflowjs_converter --input_format=keras flood_model.keras static/model/
-```
+1. **Flask (the normal setup).** Put the trained MobileNetV2 at
+   `models/flood_model.keras` (see `models/README.md`), install the requirements
+   (Python 3.12 for TensorFlow) and run `flask --app app run`. The page checks
+   `GET /api/model-status`, then sends each photo as a JPEG (longest side up to
+   1024 px) to `POST /api/classify`, which returns `{"prob": 0..1, "source": "server"}`.
+   If that request fails, the report still goes through with the demo estimate
+   and a toast says so.
+2. **TensorFlow.js (optional).** For running without Flask, convert the model:
 
-Then serve the folder over http (for example `python -m http.server` from the
-repo root) because browsers do not let a page opened from disk load the model.
-Preprocessing is `[-1, 1]` scaling at 224×224, which is MobileNetV2's default.
-If your model has two outputs, set `FDA.classifier.floodIndex` to the index of
-the "Flood" class in your training order.
+   ```bash
+   pip install tensorflowjs
+   tensorflowjs_converter --input_format=keras flood_model.keras static/model/
+   ```
 
-**Until then the result is a rough colour-based demo estimate**, not the trained
-model. The result page labels it "DEMO ESTIMATE".
+   and serve the folder over http (for example `python -m http.server` from the
+   repo root), because browsers do not let a page opened from disk load the model.
+   The page passes raw 0–255 pixels at 224×224: the model has its own scaling
+   layer, so do not scale them in the browser. If a model has two outputs, set
+   `FDA.classifier.floodIndex` to the index of the "Flood" class in its training order.
+3. **Demo estimate.** With neither, or from `file://`, the result is a rough
+   colour-based estimate, not the trained model. The result page labels it "DEMO ESTIMATE".
 
 ## Weather
 
