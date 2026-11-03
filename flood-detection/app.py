@@ -12,7 +12,7 @@ Without it, or without TensorFlow installed, the site still runs and the
 report page falls back to the demo estimate.
 The tables are in database.py and described in DATABASE.md; accounts are in accounts.py,
 flood reports in reports_api.py, confirmations, comments and flags in community_api.py,
-saved routes and travel schedules in routes_api.py.
+saved routes and travel schedules in routes_api.py, notifications in notifications_api.py.
 """
 import io
 import os
@@ -23,6 +23,7 @@ from flask import Flask, abort, jsonify, render_template, request
 
 import accounts
 import community_api
+import notifications_api
 import reports_api
 import routes_api
 from database import NotificationSettings, User, add_missing_columns, db
@@ -64,6 +65,8 @@ reports_api.init_app(app)
 community_api.init_app(app)
 # ---- Routes and travel schedules (Modules 10-11) -----------------------------
 routes_api.init_app(app)
+# ---- Notifications, their settings and watched barangays (Module 12) ---------
+notifications_api.init_app(app)
 
 
 @app.cli.command("init-db")

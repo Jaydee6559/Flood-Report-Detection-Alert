@@ -112,10 +112,7 @@
     if (r.ownerId === voter) return FDA.ui.toast("You can't confirm your own report.", "error");
     send("/api/reports/" + r.id + "/confirm", { kind: kind }).then(function (data) {
       if (!data) return;
-      r = FDA.store.putReport(data.report);
-      if (r.myVote === "still") {
-        FDA.notify.push(r.ownerId, { kind: "report", key: "confirm:" + r.id, title: "Your report #" + r.id + " was confirmed " + r.still + " time" + (r.still > 1 ? "s" : ""), text: r.still + " " + (r.still > 1 ? "people say" : "person says") + " it is still flooded", href: "report-details.html?id=" + r.id, cta: "Open report →" });
-      }
+      r = FDA.store.putReport(data.report);   // the server tells the reporter (notifications_api.py)
       paintVotes(); indicators(); FDA.layout.refresh();
     });
   }
@@ -190,8 +187,7 @@
       post.disabled = false;
       if (!data) return;
       var c = data.comment;
-      comments.unshift(c);
-      if (r.ownerId !== me.id) FDA.notify.push(r.ownerId, { kind: "report", key: "comment:" + r.id + ":" + c.id, title: "New comment on your report #" + r.id, text: "“" + c.text + "”", href: "report-details.html?id=" + r.id, cta: "Reply →" });
+      comments.unshift(c);   // the server tells the reporter (notifications_api.py)
       input.value = ""; paintComments();
     });
   }

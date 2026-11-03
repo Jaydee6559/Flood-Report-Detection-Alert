@@ -34,7 +34,7 @@
     var groups = {};
     rows.forEach(function (n) { (groups[FDA.ui.dayLabel(n.ts)] = groups[FDA.ui.dayLabel(n.ts)] || []).push(n); });
     var html = Object.keys(groups).map(function (g, i) {
-      return '<p class="notice-group">' + g + (i === 0 ? ' <span class="badge badge--sample">DEMO DATA</span>' : "") + "</p><ul>" + groups[g].map(item).join("") + "</ul>";
+      return '<p class="notice-group">' + g + "</p><ul>" + groups[g].map(item).join("") + "</ul>";
     }).join("");
     box.innerHTML = html || '<p class="notice-group">Nothing here yet</p><p class="text-small text-muted" style="padding:8px 20px 20px">' +
       (active === "route" ? "Save a route to get alerts when a flood report appears along it." : "New notifications will show up here.") + "</p>";
@@ -45,19 +45,27 @@
   var markAll = $(".notices-head__desktop");
   markAll.addEventListener("click", function () { FDA.notify.markAllRead(user.id); render(); });
 
-  // Opening a notification marks it as read
+  // Opening a notification marks it as read (saved on the server)
   box.addEventListener("click", function (e) {
     var art = e.target.closest(".notice"); if (!art) return;
     var n = FDA.store.db().notifications.filter(function (x) { return x.id === +art.dataset.id; })[0];
-    if (n && !n.read) { n.read = true; FDA.store.save(); if (!e.target.closest("a")) render(); }
+    if (n && !n.read) { FDA.notify.markRead(n.id); if (!e.target.closest("a")) render(); }
   });
 
-  /* Settings */
+  // New notifications from the server (checked once a minute) show without a reload
+  document.addEventListener("fda:notifications", render);
+
+  /* Settings (saved on the server). If saving fails, the switch goes back. */
   var map = { "set-route": "route", "set-area": "area", "set-schedule": "schedule", "set-reports": "reports", "set-clear": "clear" };
-  var settings = FDA.notify.settings(user.id);
+  var settings = FDA.notify.settings();
   $$(".settings-list .switch").forEach(function (sw) {
     var key = map[sw.getAttribute("aria-labelledby")];
-    FDA.ui.bindSwitch(sw, settings[key], function (v) { settings[key] = v; FDA.store.save(); FDA.ui.toast(v ? "Turned on." : "Turned off."); });
+    FDA.ui.bindSwitch(sw, settings[key], function (v) {
+      FDA.notify.saveSetting(key, v).then(function () { FDA.ui.toast(v ? "Turned on." : "Turned off."); }, function (err) {
+        sw.setAttribute("aria-checked", String(!v));
+        FDA.ui.toast(err.message, "error");
+      });
+    });
   });
 
   var empty = $(".empty-card"); if (empty) empty.hidden = FDA.store.db().routes.some(function (r) { return r.userId === user.id; });

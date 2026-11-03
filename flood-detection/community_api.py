@@ -21,6 +21,7 @@ from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
 from database import Comment, Confirmation, Flag, Report, User, db
+from notifications_api import notify
 from reports_api import counts_for, naive_utc, public
 
 bp = Blueprint("community_api", __name__)
@@ -75,6 +76,7 @@ def confirm(report_id):
     if r.user_id == current_user.id:
         return jsonify(ok=False, error="You can't confirm your own report."), 400
     mine = Confirmation.query.filter_by(report_id=r.id, user_id=current_user.id).first()
+    before = mine.kind if mine is not None else None
     if mine is not None and mine.kind == kind:
         db.session.delete(mine)                      # tapping the same button again takes the vote back
     elif mine is not None:
@@ -86,6 +88,12 @@ def confirm(report_id):
         db.session.commit()
     except IntegrityError:                           # a double tap raced another request: keep the first
         db.session.rollback()
+    if kind == "still" and before != "still":       # a new "still flooded" (not one taken back)
+        still = Confirmation.query.filter_by(report_id=r.id, kind="still").count()
+        if still:                                    # tell the reporter (one notification per report, refreshed)
+            notify(r.user_id, "report", "confirm:%d" % r.id, "Your report #%d was confirmed %d time%s" % (r.id, still, "" if still == 1 else "s"),
+                   "%d %s it is still flooded" % (still, "person says" if still == 1 else "people say"), "report-details.html?id=%d" % r.id, "Open report →")
+            db.session.commit()
     return jsonify(ok=True, report=_report_json(r))
 
 
@@ -164,6 +172,10 @@ def add_comment(report_id):
         return jsonify(ok=False, error="Keep comments to %d characters." % COMMENT_MAX), 400
     c = Comment(report_id=r.id, user_id=current_user.id, text=text)
     db.session.add(c)
+    db.session.flush()
+    if r.user_id != current_user.id:                 # tell the reporter
+        notify(r.user_id, "report", "comment:%d:%d" % (r.id, c.id), "New comment on your report #%d" % r.id,
+               "“%s”" % text, "report-details.html?id=%d" % r.id, "Reply →")
     db.session.commit()
     return jsonify(ok=True, comment=comment_json(c))
 

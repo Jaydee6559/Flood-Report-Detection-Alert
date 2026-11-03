@@ -16,25 +16,27 @@
  * (saveRoute, deleteRoute, saveSchedule, ...), which send the change to the
  * server and then update db.routes / db.schedules.
  *
- * Notifications and settings still live in this browser's localStorage under
- * one key, until the next step moves them to the database.
+ * Notifications, notification settings and the watched barangays come from the
+ * server too (notifications_api.py, in the same /api/my.js): db.notifications,
+ * db.settings, db.watch. Change them through FDA.notify and FDA.areas.
+ *
+ * Only small things stay in this browser's localStorage: "Remind me" reminders,
+ * the area-risk log and the flood-spot log (core/areas.js, core/hazard.js).
  */
 (function () {
   "use strict";
 
   var FDA = (window.FDA = window.FDA || {});
   var KEY = "fda.demo.v3";
-  var VERSION = 6;
-  var FROM_SERVER = { reports: 1, routes: 1, schedules: 1 };   // never written to localStorage
+  var VERSION = 7;
+  var FROM_SERVER = { reports: 1, routes: 1, schedules: 1, notifications: 1, settings: 1, watch: 1 };   // never written to localStorage
   var db = null;
 
   function empty() {
     return {
       version: VERSION,
       users: [],          // the signed-in account is copied here by core/auth.js
-      notifications: [],
-      settings: {},
-      meta: { nextNotice: 1 }
+      meta: {}
     };
   }
 
@@ -59,6 +61,14 @@
       if (old.routes.length) db.pendingImport = old;
       delete db.routes; delete db.schedules;
       if (db.meta) { delete db.meta.nextRoute; delete db.meta.nextSchedule; }
+      db.version = 6;
+    }
+    if (db && db.version === 6) {
+      // Step 6: notifications and settings moved to the server. Old browser notifications are dropped
+      // (new ones are made on the server); the "Alert me" barangays are sent to the server once.
+      if (db.watch && Object.keys(db.watch).length) db.pendingWatch = db.watch;
+      delete db.notifications; delete db.settings; delete db.watch;
+      if (db.meta) delete db.meta.nextNotice;
       db.version = VERSION;
     }
     if (!db || db.version !== VERSION) db = empty();
@@ -66,14 +76,28 @@
     db.reports = window.FDA_REPORTS || [];
     db.routes = mine.routes || [];
     db.schedules = mine.schedules || [];
+    db.notifications = mine.notifications || [];
+    db.settings = mine.settings || null;     // the signed-in person's notification settings (null for a guest)
+    db.watch = mine.watch || [];             // the signed-in person's "Alert me" barangays
     FDA.store.save();
-    if (db.pendingImport) setTimeout(importOld, 0);
+    if (db.pendingImport || db.pendingWatch) setTimeout(importOld, 0);
   }
 
-  /** Send the routes and schedules this browser saved before step 5 to the server, then reload. */
+  /** Send the routes, schedules and watched barangays this browser saved before steps 5-6 to the server. */
   function importOld() {
-    var me = window.FDA_ME, p = db.pendingImport;
-    if (!me || !p || !FDA.api || !FDA.api.available()) return;   // try again when the owner is signed in
+    var me = window.FDA_ME;
+    if (!me || !FDA.api || !FDA.api.available()) return;   // try again when the owner is signed in
+    var w = db.pendingWatch && db.pendingWatch[me.id];
+    if (w) {
+      delete db.pendingWatch[me.id];
+      if (!Object.keys(db.pendingWatch).length) delete db.pendingWatch;
+      FDA.store.save();
+      w.forEach(function (name) {
+        FDA.api.post("/api/watch", { barangay: name, on: true }).then(function (res) { if (res.ok) db.watch = res.data.watch; }, function () {});
+      });
+    }
+    var p = db.pendingImport;
+    if (!p) return;
     var routes = p.routes.filter(function (r) { return r.userId === me.id; });
     if (!routes.length) return;
     var ids = routes.map(function (r) { return r.id; });
@@ -111,7 +135,7 @@
   }
 
   FDA.store = {
-    /** The whole data object. Change notifications/settings, then call save(). Reports, routes and schedules come from the server. */
+    /** The whole data object. Reports, routes, schedules, notifications, settings and watch come from the server. */
     db: function () { if (!db) load(); return db; },
     save: function () {
       try {
@@ -163,7 +187,7 @@
       });
     },
 
-    /** Throw away this browser's data (notifications, settings...). Reports, routes and schedules stay on the server. */
+    /** Throw away this browser's own data (reminders, the area and flood-spot logs). Everything else stays on the server. */
     reset: function () { try { window.localStorage.removeItem(KEY); } catch (e) {} db = null; load(); },
     nextId: function (name) { var m = FDA.store.db().meta; var id = m[name] || 1; m[name] = id + 1; return id; }
   };

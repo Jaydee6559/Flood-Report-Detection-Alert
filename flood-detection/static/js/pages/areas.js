@@ -85,9 +85,12 @@
     btn.textContent = home ? "Your home barangay" : on ? "Alerts on" : "Alert me";
     btn.disabled = home;
     btn.onclick = function () {
-      var now = !FDA.areas.isWatching(user.id, current);
-      FDA.areas.setWatching(user.id, current, now); drawWatch();
-      FDA.ui.toast(now ? "You will be alerted if " + current + " becomes high risk." : "Alerts off for " + current + ".");
+      var name = current, now = !FDA.areas.isWatching(user.id, name);
+      btn.disabled = true;
+      FDA.areas.setWatching(user.id, name, now).then(function () {   // saved on the server
+        btn.disabled = false; if (current === name) drawWatch();
+        FDA.ui.toast(now ? "You will be alerted if " + name + " becomes high risk." : "Alerts off for " + name + ".");
+      }, function (err) { btn.disabled = false; FDA.ui.toast(err.message, "error"); });
     };
   }
 

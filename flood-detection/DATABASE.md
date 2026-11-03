@@ -144,9 +144,39 @@ sees and changes their own.
 - The pre-departure check still runs in the page while a page is open (`core/scheduler.js`); the server remembers that
   it ran today, so another page or device doesn't run it again.
 
-## Not connected yet
+## Notifications (connected)
 
-Notifications and notification settings still save to the browser (`static/js/core/store.js`). Notifications to a
-reporter (their report was confirmed, commented on or removed) and route alerts only appear in the browser where the
-action happened, until the notifications step.
+Notifications, notification settings and the "Alert me" barangays go through `notifications_api.py` and the
+`notifications`, `notification_settings` and `watched_barangays` tables.
+
+**Notifications for other people are made on the server when the thing happens**, so they reach that person on any device:
+
+| What happened | Who is told | Key |
+|---|---|---|
+| A new "still flooded" on a report | The reporter: "confirmed N times" (one notification, refreshed) | `confirm:<report>` |
+| A comment on a report | The reporter (not for their own comments) | `comment:<report>:<comment>` |
+| A moderator merged or removed a report | The reporter, with the reason | `dup:<report>`, `removed:<report>` |
+| A new flood warning / possible flood with a precise location | Everyone with route alerts on whose saved route passes within 800 m | `route:<report>:<route>` |
+
+**Notifications for yourself are made by the page** (a schedule was set, the pre-departure check, an area rain alert,
+"Remind me") and sent with `POST /api/notifications`. The page can't make one for anyone else.
+
+| Route | What it does |
+|---|---|
+| `GET /api/notifications` | Your latest 200 and the unread count. Open pages ask once a minute, so new ones show without a reload |
+| `POST /api/notifications` | `{kind, key, title, text, href, cta, clear}`, for yourself only. Links must be to one of our pages |
+| `POST /api/notifications/read` | `{ids: [...]}` or `{all: true}` |
+| `POST /api/notifications/settings` | `{route, area, schedule, reports, clear}` (on / off) |
+| `POST /api/watch` | `{barangay, on}`: the "Alert me" list on the Flood areas page |
+
+- The same key again refreshes the earlier notification (new text, unread again) instead of adding another.
+- A kind that is switched off is not saved at all.
+- `/api/my.js` also carries `notifications`, `settings` and `watch`, so pages start with them.
+
+## Still in the browser
+
+- **"Remind me"** reminders, the **area-risk log** (Rule 2 level changes) and the moderators' **flood-spot log** are still
+  kept in `localStorage`; the `agent_decisions` (kind `area`), `area_state` and `flood_spots` tables are ready for them.
+- **Timed jobs still run only while a page is open**: the pre-departure check (`core/scheduler.js`) and the 15-minute area
+  rain check (`core/areas.js`). Moving them to a server timer (APScheduler) would make them run with no page open.
 If you change a table before then, run `flask --app app init-db --reset`. There is no migration tool yet.

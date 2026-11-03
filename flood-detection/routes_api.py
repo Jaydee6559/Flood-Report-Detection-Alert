@@ -1,8 +1,9 @@
 """Saved routes and travel schedules (Modules 10-11), saved in the database.
 
 The pages read the signed-in person's own routes and schedules from a small script,
-    GET /api/my.js   ->  window.FDA_MY = {routes: [...], schedules: [...]}
+    GET /api/my.js   ->  window.FDA_MY = {routes, schedules, notifications, settings, watch}
 that static/js/app.js loads before the page scripts (a guest gets empty lists).
+Notifications, settings and watch come from notifications_api.py.
 
 All of these need an account, and only ever touch the signed-in person's own rows:
     POST /api/routes                       a new route
@@ -76,11 +77,15 @@ def schedule_json(s):
 
 
 def my_data():
+    """Everything of the signed-in person's that the pages start with (a guest gets empty lists)."""
     if not current_user.is_authenticated:
-        return {"routes": [], "schedules": []}
+        return {"routes": [], "schedules": [], "notifications": [], "settings": None, "watch": []}
+    import notifications_api
     routes = Route.query.filter_by(user_id=current_user.id).order_by(Route.id).all()
     schedules = Schedule.query.filter_by(user_id=current_user.id).order_by(Schedule.id).all()
-    return {"routes": [route_json(r) for r in routes], "schedules": [schedule_json(s) for s in schedules]}
+    out = {"routes": [route_json(r) for r in routes], "schedules": [schedule_json(s) for s in schedules]}
+    out.update(notifications_api.mine())      # notifications, settings, watch
+    return out
 
 
 @bp.get("/api/my.js")

@@ -1,10 +1,11 @@
 # Flood Detection & Alert — JavaScript
 
 This folder makes the pages work in the browser. **Accounts, flood reports,
-confirmations, comments, flags, saved routes and travel schedules are on the
-Flask server** (`accounts.py`, `reports_api.py`, `community_api.py`,
-`routes_api.py`, SQLite). Notifications and their settings are still kept in
-`localStorage` until the next step moves them to the database (see `DATABASE.md`).
+confirmations, comments, flags, saved routes, travel schedules and
+notifications are on the Flask server** (`accounts.py`, `reports_api.py`,
+`community_api.py`, `routes_api.py`, `notifications_api.py`, SQLite). Only
+"Remind me" reminders, the area-risk log and the flood-spot log are still kept
+in `localStorage` (see `DATABASE.md`).
 
 ## How it is loaded
 
@@ -16,8 +17,8 @@ Every page has one line before `</body>`:
 ```
 
 `app.js` first loads `/api/auth/me.js` from the server (who is signed in: `window.FDA_ME`, and the CSRF token:
-`window.FDA_CSRF`), `/api/reports.js` (the flood reports: `window.FDA_REPORTS`) and `/api/my.js` (your routes and
-schedules: `window.FDA_MY`), then `data/locations.js` and `core/*.js` in order, then `pages/<this-page-name>.js`.
+`window.FDA_CSRF`), `/api/reports.js` (the flood reports: `window.FDA_REPORTS`) and `/api/my.js` (your routes,
+schedules, notifications, notification settings and watched barangays: `window.FDA_MY`), then `data/locations.js` and `core/*.js` in order, then `pages/<this-page-name>.js`.
 Plain scripts (no modules). A page opened from disk (`file://`) still opens, but as a guest with no reports:
 signing in and reports need the server.
 
@@ -35,8 +36,8 @@ Reporting, confirming, commenting, flagging, routes, schedules and notifications
 moderation needs a moderator account. Passwords are hashed on the server (Werkzeug), sessions use
 Flask-Login, and every POST carries a CSRF token (Flask-WTF), which `core/api.js` adds.
 There are no sample reports any more: report numbers start at #1 in the database.
-To clear this browser's data (notifications, settings...), run `FDA.store.reset()` in the browser console.
-Reports, comments, routes and schedules stay on the server.
+To clear this browser's own data (reminders, the area and flood-spot logs), run `FDA.store.reset()` in the browser console.
+Everything else stays on the server.
 
 ## Core files (`core/`)
 
@@ -48,7 +49,7 @@ Reports, comments, routes and schedules stay on the server.
 | `agent.js`     | **The intelligent agent**: thresholds, status, recommendation, duplicate check, route check, flood-risk outlook. Edit `FDA.agent.config` to tune. |
 | `classifier.js`| Photo → flood probability. Uses the trained model through Flask (`/api/classify`) first, then a TensorFlow.js copy if present, otherwise a **demo estimate** (see below). |
 | `auth.js`      | Register, sign in/out and roles, through the server (`/api/auth/*`). `FDA.auth.current()` reads `window.FDA_ME`. |
-| `notify.js`    | In-app notifications and per-user settings. |
+| `notify.js`    | In-app notifications and settings, on the server. `push()` only makes one for yourself (other people's are made by the server); checks for new ones once a minute. |
 | `scheduler.js` | Pre-departure route checks. Runs while a page is open (a server would use APScheduler). |
 | `ui.js`        | Badges, toasts, dialogs, form errors. |
 | `layout.js`    | Runs on every page: sign-in guards, header avatar, bell count, bottom bar. |
@@ -169,7 +170,7 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 
 ## Known limits of this prototype
 
-- Accounts, reports, confirmations, comments, routes and schedules are on the server, but notifications still live in one browser until they move to the database.
+- Everything people share is on the server. "Remind me", the area-risk log and the flood-spot log still live in one browser.
 - The photo check and the agent's Rule 1 run in the page; the server checks the values it is sent but does not re-run them.
 - Pre-departure checks and reminders only run while a page is open.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).

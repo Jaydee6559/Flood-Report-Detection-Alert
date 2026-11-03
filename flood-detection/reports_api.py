@@ -26,6 +26,7 @@ from flask import Blueprint, Response, abort, current_app, jsonify, request, sen
 from flask_login import current_user, login_required
 
 import accounts
+import notifications_api
 from database import STATUSES, AgentDecision, Confirmation, Flag, Report, db, utcnow
 
 bp = Blueprint("reports_api", __name__)
@@ -268,6 +269,7 @@ def create_report():
             hazard=hazard, rain_level=rain, rain_mm=rain_mm, spots=spots, nearby_reports=nearby,
             inputs={"model": source, "lat": lat, "lng": lng, "evidence": inputs["evidence"], "dupCandidate": report.dup_candidate_id},
         ))
+        notifications_api.route_alerts(report)   # everyone whose saved route passes near it
         db.session.commit()
     except Bad as e:
         db.session.rollback()
@@ -318,6 +320,12 @@ def review_report(report_id):
         return jsonify(ok=False, error="Unknown action."), 400
     if action != "later":
         r.reviewed_by, r.reviewed_at = current_user.id, now
+    link = "report-details.html?id=%d" % r.id
+    if action == "duplicate":       # tell the reporter
+        notifications_api.notify(r.user_id, "report", "dup:%d" % r.id, "Your report #%d was marked as a duplicate" % r.id,
+                                 "Merged with #%d by a moderator" % r.dup_of_id, link, "Open report →")
+    elif action == "remove":
+        notifications_api.notify(r.user_id, "report", "removed:%d" % r.id, "Your report #%d was removed" % r.id, r.remove_reason, link, "Open report →")
     db.session.commit()
     return jsonify(ok=True, report=public(r, counts_for([r], current_user)[r.id], current_user))
 

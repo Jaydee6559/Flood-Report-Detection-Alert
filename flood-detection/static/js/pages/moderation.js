@@ -125,9 +125,9 @@
     b[0].hidden = !other; if (other) b[0].lastChild.textContent = "Mark as duplicate of #" + other.id;
   }
 
-  function tell(r, title, text) { if (r.ownerId && r.ownerId.indexOf("u") === 0) FDA.notify.push(r.ownerId, { kind: "report", key: "mod:" + r.id + ":" + Date.now(), title: title, text: text, href: "report-details.html?id=" + r.id, cta: "Open report →" }); }
 
-  /* Review actions are saved on the server (reports_api.py). Resolves with the updated report, or null if it failed. */
+  /* Review actions are saved on the server (reports_api.py), which also tells the reporter.
+     Resolves with the updated report, or null if it failed. */
   var reviewing = false;
   function review(r, action, reason) {
     if (reviewing) return Promise.resolve(null);
@@ -148,7 +148,6 @@
     var r = cur(); if (!r || !r.dupCandidate) return;
     review(r, "duplicate").then(function (r) {
       if (!r) return;
-      tell(r, "Your report #" + r.id + " was marked as a duplicate", "Merged with #" + r.dupOf + " by a moderator");
       FDA.ui.toast("Report #" + r.id + " merged with #" + r.dupOf + ".", "success"); render();
     });
   });
@@ -172,7 +171,6 @@
       if (reason === null) return;
       review(r, "remove", reason).then(function (r) {
         if (!r) return;
-        tell(r, "Your report #" + r.id + " was removed", reason);
         FDA.ui.toast("Report #" + r.id + " removed.", "success"); render();
       });
     });
