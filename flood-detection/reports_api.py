@@ -12,8 +12,8 @@ reports (newest first), plus any report asked for with ?id=<number>.
 
 The photo check (MobileNetV2) and the agent's Rule 1 still run in the page;
 the server checks every value it is sent before saving it, and logs the
-decision in agent_decisions. Confirmations, comments and flags are still kept
-in the browser until step 4.
+decision in agent_decisions. Confirmations, comments and flags are in
+community_api.py.
 """
 import io
 import json
@@ -47,26 +47,47 @@ def _ms(dt):
     return int(dt.timestamp() * 1000)
 
 
-def _counts(ids):
-    """{report id: {"still": n, "not": n, "last": datetime, "flags": n}} from the confirmations and flags rows."""
-    out = {i: {"still": 0, "not": 0, "last": None, "flags": 0} for i in ids}
+def naive_utc(dt):
+    """SQLite gives times back without a zone; compare everything as plain UTC."""
+    return dt.astimezone(timezone.utc).replace(tzinfo=None) if dt is not None and dt.tzinfo else dt
+
+
+def _counts(ids, viewer=None, reviewed=None):
+    """{report id: {"still", "not", "last", "flags", "myVote", "myFlag"}} counted from the confirmations and flags rows.
+    "flags" only counts flags made after the report was last reviewed (reviewed = {id: reviewed_at}), so a report that
+    was approved comes back to the queue if people report it again."""
+    out = {i: {"still": 0, "not": 0, "last": None, "flags": 0, "myVote": None, "myFlag": False} for i in ids}
     if not ids:
         return out
+    reviewed = reviewed or {}
+    me = viewer.id if viewer is not None else None
     for c in Confirmation.query.filter(Confirmation.report_id.in_(ids)):
         o = out[c.report_id]
         o[c.kind] += 1
-        if o["last"] is None or (c.created_at and c.created_at > o["last"]):
+        if o["last"] is None or (c.created_at and naive_utc(c.created_at) > naive_utc(o["last"])):
             o["last"] = c.created_at
+        if c.user_id == me:
+            o["myVote"] = c.kind
     for f in Flag.query.filter(Flag.target == "report", Flag.target_id.in_(ids)):
-        if f.target_id in out:
-            out[f.target_id]["flags"] += 1
+        o = out.get(f.target_id)
+        if o is None:
+            continue
+        since = naive_utc(reviewed.get(f.target_id))
+        if since is None or naive_utc(f.created_at) > since:
+            o["flags"] += 1
+        if f.user_id == me:
+            o["myFlag"] = True
     return out
+
+
+def counts_for(reports, viewer=None):
+    return _counts([r.id for r in reports], viewer, {r.id: r.reviewed_at for r in reports if r.reviewed_at})
 
 
 def public(r, counts=None, viewer=None):
     """One report as the pages see it. A removed report keeps only its number and the reason,
     except for its owner and moderators."""
-    c = counts or {"still": 0, "not": 0, "last": None, "flags": 0}
+    c = counts or {"still": 0, "not": 0, "last": None, "flags": 0, "myVote": None, "myFlag": False}
     inputs = r.inputs or {}
     out = {
         "id": r.id, "ownerId": "u%d" % r.user_id, "ts": _ms(r.created_at), "removed": r.removed,
@@ -86,6 +107,7 @@ def public(r, counts=None, viewer=None):
         "reasons": r.reasons or [], "inputs": {k: v for k, v in inputs.items() if k not in ("evidence", "depthCm")},
         "evidence": inputs.get("evidence") or [], "dupCandidate": r.dup_candidate_id, "dupOf": r.dup_of_id,
         "flags": c["flags"], "still": c["still"], "not": c["not"], "lastConfirmTs": _ms(c["last"]),
+        "myVote": c["myVote"], "myFlag": c["myFlag"],      # the signed-in viewer's own vote and flag
     })
     return out
 
@@ -101,8 +123,8 @@ def report_list(extra_id=None):
         r = db.session.get(Report, extra_id)
         if r is not None:
             rows.append(r)
-    counts = _counts([r.id for r in rows])
     viewer = _viewer()
+    counts = counts_for(rows, viewer)
     return [public(r, counts[r.id], viewer) for r in rows]
 
 
@@ -297,7 +319,7 @@ def review_report(report_id):
     if action != "later":
         r.reviewed_by, r.reviewed_at = current_user.id, now
     db.session.commit()
-    return jsonify(ok=True, report=public(r, _counts([r.id])[r.id], current_user))
+    return jsonify(ok=True, report=public(r, counts_for([r], current_user)[r.id], current_user))
 
 
 def init_app(app):

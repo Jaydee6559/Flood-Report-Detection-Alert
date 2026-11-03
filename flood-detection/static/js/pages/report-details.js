@@ -16,7 +16,6 @@
   }
 
   var me = FDA.auth.current(), voter = me ? me.id : null;   // guests can read, but not confirm, comment or flag
-  var voteKey = r.id + "|" + voter;
 
   /** Guests: explain and offer the sign-in page. Returns true when the action may go ahead. */
   function signedIn(title) {
@@ -78,12 +77,30 @@
     };
   }
 
-  /* ---------- Confirmations ---------- */
+  /** A POST to the server (community_api.py). Resolves with the reply data, or null after showing the error. */
+  var sending = false;
+  function send(url, body) {
+    if (sending) return Promise.resolve(null);
+    sending = true;
+    return FDA.api.post(url, body || {}).then(function (res) {
+      sending = false;
+      if (res.ok) return res.data;
+      if (res.status === 401) { signedIn("Please sign in again"); return null; }
+      FDA.ui.toast(res.data.error || "That did not work. Please try again.", "error");
+      return null;
+    }, function () {
+      sending = false;
+      FDA.ui.toast("The server can't be reached. Check your connection and try again.", "error");
+      return null;
+    });
+  }
+
+  /* ---------- Confirmations (one per account; saved on the server) ---------- */
   var btnStill = $(".confirm-card__buttons .btn--primary"), btnNot = $(".confirm-card__buttons .btn--ghost");
+  var iconStill = btnStill.querySelector("svg").outerHTML, iconNot = btnNot.querySelector("svg").outerHTML;
   function paintVotes() {
-    var mine = db.votes[voteKey];
-    var s = btnStill.querySelector("svg").outerHTML, n = btnNot.querySelector("svg").outerHTML;
-    btnStill.innerHTML = s + " Still flooded · " + r.still; btnNot.innerHTML = n + " Not flooded · " + r.not;
+    var mine = r.myVote;
+    btnStill.innerHTML = iconStill + " Still flooded · " + (r.still || 0); btnNot.innerHTML = iconNot + " Not flooded · " + (r.not || 0);
     btnStill.className = "btn btn--sm " + (mine === "not" ? "btn--ghost" : "btn--primary");
     btnNot.className = "btn btn--sm " + (mine === "not" ? "btn--primary" : "btn--ghost");
     btnStill.setAttribute("aria-pressed", String(mine === "still")); btnNot.setAttribute("aria-pressed", String(mine === "not"));
@@ -93,43 +110,72 @@
   function vote(kind) {
     if (!signedIn("Sign in to confirm")) return;
     if (r.ownerId === voter) return FDA.ui.toast("You can't confirm your own report.", "error");
-    var prev = db.votes[voteKey];
-    if (prev) r[prev]--;
-    if (prev === kind) delete db.votes[voteKey];
-    else { db.votes[voteKey] = kind; r[kind]++; r.lastConfirmTs = db.voteTs[r.id] = Date.now(); }   // this browser only, until step 4
-    FDA.store.save();
-    if (kind === "still" && db.votes[voteKey] === "still" && r.ownerId.indexOf("u") === 0) {
-      FDA.notify.push(r.ownerId, { kind: "report", key: "confirm:" + r.id, title: "Your report #" + r.id + " was confirmed " + r.still + " time" + (r.still > 1 ? "s" : ""), text: r.still + " " + (r.still > 1 ? "people say" : "person says") + " it is still flooded", href: "report-details.html?id=" + r.id, cta: "Open report →" });
-    }
-    paintVotes(); indicators(); FDA.layout.refresh();
+    send("/api/reports/" + r.id + "/confirm", { kind: kind }).then(function (data) {
+      if (!data) return;
+      r = FDA.store.putReport(data.report);
+      if (r.myVote === "still") {
+        FDA.notify.push(r.ownerId, { kind: "report", key: "confirm:" + r.id, title: "Your report #" + r.id + " was confirmed " + r.still + " time" + (r.still > 1 ? "s" : ""), text: r.still + " " + (r.still > 1 ? "people say" : "person says") + " it is still flooded", href: "report-details.html?id=" + r.id, cta: "Open report →" });
+      }
+      paintVotes(); indicators(); FDA.layout.refresh();
+    });
   }
   btnStill.addEventListener("click", function () { vote("still"); });
   btnNot.addEventListener("click", function () { vote("not"); });
 
-  /* ---------- Comments ---------- */
+  /* ---------- Report a problem with this report (goes to the moderators' queue) ---------- */
+  var flagBtn = document.createElement("button");
+  flagBtn.type = "button"; flagBtn.className = "link-button"; flagBtn.style.marginTop = "8px";
+  flagBtn.innerHTML = '<svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true">' + FDA.ui.icon.flag + "</svg> Report a problem with this report";
+  $(".confirm-card__last").insertAdjacentElement("afterend", flagBtn);
+  flagBtn.hidden = r.ownerId === voter;   // not on your own report
+  flagBtn.addEventListener("click", function () {
+    if (!signedIn("Sign in to report a problem")) return;
+    if (r.myFlag) return FDA.ui.toast("You already reported this. A moderator will look at it.");
+    FDA.ui.dialog({ title: "Report a problem?", text: "A moderator will review this report. Use this for photos that are not of a street, the wrong place, or spam.", confirm: "Send to moderators",
+      input: { label: "What is wrong? (optional)", placeholder: "e.g. Photo is not from Quezon City" } }).then(function (reason) {
+      if (reason === null || reason === false) return;
+      send("/api/reports/" + r.id + "/flag", { reason: typeof reason === "string" ? reason : "" }).then(function (data) {
+        if (!data) return;
+        r = FDA.store.putReport(data.report);
+        FDA.ui.toast(data.already ? "You already reported this. A moderator will look at it." : "Thanks. A moderator will review this report.", "success");
+      });
+    });
+  });
+
+  /* ---------- Comments (saved on the server) ---------- */
+  var comments = [], commentsLoaded = false;
   function initials(name) { return name.split(/\s+/).map(function (p) { return p[0]; }).join("").slice(0, 2).toUpperCase(); }
-  function shortName(name) { var p = name.split(/\s+/); return p.length > 1 ? p[0] + " " + p[p.length - 1][0] + "." : name; }
 
   function paintComments() {
-    var items = db.comments.filter(function (c) { return c.reportId === r.id && !c.removed; }).sort(function (a, b) { return b.ts - a.ts; });
-    $("#comments-title").textContent = "Comments (" + items.length + ")";
-    $(".comment-list").innerHTML = items.length ? items.map(function (c) {
-      return '<li class="comment"><span class="comment__avatar" aria-hidden="true">' + esc(initials(c.author)) + '</span><div class="comment__meta"><span class="comment__author">' + esc(c.author) + "</span><span>" + FDA.ui.clock(c.ts) +
-        '</span><button class="comment__report" type="button" data-id="' + c.id + '" aria-label="Report comment by ' + esc(c.author) + '"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true">' + FDA.ui.icon.flag + "</svg> Report</button></div>" +
-        '<p class="comment__text">' + esc(c.text) + "</p></li>";
-    }).join("") : '<li class="text-small text-muted" style="padding:8px 0">No comments yet. Be the first to add one.</li>';
+    $("#comments-title").textContent = commentsLoaded ? "Comments (" + comments.length + ")" : "Comments";
+    $(".comment-list").innerHTML = !commentsLoaded ? '<li class="text-small text-muted" style="padding:8px 0">Loading comments…</li>'
+      : comments.length ? comments.map(function (c) {
+        return '<li class="comment"><span class="comment__avatar" aria-hidden="true">' + esc(initials(c.author)) + '</span><div class="comment__meta"><span class="comment__author">' + esc(c.author) + "</span><span>" + FDA.ui.clock(c.ts) + "</span>" +
+          (c.mine ? "" : '<button class="comment__report" type="button" data-id="' + c.id + '" aria-label="Report comment by ' + esc(c.author) + '"><svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true">' + FDA.ui.icon.flag + "</svg> Report</button>") + "</div>" +
+          '<p class="comment__text">' + esc(c.text) + "</p></li>";
+      }).join("") : '<li class="text-small text-muted" style="padding:8px 0">No comments yet. Be the first to add one.</li>';
+  }
+  function loadComments() {
+    if (!FDA.api.available()) { commentsLoaded = true; paintComments(); return; }
+    FDA.api.get("/api/reports/" + r.id + "/comments").then(function (res) {
+      comments = res.ok ? res.data.comments || [] : []; commentsLoaded = true; paintComments();
+      if (!res.ok) FDA.ui.toast("The comments could not be loaded.", "error");
+    }, function () { commentsLoaded = true; paintComments(); FDA.ui.toast("The comments could not be loaded.", "error"); });
   }
 
   $(".comment-list").addEventListener("click", function (e) {
     var b = e.target.closest(".comment__report"); if (!b) return;
     if (!signedIn("Sign in to report a comment")) return;
-    var c = db.comments.filter(function (x) { return x.id === +b.dataset.id; })[0];
-    c.flaggedBy = c.flaggedBy || [];
-    if (c.flaggedBy.indexOf(voter) >= 0) return FDA.ui.toast("You already reported this comment.");
+    var c = comments.filter(function (x) { return x.id === +b.dataset.id; })[0];
+    if (!c) return;
+    if (c.flaggedByMe) return FDA.ui.toast("You already reported this comment.");
     FDA.ui.dialog({ title: "Report this comment?", text: "A moderator will review it. Use this for spam, abuse or comments that are not about this flood.", confirm: "Report comment" }).then(function (ok) {
       if (!ok) return;
-      c.flaggedBy.push(voter); c.flags = (c.flags || 0) + 1; c.flagReason = c.flagReason || "Reported by a user";
-      FDA.store.save(); FDA.ui.toast("Thanks. A moderator will review this comment.", "success");
+      send("/api/comments/" + c.id + "/flag", { reason: "Reported by a user" }).then(function (data) {
+        if (!data) return;
+        c.flaggedByMe = true;
+        FDA.ui.toast(data.already ? "You already reported this comment." : "Thanks. A moderator will review this comment.", "success");
+      });
     });
   });
 
@@ -139,14 +185,19 @@
     if (!signedIn("Sign in to comment")) return;
     if (!text) return FDA.ui.fieldError(input, "Write a short comment first.");
     FDA.ui.fieldError(input, "");
-    var c = { id: FDA.store.nextId("nextComment"), reportId: r.id, author: shortName(me.name), authorId: me.id, ts: Date.now(), text: text.slice(0, 200), flags: 0, removed: false };
-    db.comments.push(c); FDA.store.save();
-    if (r.ownerId !== me.id && r.ownerId.indexOf("u") === 0) FDA.notify.push(r.ownerId, { kind: "report", key: "comment:" + r.id + ":" + c.id, title: "New comment on your report #" + r.id, text: "“" + c.text + "”", href: "report-details.html?id=" + r.id, cta: "Reply →" });
-    input.value = ""; paintComments();
+    post.disabled = true;
+    send("/api/reports/" + r.id + "/comments", { text: text.slice(0, 200) }).then(function (data) {
+      post.disabled = false;
+      if (!data) return;
+      var c = data.comment;
+      comments.unshift(c);
+      if (r.ownerId !== me.id) FDA.notify.push(r.ownerId, { kind: "report", key: "comment:" + r.id + ":" + c.id, title: "New comment on your report #" + r.id, text: "“" + c.text + "”", href: "report-details.html?id=" + r.id, cta: "Reply →" });
+      input.value = ""; paintComments();
+    });
   }
   post.addEventListener("click", addComment);
   $(".comment-form").addEventListener("submit", function (e) { e.preventDefault(); addComment(); });
   input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addComment(); } });
 
-  indicators(); duplicates(); paintVotes(); paintComments();
+  indicators(); duplicates(); paintVotes(); paintComments(); loadComments();
 })();

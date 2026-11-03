@@ -11,7 +11,7 @@ The trained model goes in  models/flood_model.keras  (see models/README.md).
 Without it, or without TensorFlow installed, the site still runs and the
 report page falls back to the demo estimate.
 The tables are in database.py and described in DATABASE.md; accounts are in accounts.py,
-flood reports in reports_api.py.
+flood reports in reports_api.py, confirmations, comments and flags in community_api.py.
 """
 import io
 import os
@@ -21,6 +21,7 @@ import click
 from flask import Flask, abort, jsonify, render_template, request
 
 import accounts
+import community_api
 import reports_api
 from database import NotificationSettings, User, db
 
@@ -55,6 +56,8 @@ accounts.init_app(app)
 
 # ---- Flood reports (Modules 5-8, 13): saved in the database, photos in uploads/ --
 reports_api.init_app(app)
+# ---- Community (Modules 9, 13): confirmations, comments, flags ---------------
+community_api.init_app(app)
 
 
 @app.cli.command("init-db")

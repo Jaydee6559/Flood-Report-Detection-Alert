@@ -95,9 +95,30 @@ Flood reports, their photos and moderator review go through `reports_api.py` and
 - Values the database has no column for are kept in `reports.inputs`: `evidence` (nearby report numbers) and `depthCm`.
 - The photo check and Rule 1 still run in the page; the server checks the values but does not re-run them.
 
+## Community (connected)
+
+Confirmations, comments and flags go through `community_api.py` and the `confirmations`, `comments` and `flags` tables:
+
+| Route | What it does |
+|---|---|
+| `POST /api/reports/<id>/confirm` | Signed in. `{kind: "still" \| "not"}`. One vote per account; the other kind changes it, the same kind again takes it back |
+| `POST /api/reports/<id>/flag` | Signed in. `{reason}` (optional). Sends the report to the moderators' "Reported" queue |
+| `GET /api/reports/<id>/comments` | The comments, newest first, with the author's short name ("Ana R.") |
+| `POST /api/reports/<id>/comments` | Signed in. `{text}`, up to 200 characters |
+| `POST /api/comments/<id>/flag` | Signed in. Sends the comment to the moderators' comment queue |
+| `GET /api/moderation/comments` | Moderators. Comments with flags made after their last review, and how many were reviewed today |
+| `POST /api/comments/<id>/review` | Moderators. `{action: "keep" \| "remove"}` |
+
+- Nobody confirms or flags their own report, or flags their own comment. Flagging twice changes nothing.
+- Removed reports can't be confirmed, commented on or flagged, and removed comments are hidden.
+- Each report in `/api/reports.js` carries the counts (`still`, `not`, `lastConfirmTs`, `flags`) and the signed-in
+  viewer's own `myVote` and `myFlag`.
+- `flags` only counts flags made after the moderator's last review, so an approved report, or a kept comment, comes back to
+  the queue only if people report it again.
+
 ## Not connected yet
 
-Comments, confirmations and flags (step 4), then routes, schedules and notifications, still save to the browser
-(`static/js/core/store.js`). Until step 4, confirmations made in a browser are added on top of the server's counts in that
-browser only.
+Routes, schedules and notifications still save to the browser (`static/js/core/store.js`). Notifications to a reporter
+(their report was confirmed, commented on or removed) only appear in the browser where the action happened, until the
+notifications step.
 If you change a table before then, run `flask --app app init-db --reset`. There is no migration tool yet.

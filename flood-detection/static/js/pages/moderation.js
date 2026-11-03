@@ -16,7 +16,8 @@
   function reasons(r) {
     var out = [];
     if (r.dupCandidate && !r.dupOf && r.review !== "approved") out.push({ k: "dup", html: '<span class="badge badge--duplicate">' + iconDup + "Duplicate of #" + r.dupCandidate + "?</span>" });
-    if (r.flags && r.review !== "approved") out.push({ k: "reported", html: '<span class="badge badge--reported">' + iconFlag + "Reported by " + r.flags + " user" + (r.flags > 1 ? "s" : "") + "</span>" });
+    // the server only counts flags made after the last review, so approving clears them
+    if (r.flags) out.push({ k: "reported", html: '<span class="badge badge--reported">' + iconFlag + "Reported by " + r.flags + " user" + (r.flags > 1 ? "s" : "") + "</span>" });
     if (r.status === "flood-warning" && !FDA.agent.isRecent(r) && r.review !== "approved") out.push({ k: "outdated", html: '<span class="badge badge--outdated">' + iconClock + "May be outdated</span>" });
     return out;
   }
@@ -24,8 +25,17 @@
     return db.reports.filter(function (r) { return !r.removed && !r.dupOf && reasons(r).length && r.review !== "later-hide"; })
       .sort(function (a, b) { return (a.review === "later") - (b.review === "later") || b.ts - a.ts; });
   }
-  function pendingComments() { return db.comments.filter(function (c) { return !c.removed && c.flags > 0 && !c.kept; }); }
-  function reviewedToday() { return db.reports.filter(function (r) { return r.reviewedAt && Date.now() - r.reviewedAt < 86400000; }).length + db.comments.filter(function (c) { return c.reviewedAt && Date.now() - c.reviewedAt < 86400000; }).length; }
+  /* Flagged comments come from the server (community_api.py), loaded after the page opens. */
+  var commentQueue = [], commentsReviewed = 0;
+  function loadComments() {
+    return FDA.api.get("/api/moderation/comments").then(function (res) {
+      if (!res.ok) { FDA.ui.toast(res.data.error || "The comment queue could not be loaded.", "error"); return; }
+      commentQueue = res.data.comments || []; commentsReviewed = res.data.reviewedToday || 0;
+      render();
+    }, function () { FDA.ui.toast("The comment queue could not be loaded.", "error"); });
+  }
+  function pendingComments() { return commentQueue; }
+  function reviewedToday() { return db.reports.filter(function (r) { return r.reviewedAt && Date.now() - r.reviewedAt < 86400000; }).length + commentsReviewed; }
 
   function counts() {
     var q = queue(), c = {};
@@ -174,10 +184,20 @@
 
   function onCommentAction(e) {
     var b = e.target.closest("button[data-act]"); if (!b) return;
-    var c = db.comments.filter(function (x) { return x.id === +b.closest("li").dataset.id; })[0];
-    if (b.dataset.act === "keep") { c.kept = true; c.flags = 0; c.reviewedAt = Date.now(); FDA.store.save(); FDA.ui.toast("Comment kept."); render(); }
+    var c = commentQueue.filter(function (x) { return x.id === +b.closest("li").dataset.id; })[0];
+    if (!c) return;
+    function act(action, message) {
+      b.disabled = true;
+      FDA.api.post("/api/comments/" + c.id + "/review", { action: action }).then(function (res) {
+        b.disabled = false;
+        if (!res.ok) return FDA.ui.toast(res.data.error || "That did not work. Please try again.", "error");
+        commentQueue = commentQueue.filter(function (x) { return x.id !== c.id; }); commentsReviewed++;
+        FDA.ui.toast(message, "success"); render();
+      }, function () { b.disabled = false; FDA.ui.toast("The server can't be reached, so nothing was changed. Try again.", "error"); });
+    }
+    if (b.dataset.act === "keep") act("keep", "Comment kept.");
     else FDA.ui.dialog({ title: "Remove this comment?", text: "“" + c.text + "”", confirm: "Remove", danger: true }).then(function (ok) {
-      if (!ok) return; c.removed = true; c.reviewedAt = Date.now(); FDA.store.save(); FDA.ui.toast("Comment removed.", "success"); render();
+      if (ok) act("remove", "Comment removed.");
     });
   }
   cqUl.addEventListener("click", onCommentAction);
@@ -244,4 +264,5 @@
   })();
 
   render();
+  loadComments();
 })();

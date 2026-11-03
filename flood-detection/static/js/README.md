@@ -1,10 +1,10 @@
 # Flood Detection & Alert — JavaScript
 
-This folder makes the pages work in the browser. **Accounts and flood reports
-are on the Flask server** (`accounts.py`, `reports_api.py`, SQLite). Everything
-else the pages save (comments, confirmations, routes, schedules, notifications)
-is still kept in `localStorage` until the next steps move it to the database
-(see `DATABASE.md`).
+This folder makes the pages work in the browser. **Accounts, flood reports,
+confirmations, comments and flags are on the Flask server** (`accounts.py`,
+`reports_api.py`, `community_api.py`, SQLite). Routes, schedules and
+notifications are still kept in `localStorage` until the next steps move them
+to the database (see `DATABASE.md`).
 
 ## How it is loaded
 
@@ -35,14 +35,14 @@ Reporting, confirming, commenting, flagging, routes, schedules and notifications
 moderation needs a moderator account. Passwords are hashed on the server (Werkzeug), sessions use
 Flask-Login, and every POST carries a CSRF token (Flask-WTF), which `core/api.js` adds.
 There are no sample reports any more: report numbers start at #1 in the database.
-To clear this browser's data (comments, routes, notifications...), run `FDA.store.reset()` in the browser console.
-Reports stay on the server.
+To clear this browser's data (routes, schedules, notifications...), run `FDA.store.reset()` in the browser console.
+Reports and comments stay on the server.
 
 ## Core files (`core/`)
 
 | File           | What it does |
 |----------------|--------------|
-| `store.js`     | `db().reports` = the server's reports (in memory). Browser data (localStorage) for everything not yet on the database. `putReport()` takes a report the server sent back. |
+| `store.js`     | `db().reports` = the server's reports (in memory), with their counts and your own `myVote` / `myFlag`. Browser data (localStorage) for routes, schedules and notifications. `putReport()` takes a report the server sent back. |
 | `api.js`       | `FDA.api.get / post` to the Flask server. Adds the CSRF token to every POST. |
 | `geo.js`       | Reads the location list (see below), then does lookups, distances and "use my location". Add a geocoder for street-level addresses later. |
 | `agent.js`     | **The intelligent agent**: thresholds, status, recommendation, duplicate check, route check, flood-risk outlook. Edit `FDA.agent.config` to tune. |
@@ -169,7 +169,7 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 
 ## Known limits of this prototype
 
-- Accounts and reports are shared through the server, but comments, confirmations, routes and notifications still live in one browser until they move to the database.
+- Accounts, reports, confirmations and comments are shared through the server, but routes, schedules and notifications still live in one browser until they move to the database.
 - The photo check and the agent's Rule 1 run in the page; the server checks the values it is sent but does not re-run them.
 - Pre-departure checks and reminders only run while a page is open.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).
