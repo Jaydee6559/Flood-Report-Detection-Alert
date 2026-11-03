@@ -16,6 +16,7 @@ Rules the tables follow:
 """
 from datetime import datetime, timezone
 
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Text, UniqueConstraint, event
 from sqlalchemy.engine import Engine
@@ -61,7 +62,7 @@ PASSABLE = ("all", "light-no", "none")
 
 
 # ---- Accounts (Module 1) ------------------------------------------------------
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
     __table_args__ = (_one_of("role", ROLES),)
 

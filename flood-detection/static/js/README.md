@@ -1,11 +1,9 @@
 # Flood Detection & Alert — JavaScript
 
-This folder makes the static pages work **in the browser, without a server**.
-Everything the pages save (accounts, reports, comments, routes, schedules,
-notifications) is kept in `localStorage`, so the prototype can be clicked
-through end to end and demoed. When the Flask + SQLite backend exists, the
-pages stay as they are and only `core/store.js` (plus a few calls in
-`core/auth.js` and the page scripts) change to talk to the API.
+This folder makes the pages work in the browser. **Accounts are on the Flask
+server** (`accounts.py`, SQLite). Everything else the pages save (reports,
+comments, routes, schedules, notifications) is still kept in `localStorage`
+until the next steps move it to the database (see `DATABASE.md`).
 
 ## How it is loaded
 
@@ -16,31 +14,36 @@ Every page has one line before `</body>`:
 <script src="../../static/js/app.js"></script>       <!-- templates/auth/*.html -->
 ```
 
-`app.js` loads `data/locations.js` and `core/*.js` in order, then `pages/<this-page-name>.js`.
-Plain scripts (no modules), so pages still open from disk (`file://`).
+`app.js` first loads `/api/auth/me.js` from the server (who is signed in: `window.FDA_ME`, and the CSRF token:
+`window.FDA_CSRF`), then `data/locations.js` and `core/*.js` in order, then `pages/<this-page-name>.js`.
+Plain scripts (no modules). A page opened from disk (`file://`) still opens, but as a guest: signing in needs the server.
 
-## Demo accounts
+## Accounts
 
-| Role      | Email / number          | Password      |
-|-----------|-------------------------|---------------|
-| User      | `maria@example.com`     | `Flood123`    |
-| Moderator | `moderator@example.com` | `Moderate123` |
+There are no demo accounts. Create a user account on the register page.
+Moderators are created by an administrator, from the `flood-detection` folder:
 
-You can also create an account on the register page. Guests can check photos,
-read reports, use the map and see the weather; routes, schedules and
-notifications need an account; moderation needs the moderator account.
-To start over, run `FDA.store.reset()` in the browser console.
-The sample reports, Maria's home (Tandang Sora) and her three routes are all in Quezon City.
+```
+flask --app app create-user --moderator
+```
+
+**Guests can only view**: the map, weather, flood areas, reports and report details.
+Reporting, confirming, commenting, flagging, routes, schedules and notifications need an account;
+moderation needs a moderator account. Passwords are hashed on the server (Werkzeug), sessions use
+Flask-Login, and every POST carries a CSRF token (Flask-WTF), which `core/api.js` adds.
+The sample reports and comments in the browser (#1031–#1043) stay until the reports move to the database.
+To clear the browser data, run `FDA.store.reset()` in the browser console.
 
 ## Core files (`core/`)
 
 | File           | What it does |
 |----------------|--------------|
-| `store.js`     | The "database" (localStorage) and the sample data. Swap for the API later. |
+| `store.js`     | Browser data (localStorage) for everything not yet on the database, and the sample reports. |
+| `api.js`       | `FDA.api.get / post` to the Flask server. Adds the CSRF token to every POST. |
 | `geo.js`       | Reads the location list (see below), then does lookups, distances and "use my location". Add a geocoder for street-level addresses later. |
 | `agent.js`     | **The intelligent agent**: thresholds, status, recommendation, duplicate check, route check, flood-risk outlook. Edit `FDA.agent.config` to tune. |
 | `classifier.js`| Photo → flood probability. Uses the trained model through Flask (`/api/classify`) first, then a TensorFlow.js copy if present, otherwise a **demo estimate** (see below). |
-| `auth.js`      | Register, sign in/out, roles. Toy password hash, **demo only**. |
+| `auth.js`      | Register, sign in/out and roles, through the server (`/api/auth/*`). `FDA.auth.current()` reads `window.FDA_ME`. |
 | `notify.js`    | In-app notifications and per-user settings. |
 | `scheduler.js` | Pre-departure route checks. Runs while a page is open (a server would use APScheduler). |
 | `ui.js`        | Badges, toasts, dialogs, form errors. |
@@ -162,11 +165,11 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 
 ## Known limits of this prototype
 
-- Data lives in one browser; other people and devices cannot see it.
+- Accounts are shared through the server, but reports, comments, routes and notifications still live in one browser until they move to the database.
 - Pre-departure checks and reminders only run while a page is open.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).
 - Hazard levels and recurring flood spots are SAMPLE data until UP NOAH and real sightings are added (`static/data/`, rebuild with `scripts/build_barangays.py`).
 - Three barangays (Capri, Greater Lagro, North Fairview) have approximate squares instead of real boundaries.
 - Photos are shrunk to ~800 px and stored in the browser (about 5 MB total).
 - Moderators reach the moderation page from the header on desktop; there is no phone link to it yet.
-- Password reset, real email/SMS needs the backend. The location list covers Quezon City only.
+- There is no password reset or email/SMS yet. The location list covers Quezon City only.

@@ -13,15 +13,18 @@
   /* ---------- Who may open which page ---------- */
   var NEEDS_USER = { report: 1, routes: 1, schedules: 1, notifications: 1 };   // guests can view, but reporting needs an account
   var NEEDS_MODERATOR = { moderation: 1 };
-  if ((NEEDS_USER[page] && !user) || (NEEDS_MODERATOR[page] && !(user && user.role === "moderator"))) {
+  if ((NEEDS_USER[page] || NEEDS_MODERATOR[page]) && !user) {
     location.replace(FDA.ui.url("auth/login.html") + "?next=" + encodeURIComponent(page + ".html"));
+    return;
+  }
+  if (NEEDS_MODERATOR[page] && user.role !== "moderator") {   // signed in, but not a moderator: no sign-in loop
+    location.replace(FDA.ui.url("map.html"));
     return;
   }
 
   function signOut(e) {
     if (e) e.preventDefault();
-    FDA.auth.logout();
-    location.href = FDA.ui.url("auth/login.html");
+    FDA.auth.logout().then(function () { location.href = FDA.ui.url("auth/login.html"); });
   }
 
   function refresh() {

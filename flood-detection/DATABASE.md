@@ -60,8 +60,24 @@ Allowed values (checked by the database):
 | `flood_spots.worst_depth` | `gutter`, `tire`, `knee`, `waist` (MMDA words) |
 | `flood_spots.passable` | `all`, `light-no`, `none` |
 
+## Accounts (connected)
+
+Register, sign-in and sign-out go through `accounts.py` and the `users` table:
+
+| Route | What it does |
+|---|---|
+| `GET /api/auth/me.js` | A small script for the pages: `window.FDA_ME` (the user, or `null`) and `window.FDA_CSRF` |
+| `GET /api/auth/me` | The same as JSON |
+| `POST /api/auth/register` | `{name, login, password, confirm, barangay, agree}`. Same rules as the page; signs the new user in |
+| `POST /api/auth/login` | `{login, password, remember}`. "Keep me signed in" = a 30-day cookie |
+| `POST /api/auth/logout` | Signs out |
+
+Every POST needs the CSRF token in the `X-CSRFToken` header (`static/js/core/api.js` adds it).
+Logins are stored normalised: emails in lower case, mobile numbers as `639…` (so `0917…` and `+63917…` are the same account).
+The session cookie is signed with `FLASK_SECRET_KEY`, or with a random key saved once in `instance/secret_key`.
+
 ## Not connected yet
 
-The pages still save to the browser (`static/js/core/store.js`), with its sample data, until the next steps move them to
-the database: accounts (Flask-Login), then reports, then community, routes, schedules and notifications.
+The other pages still save to the browser (`static/js/core/store.js`), with its sample reports, until the next steps move
+them to the database: reports, then community, routes, schedules and notifications.
 If you change a table before then, run `flask --app app init-db --reset`. There is no migration tool yet.

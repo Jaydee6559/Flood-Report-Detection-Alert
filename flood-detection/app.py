@@ -10,7 +10,7 @@ Run:
 The trained model goes in  models/flood_model.keras  (see models/README.md).
 Without it, or without TensorFlow installed, the site still runs and the
 report page falls back to the demo estimate.
-The tables are in database.py and described in DATABASE.md.
+The tables are in database.py and described in DATABASE.md; accounts are in accounts.py.
 """
 import io
 import os
@@ -19,6 +19,7 @@ import threading
 import click
 from flask import Flask, abort, jsonify, render_template, request
 
+import accounts
 from database import NotificationSettings, User, db
 
 app = Flask(__name__)  # templates/ and static/ sit next to this file
@@ -32,6 +33,23 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", "sqlite:///" + os.path.join(app.instance_path, "flood.db"))
 app.config["UPLOAD_FOLDER"] = os.environ.get("UPLOAD_FOLDER", os.path.join(app.root_path, "uploads"))
 db.init_app(app)
+
+
+def _secret_key():
+    """Signs the session cookie. From FLASK_SECRET_KEY, or a random key saved once in instance/secret_key (not committed)."""
+    if os.environ.get("FLASK_SECRET_KEY"):
+        return os.environ["FLASK_SECRET_KEY"]
+    path = os.path.join(app.instance_path, "secret_key")
+    if not os.path.isfile(path):
+        with open(path, "w") as f:
+            f.write(os.urandom(32).hex())
+    with open(path) as f:
+        return f.read().strip()
+
+
+# ---- Accounts (Module 1): Flask-Login sessions, CSRF protection --------------
+app.config["SECRET_KEY"] = _secret_key()
+accounts.init_app(app)
 
 
 @app.cli.command("init-db")
@@ -53,7 +71,11 @@ def init_db(reset):
 @click.option("--moderator", is_flag=True, help="Give the account the moderator role.")
 def create_user(name, login, password, moderator):
     """Add an account from the command line (moderators are created this way)."""
-    login = login.strip().lower()
+    if not accounts.login_is_valid(login):
+        raise click.ClickException("Enter a valid email or a mobile number like 0917 123 4567.")
+    if not accounts.password_is_strong(password):
+        raise click.ClickException("Use at least 8 characters, a number, and upper and lower case letters.")
+    login = accounts.norm_login(login)
     if User.query.filter_by(login=login).first():
         raise click.ClickException("That email or number is already registered.")
     user = User(name=name.strip(), login=login, role="moderator" if moderator else "user")

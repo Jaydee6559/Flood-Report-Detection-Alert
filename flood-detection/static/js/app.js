@@ -21,7 +21,7 @@
   // data/locations.js is a copy of data/locations.json (see scripts/build_locations.py)
   var dataDir = base.replace(/js\/$/, "") + "data/";
   var data = ["locations", "barangays", "flood-spots"];   // barangays.js = polygons + hazard; flood-spots.js = recurring spots
-  var core = ["geo", "store", "hazard", "agent", "rain", "areas", "classifier", "ui", "auth", "notify", "scheduler", "layout", "mapkit", "streets", "routing", "routeDraft", "weather", "hazardLayer", "possibleFlooding", "possibleFloodingLayer"];
+  var core = ["geo", "store", "api", "hazard", "agent", "rain", "areas", "classifier", "ui", "auth", "notify", "scheduler", "layout", "mapkit", "streets", "routing", "routeDraft", "weather", "hazardLayer", "possibleFlooding", "possibleFloodingLayer"];
 
   var tags = data.map(function (name) {
     return '<script src="' + dataDir + name + '.js"><\/script>';
@@ -29,6 +29,10 @@
     return '<script src="' + base + "core/" + name + '.js"><\/script>';
   }));
   tags.push('<script src="' + base + "pages/" + page + '.js" onerror="void 0"><\/script>');
+
+  // Who is signed in (window.FDA_ME) and the CSRF token, from the Flask server. Loaded first.
+  // A page opened from disk has no server, so it is a guest.
+  if (location.protocol === "http:" || location.protocol === "https:") tags.unshift('<script src="/api/auth/me.js"><\/script>');
 
   // document.write keeps the scripts in order and runs them before DOMContentLoaded.
   document.write(tags.join(""));

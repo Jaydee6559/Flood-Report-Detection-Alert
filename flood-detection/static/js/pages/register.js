@@ -41,20 +41,25 @@
     el.textContent = msg || ""; el.hidden = !msg;
   }
 
+  var busy = false, submit = form.querySelector('[type="submit"]') || form.querySelector(".btn--primary");
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     ["name", "login", "password", "confirm"].forEach(function (k) { FDA.ui.fieldError(f[k], ""); });
     termsError("");
 
-    var res = FDA.auth.register({
+    if (busy) return;
+    busy = true; submit.disabled = true; submit.setAttribute("aria-busy", "true");
+    FDA.auth.register({
       name: f.name.value, login: f.login.value, password: f.password.value, confirm: f.confirm.value,
-      city: f.barangay.value ? CITY : "", barangay: f.barangay.value, agree: agree.checked
+      barangay: f.barangay.value, agree: agree.checked
+    }).then(function (res) {
+      busy = false; submit.disabled = false; submit.removeAttribute("aria-busy");
+      if (!res.ok) {
+        Object.keys(res.errors).forEach(function (k) { if (k === "agree") termsError(res.errors[k]); else FDA.ui.fieldError(f[k], res.errors[k]); });
+        var firstBad = $('[aria-invalid="true"]'); if (firstBad) firstBad.focus();
+        return;
+      }
+      location.href = "../index.html";
     });
-    if (!res.ok) {
-      Object.keys(res.errors).forEach(function (k) { if (k === "agree") termsError(res.errors[k]); else FDA.ui.fieldError(f[k], res.errors[k]); });
-      var firstBad = $('[aria-invalid="true"]'); if (firstBad) firstBad.focus();
-      return;
-    }
-    location.href = "../index.html";
   });
 })();

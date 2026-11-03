@@ -102,12 +102,11 @@
     return photoBlob(img).then(function (blob) {
       var form = new FormData();
       form.append("photo", blob, "photo.jpg");
-      return fetch(API_CLASSIFY, { method: "POST", body: form });
-    }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (body) {
-        if (!r.ok || typeof body.prob !== "number") throw new Error(body.error || "The photo check failed (" + r.status + ").");
-        return { prob: Math.min(1, Math.max(0, body.prob)), source: "server" };
-      });
+      return FDA.api.post(API_CLASSIFY, form);   // sends the CSRF token
+    }).then(function (res) {
+      var body = res.data;
+      if (!res.ok || typeof body.prob !== "number") throw new Error(body.error || "The photo check failed (" + res.status + ").");
+      return { prob: Math.min(1, Math.max(0, body.prob)), source: "server" };
     });
   }
 
