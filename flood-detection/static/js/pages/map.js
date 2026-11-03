@@ -399,7 +399,7 @@
     });
 
     var hashB = /[#&]b=([^&]+)/.exec(location.hash), qB = FDA.ui.param("b");
-    var rep = wantReport && FDA.store.db().reports.filter(function (r) { return r.id === wantReport; })[0];
+    var rep = wantReport && FDA.store.db().reports.filter(function (r) { return r.id === wantReport && !r.removed; })[0];
     var start = qB || (hashB && decodeURIComponent(hashB[1])) || (rep && rep.barangay);
     if (rep) { state.statuses[rep.status] = true; $$("#report-filters .chip").forEach(function (b) { b.setAttribute("aria-pressed", String(state.statuses[b.dataset.status])); }); if (Date.now() - rep.ts > 24 * 3600000) { state.windowH = 168; $("#map-time").value = "168"; } drawReports(); }
     if (start && FDA.hazard.get(start)) select(start);

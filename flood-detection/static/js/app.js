@@ -30,9 +30,14 @@
   }));
   tags.push('<script src="' + base + "pages/" + page + '.js" onerror="void 0"><\/script>');
 
-  // Who is signed in (window.FDA_ME) and the CSRF token, from the Flask server. Loaded first.
-  // A page opened from disk has no server, so it is a guest.
-  if (location.protocol === "http:" || location.protocol === "https:") tags.unshift('<script src="/api/auth/me.js"><\/script>');
+  // From the Flask server, loaded first: who is signed in (window.FDA_ME) and the CSRF token,
+  // then the flood reports (window.FDA_REPORTS; ?id= also fetches an older report the page asks for).
+  // A page opened from disk has no server, so it is a guest and sees no reports.
+  if (location.protocol === "http:" || location.protocol === "https:") {
+    var want = /[?&]id=(\d+)/.exec(location.search);
+    tags.unshift('<script src="/api/reports.js' + (want ? "?id=" + want[1] : "") + '"><\/script>');
+    tags.unshift('<script src="/api/auth/me.js"><\/script>');
+  }
 
   // document.write keeps the scripts in order and runs them before DOMContentLoaded.
   document.write(tags.join(""));

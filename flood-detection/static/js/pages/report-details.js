@@ -31,7 +31,7 @@
   $(".breadcrumb [aria-current]").textContent = "#" + r.id;
   document.title = "Report #" + r.id + " · Flood Detection & Alert";
   $(".page-heading h1").textContent = r.street + ", " + r.barangay;
-  var tag = $(".page-heading__aside .badge--sample"); if (tag) tag.textContent = "DEMO DATA";
+  var tag = $(".page-heading__aside .badge--sample"); if (tag) tag.remove();   // reports are real now (the database)
 
   var photo = $(".details-summary__photo");
   photo.src = r.photo; photo.alt = "Submitted street photo for report #" + r.id; photo.removeAttribute("width"); photo.removeAttribute("height");
@@ -96,7 +96,7 @@
     var prev = db.votes[voteKey];
     if (prev) r[prev]--;
     if (prev === kind) delete db.votes[voteKey];
-    else { db.votes[voteKey] = kind; r[kind]++; r.lastConfirmTs = Date.now(); }
+    else { db.votes[voteKey] = kind; r[kind]++; r.lastConfirmTs = db.voteTs[r.id] = Date.now(); }   // this browser only, until step 4
     FDA.store.save();
     if (kind === "still" && db.votes[voteKey] === "still" && r.ownerId.indexOf("u") === 0) {
       FDA.notify.push(r.ownerId, { kind: "report", key: "confirm:" + r.id, title: "Your report #" + r.id + " was confirmed " + r.still + " time" + (r.still > 1 ? "s" : ""), text: r.still + " " + (r.still > 1 ? "people say" : "person says") + " it is still flooded", href: "report-details.html?id=" + r.id, cta: "Open report →" });

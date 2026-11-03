@@ -10,7 +10,7 @@
   var active = "all", selected = null, section = "queue";
 
   var iconDup = FDA.ui.svg("duplicate"), iconClock = FDA.ui.svg("clock"), iconFlag = FDA.ui.svg("flag");
-  var tag = $(".mod-main__head .badge--sample"); if (tag) tag.textContent = "DEMO DATA";
+  var tag = $(".mod-main__head .badge--sample"); if (tag) tag.remove();   // reports are real now (the database)
 
   /* Why a report is in the queue. A report can have more than one reason. */
   function reasons(r) {
@@ -115,33 +115,56 @@
     b[0].hidden = !other; if (other) b[0].lastChild.textContent = "Mark as duplicate of #" + other.id;
   }
 
-  function stamp(r) { r.reviewedAt = Date.now(); }
   function tell(r, title, text) { if (r.ownerId && r.ownerId.indexOf("u") === 0) FDA.notify.push(r.ownerId, { kind: "report", key: "mod:" + r.id + ":" + Date.now(), title: title, text: text, href: "report-details.html?id=" + r.id, cta: "Open report →" }); }
+
+  /* Review actions are saved on the server (reports_api.py). Resolves with the updated report, or null if it failed. */
+  var reviewing = false;
+  function review(r, action, reason) {
+    if (reviewing) return Promise.resolve(null);
+    reviewing = true;
+    return FDA.api.post("/api/reports/" + r.id + "/review", { action: action, reason: reason || "" }).then(function (res) {
+      reviewing = false;
+      if (!res.ok) { FDA.ui.toast(res.data.error || "That did not work. Please try again.", "error"); return null; }
+      return FDA.store.putReport(res.data.report);
+    }, function () {
+      reviewing = false;
+      FDA.ui.toast("The server can't be reached, so nothing was changed. Try again.", "error");
+      return null;
+    });
+  }
 
   var acts = $$(".review__actions button", panel);
   acts[0].addEventListener("click", function () { // duplicate
     var r = cur(); if (!r || !r.dupCandidate) return;
-    r.dupOf = r.dupCandidate; r.review = "duplicate"; stamp(r); FDA.store.save();
-    tell(r, "Your report #" + r.id + " was marked as a duplicate", "Merged with #" + r.dupOf + " by a moderator");
-    FDA.ui.toast("Report #" + r.id + " merged with #" + r.dupOf + ".", "success"); render();
+    review(r, "duplicate").then(function (r) {
+      if (!r) return;
+      tell(r, "Your report #" + r.id + " was marked as a duplicate", "Merged with #" + r.dupOf + " by a moderator");
+      FDA.ui.toast("Report #" + r.id + " merged with #" + r.dupOf + ".", "success"); render();
+    });
   });
   acts[1].addEventListener("click", function () { // approve
     var r = cur(); if (!r) return;
-    r.review = "approved"; r.flags = 0; r.dupCandidate = null; stamp(r); FDA.store.save();
-    FDA.ui.toast("Report #" + r.id + " approved as a separate report.", "success"); render();
+    review(r, "approve").then(function (r) {
+      if (!r) return;
+      FDA.ui.toast("Report #" + r.id + " approved as a separate report.", "success"); render();
+    });
   });
   acts[2].addEventListener("click", function () { // later
     var r = cur(); if (!r) return;
-    r.review = "later"; FDA.store.save();
-    var rows = queue(); selected = (rows.filter(function (x) { return x.id !== r.id; })[0] || r).id; FDA.ui.toast("Moved to the end of the queue."); render();
+    review(r, "later").then(function (r) {
+      if (!r) return;
+      var rows = queue(); selected = (rows.filter(function (x) { return x.id !== r.id; })[0] || r).id; FDA.ui.toast("Moved to the end of the queue."); render();
+    });
   });
   acts[3].addEventListener("click", function () { // remove
     var r = cur(); if (!r) return;
     FDA.ui.dialog({ title: "Remove report #" + r.id + "?", text: "The report disappears from the list and the map. The reporter is told why.", confirm: "Remove report", danger: true, input: { label: "Reason (the reporter will see this)", placeholder: "e.g. Photo does not show a street", required: true } }).then(function (reason) {
       if (reason === null) return;
-      r.removed = true; r.review = "removed"; r.removeReason = reason; stamp(r); FDA.store.save();
-      tell(r, "Your report #" + r.id + " was removed", reason);
-      FDA.ui.toast("Report #" + r.id + " removed.", "success"); render();
+      review(r, "remove", reason).then(function (r) {
+        if (!r) return;
+        tell(r, "Your report #" + r.id + " was removed", reason);
+        FDA.ui.toast("Report #" + r.id + " removed.", "success"); render();
+      });
     });
   });
   function cur() { return db.reports.filter(function (x) { return x.id === selected; })[0]; }

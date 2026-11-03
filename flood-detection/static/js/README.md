@@ -1,9 +1,10 @@
 # Flood Detection & Alert — JavaScript
 
-This folder makes the pages work in the browser. **Accounts are on the Flask
-server** (`accounts.py`, SQLite). Everything else the pages save (reports,
-comments, routes, schedules, notifications) is still kept in `localStorage`
-until the next steps move it to the database (see `DATABASE.md`).
+This folder makes the pages work in the browser. **Accounts and flood reports
+are on the Flask server** (`accounts.py`, `reports_api.py`, SQLite). Everything
+else the pages save (comments, confirmations, routes, schedules, notifications)
+is still kept in `localStorage` until the next steps move it to the database
+(see `DATABASE.md`).
 
 ## How it is loaded
 
@@ -15,8 +16,10 @@ Every page has one line before `</body>`:
 ```
 
 `app.js` first loads `/api/auth/me.js` from the server (who is signed in: `window.FDA_ME`, and the CSRF token:
-`window.FDA_CSRF`), then `data/locations.js` and `core/*.js` in order, then `pages/<this-page-name>.js`.
-Plain scripts (no modules). A page opened from disk (`file://`) still opens, but as a guest: signing in needs the server.
+`window.FDA_CSRF`) and `/api/reports.js` (the flood reports: `window.FDA_REPORTS`), then `data/locations.js` and
+`core/*.js` in order, then `pages/<this-page-name>.js`.
+Plain scripts (no modules). A page opened from disk (`file://`) still opens, but as a guest with no reports:
+signing in and reports need the server.
 
 ## Accounts
 
@@ -31,14 +34,15 @@ flask --app app create-user --moderator
 Reporting, confirming, commenting, flagging, routes, schedules and notifications need an account;
 moderation needs a moderator account. Passwords are hashed on the server (Werkzeug), sessions use
 Flask-Login, and every POST carries a CSRF token (Flask-WTF), which `core/api.js` adds.
-The sample reports and comments in the browser (#1031–#1043) stay until the reports move to the database.
-To clear the browser data, run `FDA.store.reset()` in the browser console.
+There are no sample reports any more: report numbers start at #1 in the database.
+To clear this browser's data (comments, routes, notifications...), run `FDA.store.reset()` in the browser console.
+Reports stay on the server.
 
 ## Core files (`core/`)
 
 | File           | What it does |
 |----------------|--------------|
-| `store.js`     | Browser data (localStorage) for everything not yet on the database, and the sample reports. |
+| `store.js`     | `db().reports` = the server's reports (in memory). Browser data (localStorage) for everything not yet on the database. `putReport()` takes a report the server sent back. |
 | `api.js`       | `FDA.api.get / post` to the Flask server. Adds the CSRF token to every POST. |
 | `geo.js`       | Reads the location list (see below), then does lookups, distances and "use my location". Add a geocoder for street-level addresses later. |
 | `agent.js`     | **The intelligent agent**: thresholds, status, recommendation, duplicate check, route check, flood-risk outlook. Edit `FDA.agent.config` to tune. |
@@ -165,11 +169,12 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 
 ## Known limits of this prototype
 
-- Accounts are shared through the server, but reports, comments, routes and notifications still live in one browser until they move to the database.
+- Accounts and reports are shared through the server, but comments, confirmations, routes and notifications still live in one browser until they move to the database.
+- The photo check and the agent's Rule 1 run in the page; the server checks the values it is sent but does not re-run them.
 - Pre-departure checks and reminders only run while a page is open.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).
 - Hazard levels and recurring flood spots are SAMPLE data until UP NOAH and real sightings are added (`static/data/`, rebuild with `scripts/build_barangays.py`).
 - Three barangays (Capri, Greater Lagro, North Fairview) have approximate squares instead of real boundaries.
-- Photos are shrunk to ~800 px and stored in the browser (about 5 MB total).
+- Photos are shrunk to ~800 px in the browser, then saved on the server in `uploads/` as JPEG (EXIF, such as GPS, removed).
 - Moderators reach the moderation page from the header on desktop; there is no phone link to it yet.
 - There is no password reset or email/SMS yet. The location list covers Quezon City only.

@@ -121,7 +121,14 @@
     el.textContent = msg || ""; el.hidden = !msg;
   }
 
-  /** Shrink the photo so it fits in browser storage; keeps it sharp enough to classify. */
+  /** A data: URL (the shrunk photo) as a Blob, to upload it. */
+  function dataUrlBlob(url) {
+    var parts = url.split(","), bin = atob(parts[1]), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: (/data:([^;]+)/.exec(parts[0]) || [])[1] || "image/jpeg" });
+  }
+
+  /** Shrink the photo before it is sent; keeps it sharp enough to classify. */
   function shrink(img, max, quality) {
     var scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
     var c = document.createElement("canvas");
@@ -192,7 +199,7 @@
     submit.setAttribute("aria-busy", "true");
 
     FDA.classifier.predict(state.img).then(function (out) {
-      var db = FDA.store.db(), me = FDA.auth.current();
+      var db = FDA.store.db();
       var centre = FDA.hazard.get(brgySel.value);   // the barangay centre; a street name is never used to invent a position
       var p = state.gps || state.pin || (centre ? { lat: centre.lat, lng: centre.lng } : FDA.geo.point(CITY, brgySel.value));
       // with no GPS, no street found on the map and no moved pin, the report only knows its barangay
@@ -200,21 +207,23 @@
       var loc = { city: CITY, barangay: brgySel.value, street: street.value.trim(), lat: p.lat, lng: p.lng };
       var verdict = FDA.agent.checkPhoto({ prob: out.prob, source: out.source, loc: loc, reports: db.reports });
 
-      var report = {
-        id: FDA.store.nextId("nextReport"), ownerId: me.id, ownerName: me.name,   // the page needs an account (core/layout.js)
-        ts: Date.now(), city: loc.city, barangay: loc.barangay, street: loc.street || "Street not given", lat: loc.lat, lng: loc.lng, location: approximate ? "approximate" : "precise",
-        desc: desc.value.trim(), photo: state.photo, prob: out.prob, depthCm: out.depthCm, model: out.source,
-        status: verdict.status, note: verdict.note, recommendation: verdict.recommendation, evidence: verdict.evidence,
-        dupCandidate: verdict.dupCandidate, startStatus: verdict.startStatus, reasons: verdict.reasons, inputs: verdict.inputs, dupOf: null, flags: 0, removed: false, review: null, still: 0, not: 0, lastConfirmTs: null
+      // Saved on the server (reports_api.py), which gives the report its number and keeps the photo in uploads/
+      var data = {
+        barangay: loc.barangay, street: loc.street, lat: loc.lat, lng: loc.lng, location: approximate ? "approximate" : "precise",
+        desc: desc.value.trim(), prob: out.prob, depthCm: out.depthCm, model: out.source,
+        status: verdict.status, startStatus: verdict.startStatus, note: verdict.note, recommendation: verdict.recommendation,
+        evidence: verdict.evidence, dupCandidate: verdict.dupCandidate, reasons: verdict.reasons, inputs: verdict.inputs
       };
-      db.reports.unshift(report);
-      if (!FDA.store.save()) { // storage full: retry once with a smaller photo
-        report.photo = shrink(state.img, 480, 0.6);
-        if (!FDA.store.save()) { db.reports.shift(); throw new Error("Your browser storage is full, so the report could not be saved."); }
-      }
-      FDA.areas.logDecision({ kind: "photo", reportId: report.id, barangay: report.barangay, prob: report.prob, startStatus: verdict.startStatus, status: verdict.status, inputs: verdict.inputs });
-      FDA.notify.fanOutReport(report);
-      location.href = "result.html?id=" + report.id;
+      var form = new FormData();
+      form.append("photo", dataUrlBlob(state.photo), "photo.jpg");
+      form.append("data", JSON.stringify(data));
+      return FDA.api.post("/api/reports", form).then(function (res) {
+        if (!res.ok) throw new Error(res.status === 401 ? "Please sign in again, then send the report." : res.data.error || "The report could not be saved. Please try again.");
+        var report = FDA.store.putReport(res.data.report);
+        FDA.areas.logDecision({ kind: "photo", reportId: report.id, barangay: report.barangay, prob: report.prob, startStatus: verdict.startStatus, status: verdict.status, inputs: verdict.inputs });
+        FDA.notify.fanOutReport(report);
+        location.href = "result.html?id=" + report.id;
+      }, function () { throw new Error("The server can't be reached, so the report was not saved. Check your connection and try again."); });
     }).catch(function (err) {
       busy = false; label.textContent = oldText; submit.removeAttribute("aria-busy");
       FDA.ui.toast(err.message || "Something went wrong while checking the photo.", "error");

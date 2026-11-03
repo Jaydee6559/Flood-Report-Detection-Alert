@@ -76,8 +76,28 @@ Every POST needs the CSRF token in the `X-CSRFToken` header (`static/js/core/api
 Logins are stored normalised: emails in lower case, mobile numbers as `639…` (so `0917…` and `+63917…` are the same account).
 The session cookie is signed with `FLASK_SECRET_KEY`, or with a random key saved once in `instance/secret_key`.
 
+## Reports (connected)
+
+Flood reports, their photos and moderator review go through `reports_api.py` and the `reports` table:
+
+| Route | What it does |
+|---|---|
+| `GET /api/reports.js` | A small script for the pages: `window.FDA_REPORTS`, the last 30 days of reports, newest first. `?id=<n>` also adds that report if it is older |
+| `GET /api/reports` | The same as JSON |
+| `POST /api/reports` | Signed in. Form field `photo` (the image) and `data` (JSON: place, P, model, Rule 1 status, note, reasons, inputs). Every value is checked: a barangay from `locations.json`, a pin inside Quezon City, P from 0 to 1, a known status. Also writes a `photo` row to `agent_decisions` |
+| `POST /api/reports/<id>/review` | Moderators. `{action: "approve" \| "duplicate" \| "later" \| "remove", reason}`; remove needs a reason |
+| `GET /uploads/<file>` | Report photos |
+
+- Photos are re-saved as JPEG (at most 1280 px), which also drops EXIF data such as GPS, under a random file name.
+- The pages never get a reporter's name or login, only `ownerId` (`u<number>`), to know which reports are your own.
+- A removed report is sent to everyone else as just its number, so the pages can say "This report was removed". Its photo,
+  place and the moderator's reason are only shown to the reporter and moderators.
+- Values the database has no column for are kept in `reports.inputs`: `evidence` (nearby report numbers) and `depthCm`.
+- The photo check and Rule 1 still run in the page; the server checks the values but does not re-run them.
+
 ## Not connected yet
 
-The other pages still save to the browser (`static/js/core/store.js`), with its sample reports, until the next steps move
-them to the database: reports, then community, routes, schedules and notifications.
+Comments, confirmations and flags (step 4), then routes, schedules and notifications, still save to the browser
+(`static/js/core/store.js`). Until step 4, confirmations made in a browser are added on top of the server's counts in that
+browser only.
 If you change a table before then, run `flask --app app init-db --reset`. There is no migration tool yet.
