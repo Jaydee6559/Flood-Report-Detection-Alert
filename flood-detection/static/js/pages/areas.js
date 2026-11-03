@@ -46,7 +46,7 @@
     $("#p-title").textContent = current;
     document.title = current + " · Flood areas · Flood Detection & Alert";
     $("#p-hazard").textContent = FDA.hazard.label(a.hazard);
-    $("#p-hazard-note").textContent = "Sample hazard level until the UP NOAH layer is added.";
+    $("#p-hazard-note").textContent = "From the UP DREAM / Phil-LiDAR 1 100-year flood hazard map (2016).";
     $("#p-rain").textContent = rainText(a);
     $("#p-rain-note").textContent = "District " + b.district + " rain, " + (hours ? "+" + hours + " h" : "now") + ". Estimate from Open-Meteo using PAGASA levels, not an official warning.";
     $("#p-risk").innerHTML = '<span class="text-risk-' + a.level + '">' + esc(FDA.agent.areaLabel(a.level)) + " risk</span>";

@@ -154,7 +154,7 @@ To rebuild, put the shapefile (.shp .dbf .shx .prj) in `scripts/source/` (not co
 node scripts/build_qc_flood_hazard.js
 ```
 
-The older "Flood hazard zones" layer (from `barangays.js`) has invented levels, is labelled SAMPLE and is off by default.
+The "Hazard level used by the agent" layer (from `barangays.js`) shows the high / medium / low level the agent uses for each barangay, taken from the same 100-year map by `scripts/apply_qc_hazard.py`. It is off by default.
 
 ## Possible flooding (rain forecast x hazard map)
 
@@ -175,7 +175,7 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 - The photo check and the agent's Rule 1 run in the page; the server checks the values it is sent but does not re-run them.
 - Pre-departure checks and reminders only run while a page is open.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).
-- Hazard levels and recurring flood spots are SAMPLE data until UP NOAH and real sightings are added (`static/data/`, rebuild with `scripts/build_barangays.py`).
+- Hazard levels come from the UP DREAM / Phil-LiDAR 1 100-year flood hazard map (2016); after rebuilding `qc-flood-hazard.geojson`, run `python scripts/apply_qc_hazard.py`. The 40 starting recurring flood spots (`static/data/flood-spots.js`) are still SAMPLE data until real QCDRRMO / MMDA sightings replace them; spots moderators add are real.
 - Three barangays (Capri, Greater Lagro, North Fairview) have approximate squares instead of real boundaries.
 - Photos are shrunk to ~800 px in the browser, then saved on the server in `uploads/` as JPEG (EXIF, such as GPS, removed).
 - Moderators reach the moderation page from the header on desktop; there is no phone link to it yet.

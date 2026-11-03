@@ -64,7 +64,7 @@
     <aside class="map-sidebar" id="map-sidebar" aria-label="Flood map controls">
       <div class="map-sidebar__title">
         <h1 class="heading-md">QC flood map</h1>
-        <span class="badge badge--sample" title="Hazard levels are sample data until the UP NOAH layer is added">SAMPLE DATA</span>
+        
       </div>
 
       <div>
@@ -103,7 +103,7 @@
         <ul class="layer-list" id="layer-list">
           <li><span class="layer-list__swatch" style="--c: #e8741a"></span><span class="layer-list__text"><strong id="l-possible">Possible flooding</strong><small id="l-possible-sub">Rain forecast × 2016 hazard map</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-possible" data-layer="possible"></button></li>
           <li><span class="layer-list__swatch" style="--c: #d64532"></span><span class="layer-list__text"><strong id="l-qchazard">Flood hazard (100-year)</strong><small id="l-qchazard-sub">UP DREAM / Phil-LiDAR 1 · per barangay</small></span><button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="l-qchazard" data-layer="qchazard"></button></li>
-          <li><span class="layer-list__swatch" style="--c: var(--hz-high)"></span><span class="layer-list__text"><strong id="l-hazard">Flood hazard zones <span class="badge badge--sample">SAMPLE</span></strong><small>Invented levels for the demo, not real data</small></span><button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="l-hazard" data-layer="hazard"></button></li>
+          <li><span class="layer-list__swatch" style="--c: var(--hz-high)"></span><span class="layer-list__text"><strong id="l-hazard">Hazard level used by the agent</strong><small>From the 100-year map · high / medium / low</small></span><button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="l-hazard" data-layer="hazard"></button></li>
           <li><span class="layer-list__swatch" style="--c: var(--lvl-orange)"></span><span class="layer-list__text"><strong id="l-rain">Rain now (area risk)</strong><small id="l-rain-sub">Open-Meteo · every 15 min</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-rain" data-layer="rain"></button></li>
           <li><span class="layer-list__swatch" style="--c: #0b5d98"></span><span class="layer-list__text"><strong id="l-streets">Streets</strong><small>OpenStreetMap · load a barangay first</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-streets" data-layer="streets"></button></li>
           <li><span class="layer-list__swatch" style="--c: #0b5d98"></span><span class="layer-list__text"><strong id="l-spots">Recurring flood spots</strong><small>QCDRRMO / MMDA log (sample)</small></span><button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="l-spots" data-layer="spots"></button></li>

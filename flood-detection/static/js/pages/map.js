@@ -259,7 +259,7 @@
   /* ---------- Legend ---------- */
   function drawLegend() {
     var h = "";
-    if (state.layers.hazard) h += "<h3>Flood hazard · SAMPLE</h3><ul>" + ["high", "medium", "low"].map(function (k) { return '<li><i style="background:' + HAZ[k] + '"></i>' + FDA.hazard.label(k) + "</li>"; }).join("") + "</ul>";
+    if (state.layers.hazard) h += "<h3>Hazard level (agent)</h3><ul>" + ["high", "medium", "low"].map(function (k) { return '<li><i style="background:' + HAZ[k] + '"></i>' + FDA.hazard.label(k) + "</li>"; }).join("") + "</ul>";
     else if (state.layers.rain) h += "<h3>Area risk</h3><ul>" + ["high", "elevated", "low"].map(function (k) { return '<li><i style="background:' + RISK[k] + '"></i>' + FDA.agent.areaLabel(k) + "</li>"; }).join("") + "</ul>";
     if (state.layers.rain) h += "<h3" + (h ? ' style="margin-top:8px"' : "") + ">Outline = area risk " + hourText(state.hours) + '</h3><ul><li><i style="background:#fff;border:3px solid #8f1d14"></i>High</li><li><i style="background:#fff;border:2.5px solid #b45309"></i>Elevated</li></ul>';
     if (streetData && state.layers.streets) h += '<h3 style="margin-top:8px">Street in hazard zone</h3><ul><li><i class="line" style="background:' + FDA.streets.COLORS.over50 + '"></i>Over 50%</li><li><i class="line" style="background:' + FDA.streets.COLORS.mid + '"></i>20–50%</li><li><i class="line" style="background:' + FDA.streets.COLORS.under20 + '"></i>Under 20%</li><li><i class="line" style="background:' + FDA.streets.COLORS.none + '"></i>Outside</li></ul>';

@@ -28,7 +28,7 @@
     var at = FDA.hazard.at(p.lat, p.lng), h = at ? at.hazard : FDA.hazard.of(brgySel.value);
     var near = FDA.hazard.spotsNear({ lat: p.lat, lng: p.lng }, FDA.agent.config.spotMeters);
     el.className = "hazard-hint" + (h === "high" ? " hazard-hint--high" : h === "medium" ? " hazard-hint--medium" : "");
-    el.innerHTML = FDA.ui.svg("possible-flood") + "<span>" + FDA.ui.esc(brgySel.value) + " is in a <strong>" + FDA.hazard.label(h).toLowerCase() + "</strong> zone (sample data)." +
+    el.innerHTML = FDA.ui.svg("possible-flood") + "<span>" + FDA.ui.esc(brgySel.value) + " is in a <strong>" + FDA.hazard.label(h).toLowerCase() + "</strong> zone (100-year flood hazard map)." +
       (near.length ? " A recurring flood spot is within " + FDA.agent.config.spotMeters + " m (" + FDA.ui.esc(near[0].corner) + ")." : "") + "</span>";
     el.hidden = false;
   }

@@ -2,8 +2,8 @@
  * Flood hazard and recurring flood spots (the agent's H and S inputs)
  *
  * Data:
- *   static/data/barangays.js    142 barangay polygons with a hazard level (SAMPLE levels until the
- *                               UP NOAH layer is plugged in; see scripts/build_barangays.py)
+ *   static/data/barangays.js    142 barangay polygons with a hazard level from the UP DREAM / Phil-LiDAR 1
+ *                               100-year flood hazard map (see scripts/apply_qc_hazard.py)
  *   static/data/flood-spots.js  the flood-spot log seed (SAMPLE). Moderators add more; those are saved on the
  *                               server (spots_api.py) and arrive as window.FDA_SPOTS_LOG (/api/spots.js).
  *
@@ -89,7 +89,7 @@
   function distance(a, b) { return FDA.geo.distance(a, b); }
 
   FDA.hazard = {
-    isSample: true,   // set to false when the UP NOAH hazard layer replaces the sample levels
+    isSample: false,  // levels come from the UP DREAM / Phil-LiDAR 1 100-year flood hazard map (scripts/apply_qc_hazard.py)
     order: ORDER, label: function (h) { return LABEL[h] || LABEL.none; },
     depth: function (d) { return DEPTH[d] || { label: d || "", rank: 0 }; },
     pass: function (p) { return PASS[p] || ""; },

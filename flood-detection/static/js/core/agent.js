@@ -171,7 +171,7 @@
         { key: "P", title: "Photo: " + Math.round(prob * 100) + "% flood probability", detail: model + " · starts as " + RECOMMENDATIONS[start].label + " (" + bandText + ")", effect: "start" }
       ];
       reasons.push({ key: "H", title: (inp.H === "none" ? "No flood hazard zone" : FDA.hazard.label(inp.H).replace(" hazard", " hazard zone")) + (loc.barangay ? "" : ""),
-        detail: (loc.barangay ? loc.barangay + " · " : "") + "hazard map at this pin" + (FDA.hazard && FDA.hazard.isSample ? " (sample levels)" : ""), effect: eff("H", hzMed) });
+        detail: (loc.barangay ? loc.barangay + " · " : "") + "hazard map at this pin" + (FDA.hazard && FDA.hazard.isSample ? " (sample levels)" : " (UP DREAM 100-year map)"), effect: eff("H", hzMed) });
       reasons.push({ key: "R", title: inp.R ? FDA.rain.names[inp.R] + " rain · " + inp.mm + " mm/h now" : "No rainfall warning level · " + inp.mm + " mm/h now",
         detail: (FDA.rain && FDA.rain.mode() === "live" ? "Open-Meteo" : FDA.rain && FDA.rain.mode() === "simulated" ? "Simulated storm" : "Typical rain values (live data unavailable)") + " · PAGASA levels: yellow 7.5, orange 15, red 30 mm/h", effect: eff("R", rainHigh) });
       reasons.push({ key: "S", title: hasS ? "Recurring flood spot " + inp.S[0].meters + " m away" : "No recurring flood spot within " + config.spotMeters + " m",
