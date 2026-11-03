@@ -1,13 +1,14 @@
 /**
  * Route draft: suggest a route, then let the person correct it on a map.
  *
- *   var d = FDA.routeDraft.create(hostElement, { collapsed: false });
- *   d.setEnds(startPoint, endPoint)   shows the suggested street route between two {lat,lng} points (null hides the map)
+ *   var d = FDA.routeDraft.create(hostElement, { collapsed: false, showEmpty: false });
+ *                                     showEmpty: keep the map on screen (Quezon City) before a start and destination are picked
+ *   d.setEnds(startPoint, endPoint)   shows the suggested street route between two {lat,lng} points (null clears it)
  *   d.load(route)                     shows a saved route (its geometry, extra points and mode) for editing
  *   d.ready()                         Promise<{geometry, segments, distanceM}> for the line as it is now (rejects with a readable message)
  *   d.state()                         {vias, mode}   the points the person added and "snap" or "free"
  *   d.addPoint(lat, lng)              what a tap on the map does
- *   d.reset()                         clears and hides
+ *   d.reset()                         clears it (and hides it, unless showEmpty)
  *
  * How it works
  *   - The suggested route comes from FDA.routing.plan (OSRM, snapped to streets).
@@ -65,6 +66,7 @@
       }).catch(function () { mapEl.innerHTML = '<p class="text-small text-muted" style="padding:16px">The map could not be loaded. You can still save the suggested route.</p>'; });
     }
     root.addEventListener("toggle", function () { if (map && root.open) { map.invalidateSize(); fit(); } });
+    window.addEventListener("resize", function () { if (map) map.invalidateSize(); });   // e.g. turning a phone, or a box that was hidden
 
     function pin(cls, text) { return window.L.divIcon({ className: "fda-pin " + cls, html: "<span>" + text + "</span>", iconSize: [26, 26], iconAnchor: [13, 13] }); }
 
@@ -152,10 +154,16 @@
       if (open !== undefined) root.open = open;
       ensureMap();
     }
+    /** Nothing picked: hide, or (showEmpty) keep an empty Quezon City map with "Pick a start point and a destination". */
+    function empty() {
+      if (!opts.showEmpty) { root.hidden = true; return; }
+      show(true); draw();
+      if (map) map.fitBounds(FDA.mapkit.QC_BOUNDS);
+    }
 
     var api = {
       setEnds: function (na, nb) {
-        if (!na || !nb) { a = b = null; vias = []; result = null; err = ""; busy = false; clearTimeout(timer); timer = null; root.hidden = true; return; }
+        if (!na || !nb) { a = b = null; vias = []; result = null; err = ""; busy = false; clearTimeout(timer); timer = null; empty(); return; }
         var unchanged = same(a, na) && same(b, nb);
         a = na; b = nb; show(!opts.collapsed);
         if (!unchanged) { vias = []; result = null; fitNext = true; schedule(); }
@@ -179,8 +187,9 @@
       },
       state: function () { return { vias: vias.slice(), mode: mode }; },
       addPoint: addPoint,
-      reset: function () { a = b = null; vias = []; mode = "snap"; result = null; err = ""; busy = false; clearTimeout(timer); timer = null; root.hidden = true; }
+      reset: function () { a = b = null; vias = []; mode = "snap"; result = null; err = ""; busy = false; clearTimeout(timer); timer = null; empty(); }
     };
+    if (opts.showEmpty) empty();
     FDA.routeDraft.all.push(api);   // lets a test or the console reach the drafts
     return api;
   }

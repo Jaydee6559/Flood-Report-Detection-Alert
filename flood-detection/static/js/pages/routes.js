@@ -134,9 +134,9 @@
 
   /* Route drafts: the suggested route, adjusted on a map. One beside the desktop form, one in the phone editor. */
   var addDraftHost = document.createElement("div"); detail.insertAdjacentElement("beforebegin", addDraftHost);
-  var addDraft = FDA.routeDraft.create(addDraftHost);
+  var addDraft = FDA.routeDraft.create(addDraftHost, { showEmpty: true });   // the map shows before anything is picked
   var mDraftHost = document.createElement("div"); $(".route-points", editor).insertAdjacentElement("afterend", mDraftHost);
-  var mDraft = FDA.routeDraft.create(mDraftHost, { collapseSaved: true });
+  var mDraft = FDA.routeDraft.create(mDraftHost, { collapseSaved: true, showEmpty: true });
   function sync(draft, s, e) { var a = s.value(), b = e.value(); draft.setEnds(a.point || null, b.point || null); }
   var addStart = Picker($('[data-point="start"]'), "Start point", function () { sync(addDraft, addStart, addEnd); });
   var addEnd = Picker($('[data-point="end"]'), "Destination", function () { sync(addDraft, addStart, addEnd); });
