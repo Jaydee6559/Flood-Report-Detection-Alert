@@ -201,7 +201,7 @@
       var verdict = FDA.agent.checkPhoto({ prob: out.prob, source: out.source, loc: loc, reports: db.reports });
 
       var report = {
-        id: FDA.store.nextId("nextReport"), ownerId: me ? me.id : FDA.store.deviceId(), ownerName: me ? me.name : "Guest",
+        id: FDA.store.nextId("nextReport"), ownerId: me.id, ownerName: me.name,   // the page needs an account (core/layout.js)
         ts: Date.now(), city: loc.city, barangay: loc.barangay, street: loc.street || "Street not given", lat: loc.lat, lng: loc.lng, location: approximate ? "approximate" : "precise",
         desc: desc.value.trim(), photo: state.photo, prob: out.prob, depthCm: out.depthCm, model: out.source,
         status: verdict.status, note: verdict.note, recommendation: verdict.recommendation, evidence: verdict.evidence,

@@ -15,8 +15,17 @@
     return;
   }
 
-  var me = FDA.auth.current(), voter = me ? me.id : FDA.store.deviceId();
+  var me = FDA.auth.current(), voter = me ? me.id : null;   // guests can read, but not confirm, comment or flag
   var voteKey = r.id + "|" + voter;
+
+  /** Guests: explain and offer the sign-in page. Returns true when the action may go ahead. */
+  function signedIn(title) {
+    if (me) return true;
+    FDA.ui.dialog({ title: title, text: "Anyone can read reports, but this needs an account.", confirm: "Sign in" }).then(function (ok) {
+      if (ok) location.href = "auth/login.html?next=" + encodeURIComponent("report-details.html?id=" + r.id);
+    });
+    return false;
+  }
 
   /* ---------- Summary ---------- */
   $(".breadcrumb [aria-current]").textContent = "#" + r.id;
@@ -82,6 +91,7 @@
     last.lastChild.textContent = r.lastConfirmTs ? " Last confirmed " + FDA.ui.timeAgo(r.lastConfirmTs) : " Not confirmed yet";
   }
   function vote(kind) {
+    if (!signedIn("Sign in to confirm")) return;
     if (r.ownerId === voter) return FDA.ui.toast("You can't confirm your own report.", "error");
     var prev = db.votes[voteKey];
     if (prev) r[prev]--;
@@ -112,6 +122,7 @@
 
   $(".comment-list").addEventListener("click", function (e) {
     var b = e.target.closest(".comment__report"); if (!b) return;
+    if (!signedIn("Sign in to report a comment")) return;
     var c = db.comments.filter(function (x) { return x.id === +b.dataset.id; })[0];
     c.flaggedBy = c.flaggedBy || [];
     if (c.flaggedBy.indexOf(voter) >= 0) return FDA.ui.toast("You already reported this comment.");
@@ -125,12 +136,7 @@
   var input = $("#comment"), post = $(".comment-form .btn");
   function addComment() {
     var text = input.value.trim();
-    if (!me) {
-      FDA.ui.dialog({ title: "Sign in to comment", text: "Anyone can read reports, but comments need an account.", confirm: "Sign in" }).then(function (ok) {
-        if (ok) location.href = "auth/login.html?next=" + encodeURIComponent("report-details.html?id=" + r.id);
-      });
-      return;
-    }
+    if (!signedIn("Sign in to comment")) return;
     if (!text) return FDA.ui.fieldError(input, "Write a short comment first.");
     FDA.ui.fieldError(input, "");
     var c = { id: FDA.store.nextId("nextComment"), reportId: r.id, author: shortName(me.name), authorId: me.id, ts: Date.now(), text: text.slice(0, 200), flags: 0, removed: false };

@@ -1,20 +1,67 @@
-"""Flood Detection & Alert: Flask app (templates, sample data, and the photo classifier).
+"""Flood Detection & Alert: Flask app (pages, the photo classifier and the database).
 
-Run:   pip install -r requirements.txt
-       flask --app app run --debug        (then open http://127.0.0.1:5000)
+First time:
+    pip install -r requirements.txt
+    flask --app app init-db                       (creates instance/flood.db, empty)
+    flask --app app create-user --moderator       (the first moderator account)
+Run:
+    flask --app app run --debug                   (then open http://127.0.0.1:5000)
 
 The trained model goes in  models/flood_model.keras  (see models/README.md).
 Without it, or without TensorFlow installed, the site still runs and the
 report page falls back to the demo estimate.
+The tables are in database.py and described in DATABASE.md.
 """
 import io
 import os
 import threading
 
+import click
 from flask import Flask, abort, jsonify, render_template, request
+
+from database import NotificationSettings, User, db
 
 app = Flask(__name__)  # templates/ and static/ sit next to this file
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # photos up to 10 MB
+
+
+# ---- Database ---------------------------------------------------------------
+# SQLite file in the instance/ folder (not committed). Photos go in uploads/ (not committed).
+os.makedirs(app.instance_path, exist_ok=True)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///" + os.path.join(app.instance_path, "flood.db"))
+app.config["UPLOAD_FOLDER"] = os.environ.get("UPLOAD_FOLDER", os.path.join(app.root_path, "uploads"))
+db.init_app(app)
+
+
+@app.cli.command("init-db")
+@click.option("--reset", is_flag=True, help="Delete ALL data and start again with empty tables.")
+def init_db(reset):
+    """Create the tables (an empty database). Safe to run again: existing data is kept."""
+    if reset:
+        click.confirm("This deletes every account, report and comment. Continue?", abort=True)
+        db.drop_all()
+    db.create_all()
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    click.echo("Database ready: " + app.config["SQLALCHEMY_DATABASE_URI"])
+
+
+@app.cli.command("create-user")
+@click.option("--name", prompt="Full name")
+@click.option("--login", prompt="Email or mobile number")
+@click.password_option("--password", prompt="Password")
+@click.option("--moderator", is_flag=True, help="Give the account the moderator role.")
+def create_user(name, login, password, moderator):
+    """Add an account from the command line (moderators are created this way)."""
+    login = login.strip().lower()
+    if User.query.filter_by(login=login).first():
+        raise click.ClickException("That email or number is already registered.")
+    user = User(name=name.strip(), login=login, role="moderator" if moderator else "user")
+    user.set_password(password)
+    user.settings = NotificationSettings()
+    db.session.add(user)
+    db.session.commit()
+    click.echo("Created %s #%d: %s" % (user.role, user.id, user.login))
 
 
 # ---- Image classifier (Module 6) ---------------------------------------------

@@ -11,7 +11,7 @@
   var user = FDA.auth.current();
 
   /* ---------- Who may open which page ---------- */
-  var NEEDS_USER = { routes: 1, schedules: 1, notifications: 1 };
+  var NEEDS_USER = { report: 1, routes: 1, schedules: 1, notifications: 1 };   // guests can view, but reporting needs an account
   var NEEDS_MODERATOR = { moderation: 1 };
   if ((NEEDS_USER[page] && !user) || (NEEDS_MODERATOR[page] && !(user && user.role === "moderator"))) {
     location.replace(FDA.ui.url("auth/login.html") + "?next=" + encodeURIComponent(page + ".html"));

@@ -4,3 +4,5 @@ __pycache__/
 flood-detection/scripts/source/
 flood-detection/__pycache__/
 flood-detection/models/*.keras
+flood-detection/instance/
+flood-detection/uploads/
