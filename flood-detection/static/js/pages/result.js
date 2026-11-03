@@ -66,10 +66,13 @@
   $(".result-actions__saved").lastChild.textContent = " Saved as report #" + r.id;
   $(".breadcrumb [aria-current]").textContent = "Check result";
 
-  // Be honest about which estimate this is
-  var badge = $(".page-heading__aside .badge--sample");
-  if (FDA.classifier.isTrained(r.model)) badge.remove();
-  else { badge.textContent = "DEMO ESTIMATE"; badge.title = "The trained model is not loaded, so this is a rough colour-based estimate."; }
+  // Be honest when the trained model was not used for this photo
+  if (!FDA.classifier.isTrained(r.model)) {
+    var badge = document.createElement("span");
+    badge.className = "badge badge--sample"; badge.textContent = "ROUGH ESTIMATE";
+    badge.title = "The trained model was not available, so this is a rough colour-based estimate.";
+    $(".page-heading__aside").appendChild(badge);
+  }
 
   if (r.dupCandidate) {
     var dup = db.reports.filter(function (x) { return x.id === r.dupCandidate; })[0];

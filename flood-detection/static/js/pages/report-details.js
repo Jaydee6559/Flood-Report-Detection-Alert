@@ -30,7 +30,6 @@
   $(".breadcrumb [aria-current]").textContent = "#" + r.id;
   document.title = "Report #" + r.id + " · Flood Detection & Alert";
   $(".page-heading h1").textContent = r.street + ", " + r.barangay;
-  var tag = $(".page-heading__aside .badge--sample"); if (tag) tag.remove();   // reports are real now (the database)
 
   var photo = $(".details-summary__photo");
   photo.src = r.photo; photo.alt = "Submitted street photo for report #" + r.id; photo.removeAttribute("width"); photo.removeAttribute("height");

@@ -78,11 +78,6 @@
 
       <div class="report-layout">
 
-        <!--
-          Prototype: nothing is uploaded or submitted yet.
-          When connecting to Flask: add enctype="multipart/form-data",
-          method="post", name attributes and a file input.
-        -->
         <form class="report-form">
 
           <!-- 1 · Photo -->
@@ -158,7 +153,7 @@
           <!-- Submit (static) -->
           <div class="form-actions">
             <p class="form-actions__note">Your photo, location and result will be saved to Reports.</p>
-            <!-- Prototype: opens the sample result page -->
+            <!-- static/js/pages/report.js checks the photo, saves the report and opens its result page -->
             <a class="btn btn--primary btn--lg" href="result.html">
               Check this photo
               <svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
@@ -199,7 +194,6 @@
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <span>Flood Detection &amp; Alert · CS 403 Intelligent Agents</span>
-      <span>Prototype · all reports and results are sample content</span>
     </div>
   </footer>
 

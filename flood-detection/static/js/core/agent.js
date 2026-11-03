@@ -165,7 +165,7 @@
       var changeable = start === "possible-flood" || start === "unclear-photo";
 
       function eff(on, present) { return raised ? (raise[on] ? "raise" : "info") : present ? (changeable ? "info" : "support") : "none"; }
-      var model = FDA.classifier && FDA.classifier.isTrained(percept.source) ? "MobileNetV2 (Flood10K)" : "Demo estimate (trained model not loaded)";
+      var model = FDA.classifier && FDA.classifier.isTrained(percept.source) ? "MobileNetV2 (Flood10K)" : "Rough estimate (trained model not available)";
       var bandText = { "flood-warning": "0.80 or more", "possible-flood": "0.50–0.79", "unclear-photo": "0.30–0.49", "no-flood": "under 0.30" }[start];
       var reasons = [
         { key: "P", title: "Photo: " + Math.round(prob * 100) + "% flood probability", detail: model + " · starts as " + RECOMMENDATIONS[start].label + " (" + bandText + ")", effect: "start" }
@@ -173,7 +173,7 @@
       reasons.push({ key: "H", title: (inp.H === "none" ? "No flood hazard zone" : FDA.hazard.label(inp.H).replace(" hazard", " hazard zone")) + (loc.barangay ? "" : ""),
         detail: (loc.barangay ? loc.barangay + " · " : "") + "hazard map at this pin" + (FDA.hazard && FDA.hazard.isSample ? " (sample levels)" : ""), effect: eff("H", hzMed) });
       reasons.push({ key: "R", title: inp.R ? FDA.rain.names[inp.R] + " rain · " + inp.mm + " mm/h now" : "No rainfall warning level · " + inp.mm + " mm/h now",
-        detail: (FDA.rain && FDA.rain.mode() === "live" ? "Open-Meteo" : FDA.rain && FDA.rain.mode() === "simulated" ? "Simulated demo rain" : "Sample rain (live data unavailable)") + " · PAGASA levels: yellow 7.5, orange 15, red 30 mm/h", effect: eff("R", rainHigh) });
+        detail: (FDA.rain && FDA.rain.mode() === "live" ? "Open-Meteo" : FDA.rain && FDA.rain.mode() === "simulated" ? "Simulated storm" : "Typical rain values (live data unavailable)") + " · PAGASA levels: yellow 7.5, orange 15, red 30 mm/h", effect: eff("R", rainHigh) });
       reasons.push({ key: "S", title: hasS ? "Recurring flood spot " + inp.S[0].meters + " m away" : "No recurring flood spot within " + config.spotMeters + " m",
         detail: hasS ? inp.S[0].spot.corner + " · flooded " + inp.S[0].spot.times + " times" + (inp.S.length > 1 ? " · " + (inp.S.length - 1) + " more nearby" : "") : "From the flood-spot log (QCDRRMO / MMDA sightings)", effect: eff("S", hasS) });
       reasons.push({ key: "N", title: hasN ? inp.N.length + " report" + (inp.N.length > 1 ? "s" : "") + " within " + config.reportMeters + " m in the last " + (config.reportMin / 60) + " h" : "No other reports within " + config.reportMeters + " m in the last " + (config.reportMin / 60) + " h",

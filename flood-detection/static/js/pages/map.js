@@ -112,13 +112,13 @@
       if (!best || mm > best.mm) best = { id: d.id, mm: mm, level: FDA.agent.rainLevel(mm) };
     });
     var next3 = best ? [1, 2, 3].reduce(function (s, h) { return s + FDA.rain.mm(best.id, h); }, 0) : 0;
-    var modeText = { live: "Live · Open-Meteo, updated " + FDA.ui.clock(snap.at), simulated: "Demo storm (simulated) so Rule 2 can be shown on a dry day", sample: "Sample rain: live data could not be loaded" }[snap.source];
+    var modeText = { live: "Live · Open-Meteo, updated " + FDA.ui.clock(snap.at), simulated: "Simulated storm, to show how area alerts work on a dry day", sample: "Live rain could not be loaded, so typical values are shown" }[snap.source];
     banner.className = "rain-banner" + (best && best.level ? " rain-banner--" + best.level : "");
     banner.innerHTML = best && best.level
       ? "<strong>" + FDA.ui.svg("possible-flood", "md") + LVL[best.level] + " rainfall · District " + best.id + " " + (state.hours ? "(" + hourText(state.hours) + ")" : "") + "</strong><small>" + best.mm + " mm/h " + hourText(state.hours) + " · " + Math.round(next3 * 10) / 10 + " mm expected in the next 3 h · PAGASA level (estimate)</small><small>" + esc(modeText) + "</small>"
       : "<strong>" + FDA.ui.svg("no-flood", "md") + "No rainfall warning level " + hourText(state.hours) + "</strong><small>Heaviest rain: " + (best ? best.mm + " mm/h in District " + best.id : "–") + ". Below the PAGASA yellow level (7.5 mm/h).</small><small>" + esc(modeText) + "</small>";
-    $("#rain-updated").textContent = { live: "Updated " + FDA.ui.clock(snap.at) + " · Open-Meteo", simulated: "Demo storm", sample: "Sample rain" }[snap.source];
-    $("#l-rain-sub").textContent = { live: "Open-Meteo · every 15 min", simulated: "Demo storm (simulated)", sample: "Sample rain (live unavailable)" }[snap.source];
+    $("#rain-updated").textContent = { live: "Updated " + FDA.ui.clock(snap.at) + " · Open-Meteo", simulated: "Simulated storm", sample: "Typical values (live unavailable)" }[snap.source];
+    $("#l-rain-sub").textContent = { live: "Open-Meteo · every 15 min", simulated: "Simulated storm", sample: "Typical values (live unavailable)" }[snap.source];
   }
 
   function rowsForList() {

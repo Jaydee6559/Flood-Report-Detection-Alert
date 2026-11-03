@@ -10,9 +10,9 @@
   if (banner) {
     var note = $(".alert-banner__note", banner);
     banner.firstChild.textContent = recent.length
-      ? recent.length + " flood warning" + (recent.length > 1 ? "s" : "") + " reported in Metro Manila in the last 24 hours "
-      : "No flood warnings reported in Metro Manila in the last 24 hours ";
-    if (note) note.textContent = "· demo data";
+      ? recent.length + " flood warning" + (recent.length > 1 ? "s" : "") + " reported in Quezon City in the last 24 hours "
+      : "No flood warnings reported in Quezon City in the last 24 hours ";
+    if (note) note.remove();
   }
 
   /* Quezon City weather card */

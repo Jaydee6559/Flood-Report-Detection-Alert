@@ -219,7 +219,6 @@
     var res = check(route), ps = planState[route.id];
     $("#route-title").textContent = route.name;
     $(".route-detail__head p").textContent = route.start + " → " + route.end + " · " + km(route);
-    $(".route-detail__aside .badge--sample").textContent = "DEMO DATA";
     $(".route-detail__aside a").href = "schedules.html?route=" + route.id;
 
     /* Placing status (routes saved before street routing, or a failed lookup) */

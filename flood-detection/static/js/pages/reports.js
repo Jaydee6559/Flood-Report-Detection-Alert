@@ -16,7 +16,6 @@
 
   // "Today" really means the last 24 hours in this prototype
   $$("option", date).forEach(function (o) { if (o.textContent === "Today") o.textContent = "Last 24 hours"; });
-  var tag = $(".page-heading__aside .badge--sample"); if (tag) tag.textContent = "DEMO DATA";
 
   function base() {
     var q = search.value.trim().toLowerCase(), hours = HOURS[date.value] || 24, now = Date.now();
@@ -62,8 +61,8 @@
 
     list.innerHTML = slice.length ? slice.map(row).join("") : '<li style="padding:24px;text-align:center;color:var(--color-text-muted)">No reports match these filters.</li>';
     info.textContent = rows.length
-      ? "Showing " + (page * PAGE_SIZE + 1) + "–" + (page * PAGE_SIZE + slice.length) + " of " + rows.length + " report" + (rows.length > 1 ? "s" : "") + " · Demo data"
-      : "No reports · Demo data";
+      ? "Showing " + (page * PAGE_SIZE + 1) + "–" + (page * PAGE_SIZE + slice.length) + " of " + rows.length + " report" + (rows.length > 1 ? "s" : "")
+      : "No reports";
     prev.disabled = page === 0; next.disabled = page >= pages - 1;
   }
 

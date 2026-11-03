@@ -135,7 +135,6 @@
     var on = mine().filter(function (s) { return s.enabled && routeOf(s); });
     examples.querySelectorAll(".sched-alert").forEach(function (n) { n.remove(); });
     $(".eyebrow-row .eyebrow").textContent = "Latest route checks";
-    var tag = $(".eyebrow-row .badge--sample"); tag.textContent = "LIVE · DEMO REPORTS";
     var html = on.map(function (s) {
       var r = routeOf(s), res = FDA.agent.routeCheck(r, db.reports), top = res.warnings[0] || res.possible[0];
       var dep = S.clockText(s.time);
@@ -154,7 +153,6 @@
     var first = on.map(function (s) { var r = routeOf(s), res = FDA.agent.routeCheck(r, db.reports); return { s: s, r: r, top: res.warnings[0] || res.possible[0] }; }).filter(function (x) { return x.top; })[0];
     var card = $(".trip-card"), advice = $(".trip-advice"), actions = $(".trip-actions"), banner = $(".travel-check");
     [card, advice, actions].forEach(function (n) { n.hidden = !first; });
-    var tagM = $(".my-schedules__head .badge--sample"); if (tagM) tagM.textContent = "DEMO DATA";
     banner.hidden = !first; // the red bar only shows when there is something to warn about
     if (first) {
       $(".travel-check__label").textContent = "Travel check · " + S.checkTimeText(first.s);

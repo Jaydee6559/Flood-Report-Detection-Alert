@@ -10,7 +10,6 @@
   var active = "all", selected = null, section = "queue";
 
   var iconDup = FDA.ui.svg("duplicate"), iconClock = FDA.ui.svg("clock"), iconFlag = FDA.ui.svg("flag");
-  var tag = $(".mod-main__head .badge--sample"); if (tag) tag.remove();   // reports are real now (the database)
 
   /* Why a report is in the queue. A report can have more than one reason. */
   function reasons(r) {

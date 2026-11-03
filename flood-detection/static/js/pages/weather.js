@@ -207,7 +207,7 @@
     var a = current();
     return getForecast(a.lat, a.lng).then(function (res) { draw(res); drawRoutes(); })
       .catch(function () {
-        $(".page-subtitle").innerHTML = "Live forecast could not be loaded, so the page shows <strong>sample data</strong>. <span class=\"badge badge--sample\">SAMPLE DATA</span>";
+        $(".page-subtitle").innerHTML = "Live forecast could not be loaded, so typical values are shown.";
         drawRoutes();
       });
   }
@@ -243,7 +243,7 @@
       card.innerHTML = '<div class="district-card__head"><h2 class="card__title" id="district-rain-title">Rain by district now</h2><span class="text-xs text-muted">Barangays at risk shown under each district</span></div>' +
         '<ul class="district-list">' + rows + "</ul>" +
         '<p class="district-card__scale text-xs text-muted"><span><i class="dot dot--yellow"></i>Yellow 7.5–15</span><span><i class="dot dot--orange"></i>Orange 15–30</span><span><i class="dot dot--red"></i>Red over 30 mm/h</span></p>' +
-        '<p class="text-muted text-xs district-card__note">' + ({ live: "Live from Open-Meteo.", simulated: "Demo storm (simulated).", sample: "Sample rain: live data could not be loaded." }[snap.source]) +
+        '<p class="text-muted text-xs district-card__note">' + ({ live: "Live from Open-Meteo.", simulated: "Simulated storm.", sample: "Live rain could not be loaded; typical values shown." }[snap.source]) +
         ' Levels are an estimate using PAGASA\'s thresholds, not an official warning. <a class="link" href="map.html">Open the flood map</a></p>';
     }
     draw(); window.addEventListener("fda:rain", draw); FDA.rain.load();

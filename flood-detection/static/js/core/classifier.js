@@ -138,8 +138,8 @@
         if (state.mode === "server") {
           return predictServer(img).catch(function (err) {
             // Flask went away or failed on this photo: say so, and use the demo estimate rather than block the report.
-            if (window.console) console.warn("Server photo check failed, using the demo estimate: " + err.message);
-            if (FDA.ui && FDA.ui.toast) FDA.ui.toast("The photo checker is not reachable, so this result is a demo estimate.", "error");
+            if (window.console) console.warn("Server photo check failed, using the rough estimate: " + err.message);
+            if (FDA.ui && FDA.ui.toast) FDA.ui.toast("The photo checker is not reachable, so this result is only a rough estimate.", "error");
             return { prob: demoProbability(img), source: "demo" };
           });
         }

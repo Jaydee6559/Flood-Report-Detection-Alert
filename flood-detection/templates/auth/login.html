@@ -83,12 +83,6 @@
           <p class="auth__subtitle">Use the email or mobile number you registered with.</p>
         </header>
 
-        <!--
-          Prototype: the button only opens the homepage.
-          Fields have no name attributes, so nothing is sent.
-          When connecting to Flask: add name="email" / name="password",
-          method="post" and point action to the login route.
-        -->
         <form class="auth__form" action="../index.html">
           <div class="form-field">
             <label class="form-label" for="email">Email or mobile number</label>
@@ -115,7 +109,7 @@
               <input type="checkbox" checked>
               Keep me signed in
             </label>
-            <!-- Static in this prototype -->
+            <!-- handled by static/js/pages/login.js -->
             <button class="link-button" type="button">Forgot password?</button>
           </div>
 
