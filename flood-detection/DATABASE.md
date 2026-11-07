@@ -17,12 +17,26 @@ flask --app app sample-spots off           # stop counting the 40 SAMPLE flood s
 flask --app app import-spots spots.csv     # add real flood sightings: barangay, corner, date, depth [, street, pass, times, lat, lng, source, url]
 ```
 
+### Demo data
+
+A separate demo database with 15 users, 20 flood reports (real Quezon City flood photos from news sites, see
+`demo/CREDITS.md`), confirmations, comments, flags, routes, schedules and notifications. Your real data is not touched.
+
+```
+$env:FDA_DEMO = "1"                        # PowerShell (Command Prompt: set FDA_DEMO=1)
+flask --app app seed-demo                  # builds instance/demo.db and uploads/demo/ from scratch (needs the trained model)
+flask --app app run --debug                # the site now uses the demo data; close the terminal or remove FDA_DEMO for the real data
+```
+
+Every demo photo is checked by the trained model, and every report goes through the agent's Rule 1 on the server, at the
+time it is dated. Sign in as `moderator@example.com` or any demo user (e.g. `maria.santos@example.com`), password `FloodDemo2026`.
+
 `flask --app app init-db --reset` deletes everything and starts again with empty tables. It asks first.
 Columns added in later steps are added to an existing `flood.db` automatically when the app starts, so you don't need to reset.
 
 ## Decisions
 
-- **The database starts empty.** There is no sample data. Report numbers start at **#1** and are never reused.
+- **The database starts empty.** Sample data lives only in the separate demo database (above). Report numbers start at **#1** and are never reused.
 - **Guests can only view.** Reporting, confirming, commenting and flagging need an account, so those rows always have a `user_id`.
 - **Moderators are created by an administrator** with `create-user --moderator`. The register page only makes normal users.
 - **Counts are counted, not stored.** "5 say still flooded" = rows in `confirmations`, "reported by 2 users" = rows in `flags`.

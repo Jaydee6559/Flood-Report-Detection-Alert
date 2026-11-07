@@ -45,9 +45,12 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # photos up to 10 MB
 # ---- Database ---------------------------------------------------------------
 # SQLite file in the instance/ folder (not committed). Photos go in uploads/ (not committed).
 os.makedirs(app.instance_path, exist_ok=True)
+# FDA_DEMO=1 switches to the sample data (instance/demo.db, uploads/demo/; made by  flask seed-demo ).
+DEMO = os.environ.get("FDA_DEMO") == "1"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "DATABASE_URL", "sqlite:///" + os.path.join(app.instance_path, "flood.db"))
-app.config["UPLOAD_FOLDER"] = os.environ.get("UPLOAD_FOLDER", os.path.join(app.root_path, "uploads"))
+    "DATABASE_URL", "sqlite:///" + os.path.join(app.instance_path, "demo.db" if DEMO else "flood.db"))
+app.config["UPLOAD_FOLDER"] = os.environ.get(
+    "UPLOAD_FOLDER", os.path.join(app.root_path, "uploads", "demo") if DEMO else os.path.join(app.root_path, "uploads"))
 db.init_app(app)
 with app.app_context():
     add_missing_columns()   # an older flood.db gets the newer columns; nothing is deleted
@@ -200,6 +203,23 @@ def import_spots(csv_file):
         click.echo("  skipped " + p)
     if added and spots_data.sample_spots_on():
         click.echo("The SAMPLE spots still count too. Run  flask --app app sample-spots off  to use only real sightings.")
+
+
+@app.cli.command("seed-demo")
+def seed_demo():
+    """Build the sample data (instance/demo.db) from scratch: 15 users, 20 reports with real QC flood photos, and more.
+    Run it with FDA_DEMO=1 set; it never touches the real database."""
+    import demo_seed
+    if not app.config["SQLALCHEMY_DATABASE_URI"].replace("\\", "/").endswith("/demo.db"):
+        raise click.ClickException("This would replace the database in use. Set FDA_DEMO=1 first "
+                                   "(PowerShell: $env:FDA_DEMO = \"1\"), then run this again.")
+    if get_model() is None:
+        raise click.ClickException("The trained model is needed to check the demo photos: " + str(_model["error"]))
+    click.echo("Checking 20 photos with the model and running the agent...")
+    counts = demo_seed.seed(app, photo_probability, echo=click.echo)
+    demo_seed.write_credits(os.path.join(app.root_path, "demo", "CREDITS.md"))
+    click.echo("Demo data ready: " + ", ".join("%d %s" % (v, k) for k, v in counts.items()))
+    click.echo("Sign in as moderator@example.com or maria.santos@example.com (any demo user), password %s" % demo_seed.PASSWORD)
 
 
 # ---- Image classifier (Module 6) ---------------------------------------------
