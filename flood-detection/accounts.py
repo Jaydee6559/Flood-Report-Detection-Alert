@@ -15,13 +15,16 @@ need an account. Moderators are created with  flask --app app create-user --mode
 import json
 import os
 import re
+import secrets
+from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, Response, current_app, jsonify, request
 from flask_login import LoginManager, current_user, login_user, logout_user
 from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
+from werkzeug.security import check_password_hash, generate_password_hash
 
 import limits
-from database import NotificationSettings, User, db
+from database import NotificationSettings, PasswordReset, User, db
 
 bp = Blueprint("accounts", __name__)
 login_manager = LoginManager()
@@ -170,6 +173,120 @@ def sign_in():
 def sign_out():
     logout_user()
     return jsonify(ok=True, csrf=generate_csrf())
+
+
+# ---- "Forgot password?" --------------------------------------------------------
+# 1. POST /api/auth/forgot {login}: a 6-digit code goes to the account's email (SMTP, see send_reset_code).
+#    The answer is the same whether or not the account exists, so nobody can test which logins are registered.
+# 2. POST /api/auth/reset {login, code, password, confirm}: a right code sets the new password and signs in.
+RESET_MINUTES = 15
+RESET_TRIES = 5
+MSG_RESET_SENT = "If that email or number has an account, a 6-digit code is on its way. It works for %d minutes." % RESET_MINUTES
+MSG_BAD_CODE = "That code is not right, or it has expired. Ask for a new one."
+
+
+def mail_ready():
+    return bool(current_app.config.get("MAIL_SERVER") or os.environ.get("MAIL_SERVER"))
+
+
+def _mail_setting(name, default=None):
+    return current_app.config.get(name) or os.environ.get(name) or default
+
+
+def send_reset_code(user, code):
+    """Send the code. By email when MAIL_SERVER is set and the login is an email; otherwise
+    (no mail server, or a mobile number: there is no SMS service yet) it is printed in the server
+    console, so whoever runs the server can pass it on. Returns "email" or "console"."""
+    sender = current_app.config.get("RESET_SENDER")          # tests put a fake one here
+    if sender:
+        return sender(user, code)
+    text = ("Your Flood Detection & Alert password reset code is %s.\n\nIt works for %d minutes. "
+            "If you did not ask for it, ignore this message; your password has not changed." % (code, RESET_MINUTES))
+    if mail_ready() and "@" in user.login:
+        import smtplib
+        from email.message import EmailMessage
+        msg = EmailMessage()
+        msg["Subject"] = "Your password reset code"
+        msg["From"] = _mail_setting("MAIL_FROM", _mail_setting("MAIL_USERNAME", "no-reply@localhost"))
+        msg["To"] = user.login
+        msg.set_content(text)
+        port = int(_mail_setting("MAIL_PORT", 587))
+        with smtplib.SMTP(_mail_setting("MAIL_SERVER"), port, timeout=20) as smtp:
+            if port != 25 and str(_mail_setting("MAIL_USE_TLS", "1")) != "0":
+                smtp.starttls()
+            if _mail_setting("MAIL_USERNAME"):
+                smtp.login(_mail_setting("MAIL_USERNAME"), _mail_setting("MAIL_PASSWORD", ""))
+            smtp.send_message(msg)
+        return "email"
+    print(" * Password reset code for %s #%d (%s): %s  (valid %d min; set MAIL_SERVER to send it by email)"
+          % (user.role, user.id, user.login, code, RESET_MINUTES), flush=True)
+    return "console"
+
+
+def _aware(dt):
+    return dt.replace(tzinfo=timezone.utc) if dt is not None and dt.tzinfo is None else dt
+
+
+@bp.post("/api/auth/forgot")
+def forgot_password():
+    data = request.get_json(silent=True) or {}
+    login, ip = str(data.get("login") or "").strip(), request.remote_addr
+    if not login_is_valid(login):
+        return jsonify(ok=False, errors={"login": "Enter a valid email or a mobile number like 0917 123 4567."}), 400
+    login = norm_login(login)
+    stop = limits.too_many("reset", login) or limits.too_many("reset-ip", ip)
+    if stop:
+        return stop
+    user = User.query.filter_by(login=login).first()
+    if user is not None:
+        PasswordReset.query.filter_by(user_id=user.id, used=False).update({"used": True})   # only the newest code works
+        code = "%06d" % secrets.randbelow(1000000)
+        db.session.add(PasswordReset(user_id=user.id, code_hash=generate_password_hash(code),
+                                     expires_at=datetime.now(timezone.utc) + timedelta(minutes=RESET_MINUTES)))
+        db.session.commit()
+        try:
+            send_reset_code(user, code)
+        except Exception:
+            current_app.logger.exception("The reset code could not be sent")
+            return jsonify(ok=False, error="The code could not be sent right now. Please try again later."), 503
+    # The same answer either way. Where the code went depends only on the server's settings, not on the account.
+    where = "email" if mail_ready() else "console"
+    return jsonify(ok=True, message=MSG_RESET_SENT, delivery=where)
+
+
+@bp.post("/api/auth/reset")
+def reset_password():
+    data = request.get_json(silent=True) or {}
+    ip, login = request.remote_addr, norm_login(data.get("login"))
+    code, password = re.sub(r"\D", "", str(data.get("code") or "")), str(data.get("password") or "")
+    stop = limits.blocked("reset-code", ip)
+    if stop:
+        return stop
+    errors = {}
+    if not password_is_strong(password):
+        errors["password"] = "Use at least 8 characters, a number, and upper and lower case letters."
+    if password != str(data.get("confirm") or ""):
+        errors["confirm"] = "The passwords do not match."
+    if len(code) != 6:
+        errors["code"] = "Enter the 6-digit code."
+    if errors:
+        return jsonify(ok=False, errors=errors), 400
+    user = User.query.filter_by(login=login).first()
+    row = None if user is None else PasswordReset.query.filter_by(user_id=user.id, used=False).order_by(PasswordReset.id.desc()).first()
+    now = datetime.now(timezone.utc)
+    if row is None or _aware(row.expires_at) < now or row.tries >= RESET_TRIES or not check_password_hash(row.code_hash, code):
+        if row is not None:
+            row.tries += 1
+            if row.tries >= RESET_TRIES:
+                row.used = True               # too many wrong tries: this code is finished
+            db.session.commit()
+        limits.count("reset-code", ip)
+        return jsonify(ok=False, errors={"code": MSG_BAD_CODE}), 400
+    row.used = True
+    user.set_password(password)
+    db.session.commit()
+    login_user(user, remember=False)
+    return jsonify(ok=True, user=public(user), csrf=generate_csrf())
 
 
 def csrf_failed(err):

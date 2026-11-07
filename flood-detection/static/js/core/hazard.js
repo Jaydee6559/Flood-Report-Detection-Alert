@@ -6,6 +6,8 @@
  *                               100-year flood hazard map (see scripts/apply_qc_hazard.py)
  *   static/data/flood-spots.js  the flood-spot log seed (SAMPLE). Moderators add more; those are saved on the
  *                               server (spots_api.py) and arrive as window.FDA_SPOTS_LOG (/api/spots.js).
+ *                               After  flask sample-spots off  the server sets FDA_SAMPLE_SPOTS_ON = false
+ *                               and the samples are left out everywhere.
  *
  * Everything here is read-only lookups, so it can move to the Flask API later without changing callers:
  *   FDA.hazard.at(lat, lng)            -> {barangay, hazard} for a point
@@ -73,10 +75,11 @@
   function metersToDeg(dn, de, lat) { return { lat: dn / 111320, lng: de / (111320 * Math.cos(lat * Math.PI / 180)) }; }
 
   function build() {
-    var key = (window.FDA_SPOTS || []).length + ":" + logged().length;
+    var seeds = window.FDA_SAMPLE_SPOTS_ON === false ? [] : (window.FDA_SPOTS || []);   // the server can turn the SAMPLE spots off
+    var key = seeds.length + ":" + logged().length;
     if (cache && key === cacheKey) return cache;
     var out = [];
-    (window.FDA_SPOTS || []).forEach(function (s, i) {
+    seeds.forEach(function (s, i) {
       var b = byName[s.b]; if (!b) return;
       var d = metersToDeg(s.dn || 0, s.de || 0, b.lat);
       out.push({ id: "s" + (i + 1), barangay: s.b, corner: s.corner, street: s.street || "", times: s.n, depth: s.depth, pass: s.pass, last: s.last, lat: b.lat + d.lat, lng: b.lng + d.lng, source: s.src, seed: true });

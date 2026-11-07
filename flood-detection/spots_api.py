@@ -2,11 +2,13 @@
 advisories, saved in the flood_spots table. They are the agent's S input for everyone.
 
     GET  /api/spots.js                 window.FDA_SPOTS_LOG = [...] (everyone; app.js loads it before the page scripts)
+                                       and window.FDA_SAMPLE_SPOTS_ON (false after  flask sample-spots off )
     POST /api/spots                    moderators: {barangay, corner, street?, date, depth, pass, url?, lat, lng}
                                        the same barangay + corner again counts as another time (times + 1)
     POST /api/spots/<id>/delete        moderators
 
-The seed spots in static/data/flood-spots.js stay as they are; these are added on top.
+The SAMPLE seed spots in static/data/flood-spots.js are added on top, unless they are turned off
+(spots_data.py). Real sightings can also be loaded in bulk with  flask --app app import-spots FILE.csv .
 """
 import json
 import math
@@ -16,6 +18,7 @@ from flask import Blueprint, Response, jsonify, request
 from flask_login import current_user, login_required
 
 import accounts
+import spots_data
 from database import DEPTHS, PASSABLE, FloodSpot, db
 
 bp = Blueprint("spots_api", __name__)
@@ -34,8 +37,9 @@ def spot_json(s):
 @bp.get("/api/spots.js")
 def spots_script():
     rows = FloodSpot.query.order_by(FloodSpot.id).all()
-    resp = Response("window.FDA_SPOTS_LOG = %s;\n" % json.dumps([spot_json(s) for s in rows], separators=(",", ":")),
-                    mimetype="application/javascript")
+    body = "window.FDA_SPOTS_LOG = %s;\nwindow.FDA_SAMPLE_SPOTS_ON = %s;\n" % (
+        json.dumps([spot_json(s) for s in rows], separators=(",", ":")), "true" if spots_data.sample_spots_on() else "false")
+    resp = Response(body, mimetype="application/javascript")
     resp.headers["Cache-Control"] = "no-store"
     return resp
 

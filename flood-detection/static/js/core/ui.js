@@ -120,7 +120,7 @@
    * Modal dialog.
    * opts: {title, text, html, confirm, cancel, danger,
    *        input:{label,placeholder,required},            one text area
-   *        fields:[{name,label,value,required}],           several text inputs
+   *        fields:[{name,label,value,required,type?,autocomplete?,inputmode?}],  several inputs
    *        extra:{label,danger}}                           a third button
    * Resolves with true / false; with the typed text (or null) for `input`;
    * with an object (or null) for `fields`; with "extra" when the third button is used.
@@ -130,7 +130,7 @@
       var d = document.createElement("dialog");
       d.className = "fda-dialog";
       var fields = (opts.fields || []).map(function (f, i) {
-        return '<label class="form-label" for="fda-f' + i + '" style="display:block;margin-top:12px">' + esc(f.label) + '</label><input class="form-input" id="fda-f' + i + '" name="' + esc(f.name) + '" value="' + esc(f.value || "") + '" style="margin-top:4px">';
+        return '<label class="form-label" for="fda-f' + i + '" style="display:block;margin-top:12px">' + esc(f.label) + '</label><input class="form-input" id="fda-f' + i + '" name="' + esc(f.name) + '" type="' + esc(f.type || "text") + '"' + (f.autocomplete ? ' autocomplete="' + esc(f.autocomplete) + '"' : "") + (f.inputmode ? ' inputmode="' + esc(f.inputmode) + '"' : "") + ' value="' + esc(f.value || "") + '" style="margin-top:4px">';
       }).join("");
       d.innerHTML = '<form method="dialog"><h2>' + esc(opts.title || "") + "</h2>" +
         (opts.text ? "<p>" + esc(opts.text) + "</p>" : "") + (opts.html || "") + fields +

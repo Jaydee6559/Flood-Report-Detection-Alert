@@ -4,7 +4,7 @@
     python -m pytest
 
 Every test gets an empty database and an empty uploads folder in a temporary directory, so your
-instance/flood.db and uploads/ are never touched. The trained model is not loaded (PHOTO_CHECK is off
+instance/flood.db, uploads/ and instance/settings.json are never touched. The trained model is not loaded (PHOTO_CHECK is off
 unless a test sets a fake one), rate limits are off unless a test turns them on, and the timed jobs
 do not start.
 """
@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app as flask_app  # noqa: E402  (the settings above must come first)
 from database import NotificationSettings, User, db  # noqa: E402
+import jobs  # noqa: E402
 import limits  # noqa: E402
 
 PASSWORD = "Flood12345"
@@ -34,7 +35,12 @@ PASSWORD = "Flood12345"
 
 @pytest.fixture(autouse=True)
 def app():
-    flask_app.config.update(TESTING=True, RATE_LIMITS=False, PHOTO_CHECK=None)
+    flask_app.config.update(TESTING=True, RATE_LIMITS=False, PHOTO_CHECK=None, RESET_SENDER=None,
+                            SETTINGS_FILE=os.path.join(TMP, "settings.json"))
+    if os.path.exists(flask_app.config["SETTINGS_FILE"]):
+        os.remove(flask_app.config["SETTINGS_FILE"])       # sample spots on, as in a new install
+    jobs.remember_rain(None)
+    jobs._rain["at"] = None                                # no live rain unless a test gives some
     with flask_app.app_context():
         db.drop_all()
         db.create_all()

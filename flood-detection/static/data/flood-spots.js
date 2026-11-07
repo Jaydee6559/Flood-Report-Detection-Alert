@@ -4,7 +4,8 @@
  * SAMPLE DATA for the prototype, modelled on the kind of corners that QCDRRMO and MMDA flood
  * advisories name. Positions are approximate: each spot sits at its barangay's centre point
  * moved by (dn metres north, de metres east). Replace these with real sightings; moderators can
- * also add sightings from the Moderation > Flood-spot log page (those are saved in the browser).
+ * also add sightings from the Moderation > Flood-spot log page (saved on the server), or load a CSV
+ * with  flask --app app import-spots FILE , then turn these samples off with  flask --app app sample-spots off .
  *
  *   b        barangay name, exactly as in locations.json
  *   corner   street or corner as people say it

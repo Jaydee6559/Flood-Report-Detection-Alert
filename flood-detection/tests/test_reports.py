@@ -21,7 +21,9 @@ def test_report_is_saved_with_the_agent_decision(make_user, app):
     rep = r.json["report"]
     assert rep["id"] == 1 and rep["ownerId"] == ana.me["id"]
     assert rep["evidence"] == []                      # a report number that does not exist is dropped
-    assert rep["depthCm"] == 40 and rep["inputs"]["hazard"] == "high"
+    # H is looked up on the server: this pin is in Culiat, a low-hazard barangay (the page said "high")
+    assert rep["depthCm"] == 40 and rep["inputs"]["hazard"] == "low" and rep["inputs"]["page"]["hazard"] == "high"
+    assert rep["inputs"]["rainSource"] == "page"      # no live rain on the server yet: the page's level is used
     with app.app_context():
         d = AgentDecision.query.one()
         assert (d.kind, d.report_id, d.result, d.rain_level) == ("photo", 1, "flood-warning", "orange")

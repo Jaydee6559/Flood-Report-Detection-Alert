@@ -172,11 +172,11 @@ It is an estimate from a rule table, not a prediction and not an official warnin
 
 - Everything is on the server. The pre-departure check, reminders and the 15-minute area rain check run there too (`jobs.py`).
 - A "Simulated storm" (map) only exists in one browser; its area alerts are made by that page and say so.
-- The photo check and the agent's Rule 1 run in the page; the server checks the values it is sent but does not re-run them.
-- Pre-departure checks and reminders only run while a page is open.
+- The photo check and the agent's Rule 1 run in the page first, so the result shows at once. The server then re-checks the photo with the trained model (when it is loaded) and runs Rule 1 again with its own hazard map, flood spots, nearby reports and live rain (`agent.py`); the server's result is the one saved. When the server has no live rain from the last 30 minutes it uses the page's rain level and logs that (`rainSource: "page"`).
+- Pre-departure checks and reminders run on the server once a minute while `flask run` is running (`jobs.py`), even with no page open. Open pages also run them, using the same notification keys, so nothing is sent twice.
 - The map is real (Leaflet + OpenStreetMap) and needs internet for tiles, streets (Overpass) and rain (Open-Meteo).
-- Hazard levels come from the UP DREAM / Phil-LiDAR 1 100-year flood hazard map (2016); after rebuilding `qc-flood-hazard.geojson`, run `python scripts/apply_qc_hazard.py`. The 40 starting recurring flood spots (`static/data/flood-spots.js`) are still SAMPLE data until real QCDRRMO / MMDA sightings replace them; spots moderators add are real.
+- Hazard levels come from the UP DREAM / Phil-LiDAR 1 100-year flood hazard map (2016); after rebuilding `qc-flood-hazard.geojson`, run `python scripts/apply_qc_hazard.py`. The 40 starting recurring flood spots (`static/data/flood-spots.js`) are SAMPLE data. Load real QCDRRMO / MMDA sightings with `flask --app app import-spots spots.csv` (or add them on the moderation page), then run `flask --app app sample-spots off` so only real spots count.
 - Three barangays (Capri, Greater Lagro, North Fairview) have approximate squares instead of real boundaries.
 - Photos are shrunk to ~800 px in the browser, then saved on the server in `uploads/` as JPEG (EXIF, such as GPS, removed).
-- Moderators reach the moderation page from the header on desktop; there is no phone link to it yet.
-- There is no password reset or email/SMS yet. The location list covers Quezon City only.
+- Moderators reach the moderation page from the header link on desktop and from the shield button next to the bell on phones.
+- "Forgot password?" sends a 6-digit code by email when `MAIL_SERVER` is set; without it (and for mobile-number accounts, as there is no SMS service yet) the code is printed in the server console. The location list covers Quezon City only.

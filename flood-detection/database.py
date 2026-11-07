@@ -110,6 +110,20 @@ class User(UserMixin, db.Model):
         return self.role == "moderator"
 
 
+class PasswordReset(db.Model):
+    """A "Forgot password?" code: 6 digits, sent by email (or shown in the server console), stored hashed.
+    Good for RESET_MINUTES and RESET_TRIES wrong tries (accounts.py); a newer code replaces it."""
+    __tablename__ = "password_resets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(255))
+    expires_at: Mapped[datetime]
+    tries: Mapped[int] = mapped_column(default=0)
+    used: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+
 class NotificationSettings(db.Model):
     """Which alerts a user wants (Notifications page > Notification settings)."""
     __tablename__ = "notification_settings"

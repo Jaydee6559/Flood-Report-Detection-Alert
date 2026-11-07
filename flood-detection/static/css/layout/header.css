@@ -74,3 +74,9 @@
   .avatar { width: 32px; height: 32px; }
   .site-header__actions { margin-left: auto; }
 }
+
+/* Moderators' shield button (added by core/layout.js): phones only, the desktop has the "Moderation" nav link */
+.site-header__actions .icon-button--moderation { display: none; }
+@media (max-width: 899px) {
+  .site-header__actions .icon-button--moderation { display: inline-flex; }
+}

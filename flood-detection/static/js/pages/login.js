@@ -47,11 +47,55 @@
     });
   });
 
-  $(".auth__options .link-button").addEventListener("click", function () {
+  /* ---------- Forgot password: 1) ask for a code, 2) type the code and a new password ---------- */
+  function firstError(data) {
+    var e = data.errors || {};
+    return e.login || e.code || e.password || e.confirm || data.error || "Something went wrong. Please try again.";
+  }
+  function offline() {
+    FDA.ui.dialog({ title: "Server not reachable", text: "The server can't be reached, so a code can't be sent. Check your connection and try again.", confirm: "OK", cancel: false });
+  }
+
+  function askForCode(prefill, problem) {
+    if (!FDA.api.available()) return offline();
     FDA.ui.dialog({
       title: "Reset your password",
-      text: "Password reset by email or SMS is not available yet. Ask a moderator to set a new password for you.",
-      confirm: "OK", cancel: false
+      text: (problem ? problem + " " : "") + "Enter the email or mobile number you registered with. We'll send a 6-digit code.",
+      fields: [{ name: "login", label: "Email or mobile number", value: prefill || "", required: true, autocomplete: "username" }],
+      confirm: "Send code"
+    }).then(function (v) {
+      if (!v) return;
+      FDA.api.post("/api/auth/forgot", { login: v.login }).then(function (res) {
+        if (!res.ok) return askForCode(v.login, firstError(res.data));
+        var where = res.data.delivery === "console"
+          ? "Email and SMS are not set up on this server yet, so the code was written in the server's console. Ask the person who runs the site for it."
+          : "Check your email (and the spam folder).";
+        enterCode(v.login, res.data.message + " " + where);
+      }, offline);
     });
-  });
+  }
+
+  function enterCode(login, info, code) {
+    FDA.ui.dialog({
+      title: "Enter the code",
+      text: info,
+      fields: [
+        { name: "code", label: "6-digit code", value: code || "", required: true, inputmode: "numeric", autocomplete: "one-time-code" },
+        { name: "password", label: "New password (8+ characters, a number, upper and lower case)", type: "password", required: true, autocomplete: "new-password" },
+        { name: "confirm", label: "Type the new password again", type: "password", required: true, autocomplete: "new-password" }
+      ],
+      confirm: "Set new password",
+      extra: { label: "Send a new code" }
+    }).then(function (v) {
+      if (v === "extra") return askForCode(login);
+      if (!v) return;
+      FDA.api.post("/api/auth/reset", { login: login, code: v.code, password: v.password, confirm: v.confirm }).then(function (res) {
+        if (!res.ok) return enterCode(login, firstError(res.data), v.code);
+        FDA.ui.toast("Password changed. You're signed in.", "success");
+        setTimeout(function () { location.href = res.data.user.role === "moderator" && target === "../map.html" ? "../moderation.html" : target; }, 800);
+      }, offline);
+    });
+  }
+
+  $(".auth__options .link-button").addEventListener("click", function () { askForCode(id.value.trim()); });
 })();

@@ -16,6 +16,9 @@ RULES = {
     "login": (10, 15 * 60),          # failed sign-ins for one email/number from one address
     "login-ip": (50, 15 * 60),       # failed sign-ins from one address, any account
     "register": (10, 60 * 60),       # new accounts from one address
+    "reset": (5, 15 * 60),           # "Forgot password?" codes asked for one email/number
+    "reset-ip": (20, 15 * 60),       # ... and from one address, any account
+    "reset-code": (10, 15 * 60),     # wrong reset codes typed from one address
     "report": (10, 10 * 60),         # flood reports by one account
     "comment": (20, 10 * 60),
     "confirm": (60, 10 * 60),
@@ -26,6 +29,9 @@ MESSAGES = {
     "login": "Too many wrong passwords. Wait 15 minutes, then try again.",
     "login-ip": "Too many wrong passwords. Wait 15 minutes, then try again.",
     "register": "Too many new accounts from this connection. Try again later.",
+    "reset": "Too many reset codes asked for. Wait 15 minutes, then try again.",
+    "reset-ip": "Too many reset codes asked for. Wait 15 minutes, then try again.",
+    "reset-code": "Too many wrong codes. Wait 15 minutes, then try again.",
 }
 DEFAULT_MESSAGE = "You're doing that too often. Wait a few minutes, then try again."
 

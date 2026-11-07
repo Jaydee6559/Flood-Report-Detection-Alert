@@ -10,9 +10,11 @@ reports (newest first), plus any report asked for with ?id=<number>.
     POST /api/reports/<id>/review        (moderator)  {action: approve|duplicate|later|remove, reason}
     GET  /uploads/<file>                              report photos
 
-The photo check (MobileNetV2) and the agent's Rule 1 still run in the page;
-the server checks every value it is sent before saving it, and logs the
-decision in agent_decisions. Confirmations, comments and flags are in
+The photo check (MobileNetV2) and the agent's Rule 1 run in the page first, so the
+person sees a result at once. The server then checks the photo again with the
+trained model (when it is loaded) and runs Rule 1 again with its own hazard map,
+flood spots, nearby reports and live rain (agent.py); its result is what is saved.
+Every decision is logged in agent_decisions. Confirmations, comments and flags are in
 community_api.py.
 """
 import io
@@ -26,6 +28,7 @@ from flask import Blueprint, Response, abort, current_app, jsonify, request, sen
 from flask_login import current_user, login_required
 
 import accounts
+import agent
 import limits
 import notifications_api
 from database import STATUSES, AgentDecision, Confirmation, Flag, Report, db, utcnow
@@ -293,20 +296,41 @@ def create_report():
                 raise Bad("The photo check on the server gave a different result. Please check the photo again, then send the report.")
             inputs["pageProb"] = prob
             prob, source = server_p, "server"
+        if status_from_probability(prob) != start:
+            raise Bad("The report's status does not match its photo probability. Please check the photo again.")
+
+        # Rule 1 again, with the hazard, flood spots, nearby reports and (when the server has it) the rain looked up here.
+        # The server's result is what is saved; what the page sent is kept in inputs["page"] for the log.
+        note, recommendation, reasons = _text(data, "note", 200), _text(data, "recommendation", 2000), _clean_reasons(data.get("reasons"))
+        mine = agent.check(prob, lat, lng, barangay, page_rain=rain, page_mm=rain_mm)
+        page_inputs = {k: inputs[k] for k in ("hazard", "rain", "rainMm", "spots", "reports") if k in inputs}
+        page_inputs["status"] = status
+        inputs.update(mine["inputs"])
+        inputs["page"] = page_inputs
+        hazard, rain, rain_mm, spots, nearby = inputs["hazard"], inputs["rain"], inputs["rainMm"], inputs["spots"], inputs["reports"]
+        if mine["status"] != status:
+            reasons.append({"key": "server", "title": "Checked again on the server: %s" % agent.LABEL[mine["status"]],
+                            "detail": "The page said %s. With the server's hazard map, flood spots, nearby reports and %s rain the result is %s."
+                                      % (agent.LABEL[status], "live" if inputs["rainSource"] == "live" else "the page's", agent.LABEL[mine["status"]]),
+                            "effect": "info"})
+            status = mine["status"]
+            note = (mine["note"] or "Checked again on the server.")[:200]
+            recommendation = mine["recommendation"][:2000]
         photo_file = _save_photo(photo_bytes)
         report = Report(
             user_id=current_user.id, barangay=barangay, street=_text(data, "street", 120), lat=lat, lng=lng,
             location_precise=data.get("location") == "precise", description=_text(data, "desc", 500),
             photo_file=photo_file, prob=prob, model_source=source, start_status=start, status=status,
-            note=_text(data, "note", 200), recommendation=_text(data, "recommendation", 2000),
-            reasons=_clean_reasons(data.get("reasons")), inputs=inputs, dup_candidate_id=dup[0] if dup else None,
+            note=note, recommendation=recommendation,
+            reasons=reasons, inputs=inputs, dup_candidate_id=dup[0] if dup else None,
         )
         db.session.add(report)
         db.session.flush()   # gives the report its number
         db.session.add(AgentDecision(
             kind="photo", report_id=report.id, barangay=barangay, prob=prob, start_status=start, result=status,
             hazard=hazard, rain_level=rain, rain_mm=rain_mm, spots=spots, nearby_reports=nearby,
-            inputs={"model": source, "lat": lat, "lng": lng, "evidence": inputs["evidence"], "dupCandidate": report.dup_candidate_id},
+            inputs={"model": source, "lat": lat, "lng": lng, "evidence": inputs["evidence"], "dupCandidate": report.dup_candidate_id,
+                    "rainSource": inputs["rainSource"], "raisedBy": mine["raised"], "pageStatus": page_inputs["status"]},
         ))
         notifications_api.route_alerts(report)   # everyone whose saved route passes near it
         db.session.commit()

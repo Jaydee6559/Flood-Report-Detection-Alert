@@ -64,6 +64,21 @@
       nav.appendChild(a);
     }
 
+    /* Phones hide the header nav, so moderators get a shield button next to the bell (CSS shows it on phones only) */
+    var actions = $(".site-header__actions"), mod = $(".icon-button--moderation");
+    if (actions && user && user.role === "moderator" && !mod) {
+      mod = document.createElement("a");
+      mod.className = "icon-button icon-button--moderation" + (page === "moderation" ? " icon-button--active" : "");
+      mod.href = FDA.ui.url("moderation.html");
+      mod.setAttribute("aria-label", "Moderation");
+      mod.title = "Moderation";
+      if (page === "moderation") mod.setAttribute("aria-current", "page");
+      mod.innerHTML = '<svg class="icon icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 5 6v5.5c0 4.3 2.9 7.6 7 9 4.1-1.4 7-4.7 7-9V6z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>';
+      actions.insertBefore(mod, actions.firstChild);
+    } else if (mod && !(user && user.role === "moderator")) {
+      mod.remove();
+    }
+
     var last = $$('.bottom-nav__item[href$="auth/login.html"]')[0];
     if (last) {
       var node = Array.prototype.filter.call(last.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); })[0];

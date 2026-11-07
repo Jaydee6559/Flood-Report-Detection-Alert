@@ -4,9 +4,14 @@ First time:
     pip install -r requirements.txt
     flask --app app init-db                       (creates instance/flood.db, empty)
     flask --app app create-user --moderator       (the first moderator account)
-    flask --app app set-password                  (reset someone's password; there is no email reset yet)
+    flask --app app set-password                  (set someone's password by hand; people can also use "Forgot password?")
+    flask --app app sample-spots off              (stop counting the 40 SAMPLE flood spots once real ones are in)
+    flask --app app import-spots spots.csv        (add real flood sightings from a CSV file)
 Run:
     flask --app app run --debug                   (then open http://127.0.0.1:5000)
+
+"Forgot password?" sends a 6-digit code by email when MAIL_SERVER is set (also MAIL_PORT, MAIL_USERNAME,
+MAIL_PASSWORD, MAIL_FROM, MAIL_USE_TLS); without it, the code is printed in this server's console.
 
 The trained model goes in  models/flood_model.keras  (see models/README.md).
 Without it, or without TensorFlow installed, the site still runs and the
@@ -30,7 +35,8 @@ import notifications_api
 import reports_api
 import routes_api
 import spots_api
-from database import NotificationSettings, User, add_missing_columns, db
+import spots_data
+from database import FloodSpot, NotificationSettings, User, add_missing_columns, db
 
 app = Flask(__name__)  # templates/ and static/ sit next to this file
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # photos up to 10 MB
@@ -116,7 +122,7 @@ def create_user(name, login, password, moderator):
 @click.option("--login", prompt="Email or mobile number of the account")
 @click.password_option("--password", prompt="New password")
 def set_password(login, password):
-    """Reset someone's password (there is no email reset yet). Asks for the new password; nothing is shown."""
+    """Set someone's password by hand. Asks for the new password; nothing is shown."""
     user = User.query.filter_by(login=accounts.norm_login(login)).first()
     if user is None:
         raise click.ClickException("No account with that email or number.")
@@ -125,6 +131,75 @@ def set_password(login, password):
     user.set_password(password)
     db.session.commit()
     click.echo("New password set for %s #%d (%s). Tell them to sign in with it." % (user.role, user.id, user.login))
+
+
+@app.cli.command("sample-spots")
+@click.argument("state", required=False, type=click.Choice(["on", "off"]))
+def sample_spots(state):
+    """Turn the 40 SAMPLE flood spots (static/data/flood-spots.js) on or off. With no argument, show which it is."""
+    if state:
+        spots_data.set_sample_spots(state == "on")
+    on = spots_data.sample_spots_on()
+    click.echo("Sample flood spots are %s. Real spots in the log: %d." % ("ON (they count as recurring spots)" if on else "OFF (only real sightings count)",
+                                                                         FloodSpot.query.count()))
+    if state and os.environ.get("FDA_SAMPLE_SPOTS") in ("0", "1"):
+        click.echo("Note: FDA_SAMPLE_SPOTS=%s is set in the environment and overrides this." % os.environ["FDA_SAMPLE_SPOTS"])
+
+
+@app.cli.command("import-spots")
+@click.argument("csv_file", type=click.Path(exists=True, dir_okay=False))
+def import_spots(csv_file):
+    """Add real flood sightings from a CSV file to the flood-spot log.
+
+    Columns (first row = names): barangay, corner, date (YYYY-MM-DD), depth (gutter|tire|knee|waist),
+    and optionally street, pass (all|light-no|none), times, lat, lng, source, url.
+    Without lat/lng the spot is put at the barangay's centre. The same barangay + corner again adds to its count.
+    """
+    import csv
+    import re
+    from agent import barangay_centre
+    from database import DEPTHS, PASSABLE
+    added = updated = 0
+    problems = []
+    with open(csv_file, newline="", encoding="utf-8-sig") as f:
+        for n, row in enumerate(csv.DictReader(f), start=2):
+            row = {(k or "").strip().lower(): (v or "").strip() for k, v in row.items()}
+            b, corner, date, depth = row.get("barangay", ""), " ".join(row.get("corner", "").split())[:120], row.get("date", ""), row.get("depth", "").lower()
+            passable, times = row.get("pass", "").lower() or "all", row.get("times", "") or "1"
+            bad = (None if b in accounts.barangay_districts() else "unknown barangay %r" % b) \
+                or (None if corner else "no corner") \
+                or (None if re.fullmatch(r"\d{4}-\d{2}-\d{2}", date) else "date must be YYYY-MM-DD") \
+                or (None if depth in DEPTHS else "depth must be one of " + ", ".join(DEPTHS)) \
+                or (None if passable in PASSABLE else "pass must be one of " + ", ".join(PASSABLE)) \
+                or (None if times.isdigit() and int(times) >= 1 else "times must be a whole number")
+            try:
+                lat, lng = (float(row["lat"]), float(row["lng"])) if row.get("lat") and row.get("lng") else barangay_centre(b) or (None, None)
+                if not bad and not (spots_api.QC_BOUNDS[0] <= lat <= spots_api.QC_BOUNDS[1] and spots_api.QC_BOUNDS[2] <= lng <= spots_api.QC_BOUNDS[3]):
+                    bad = "lat/lng is outside Quezon City"
+            except (TypeError, ValueError):
+                bad = bad or "lat/lng must be numbers"
+            if bad:
+                problems.append("row %d: %s" % (n, bad))
+                continue
+            same = next((s for s in FloodSpot.query.filter_by(barangay=b) if s.corner.lower() == corner.lower()), None)
+            if same is not None:
+                same.times += int(times)
+                same.last_seen = max(same.last_seen or "", date)
+                if spots_api.DEPTH_RANK[depth] > spots_api.DEPTH_RANK.get(same.worst_depth, -1):
+                    same.worst_depth = depth
+                updated += 1
+            else:
+                db.session.add(FloodSpot(barangay=b, corner=corner, street=row.get("street", "")[:120] or re.split(r" cor\.? ", corner, flags=re.I)[0],
+                                         times=int(times), worst_depth=depth, passable=passable, last_seen=date, lat=lat, lng=lng,
+                                         source=row.get("source", "")[:120] or "Imported", source_url=row.get("url", "")[:300] or None))
+                db.session.flush()
+                added += 1
+    db.session.commit()
+    click.echo("Added %d new spot(s), updated %d." % (added, updated))
+    for p in problems:
+        click.echo("  skipped " + p)
+    if added and spots_data.sample_spots_on():
+        click.echo("The SAMPLE spots still count too. Run  flask --app app sample-spots off  to use only real sightings.")
 
 
 # ---- Image classifier (Module 6) ---------------------------------------------

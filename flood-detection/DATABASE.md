@@ -12,7 +12,9 @@ From the `flood-detection` folder, with the virtual environment active:
 pip install -r requirements.txt
 flask --app app init-db                    # creates the empty tables (safe to run again)
 flask --app app create-user --moderator    # the first moderator (prompts for name, login, password)
-flask --app app set-password               # reset someone's password (prompts; there is no email reset yet)
+flask --app app set-password               # set someone's password by hand (prompts); people can also use "Forgot password?"
+flask --app app sample-spots off           # stop counting the 40 SAMPLE flood spots (on / off / no argument = show)
+flask --app app import-spots spots.csv     # add real flood sightings: barangay, corner, date, depth [, street, pass, times, lat, lng, source, url]
 ```
 
 `flask --app app init-db --reset` deletes everything and starts again with empty tables. It asks first.
@@ -35,6 +37,7 @@ Columns added in later steps are added to an existing `flood.db` automatically w
 | Table | What it holds | Module |
 |---|---|---|
 | `users` | Accounts: name, login (email or mobile, lower-case, unique), Werkzeug password hash, role (`user` / `moderator`), optional home district and barangay | 1 |
+| `password_resets` | "Forgot password?" codes: user, hashed code, expiry, wrong tries, used | 1 |
 | `notification_settings` | One row per user: on/off for area, route, schedule, report and "all clear" alerts | 12 |
 | `watched_barangays` | The "Alert me" list (user + barangay) | 3, 12 |
 | `reports` | One flood report: place, photo file, P from MobileNetV2, model source, Rule 1 start status and final status, note, recommendation, reasons and inputs (JSON), possible / confirmed duplicate, moderator review | 5–8, 13 |
@@ -73,6 +76,8 @@ Register, sign-in and sign-out go through `accounts.py` and the `users` table:
 | `POST /api/auth/register` | `{name, login, password, confirm, barangay, agree}`. Same rules as the page; signs the new user in |
 | `POST /api/auth/login` | `{login, password, remember}`. "Keep me signed in" = a 30-day cookie |
 | `POST /api/auth/logout` | Signs out |
+| `POST /api/auth/forgot` | `{login}`. Makes a 6-digit code (valid 15 min, 5 tries) and emails it when `MAIL_SERVER` is set, otherwise prints it in the server console. The same answer whether or not the account exists |
+| `POST /api/auth/reset` | `{login, code, password, confirm}`. A right code sets the new password and signs in; the code then stops working |
 
 Every POST needs the CSRF token in the `X-CSRFToken` header (`static/js/core/api.js` adds it).
 Logins are stored normalised: emails in lower case, mobile numbers as `639…` (so `0917…` and `+63917…` are the same account).

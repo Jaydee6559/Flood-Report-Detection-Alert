@@ -185,7 +185,7 @@ _ref = {}
 
 def reference():
     """The read-only data the pages use too: districts (locations.json), barangays with their hazard level
-    (barangays.geojson) and the seed flood spots (flood-spots.js), loaded once."""
+    (barangays.geojson) and the seed flood spots (flood-spots.js, SAMPLE data: see seed_spot_counts), loaded once."""
     if not _ref:
         with open(os.path.join(HERE, "static", "data", "locations.json"), encoding="utf-8") as f:
             city = next(c for c in json.load(f)["cities"] if c["name"] == "Quezon City")
@@ -197,6 +197,27 @@ def reference():
             seeds = re.findall(r'\{\s*b:\s*"([^"]+)"', f.read())
         _ref["seed_spots"] = {name: seeds.count(name) for name in set(seeds)}
     return _ref
+
+
+def seed_spot_counts():
+    """{barangay: sample spots}, or {} when the sample spots are turned off (spots_data.py)."""
+    import spots_data
+    return dict(reference()["seed_spots"]) if spots_data.sample_spots_on() else {}
+
+
+_rain = {"at": None, "mm": None}
+
+
+def remember_rain(mm, now=None):
+    _rain["at"], _rain["mm"] = now or datetime.now(timezone.utc), mm
+
+
+def latest_rain(max_age_min=30, now=None):
+    """The last live rain the server fetched ({district: [mm, ...]}), or None when it is older than max_age_min."""
+    now = now or datetime.now(timezone.utc)
+    if _rain["at"] is None or (now - _rain["at"]).total_seconds() > max_age_min * 60:
+        return None
+    return _rain["mm"]
 
 
 def rain_level(mm):
@@ -246,8 +267,9 @@ def run_area_check(now=None, rain=None):
         except Exception as exc:          # offline, or the service is down: try again next time
             print(" * Area rain check skipped: live rain could not be loaded (%s)" % exc, flush=True)
             return None
+        remember_rain(rain, now)      # Rule 1 on new reports uses it too (agent.py)
     ref = reference()
-    spots = dict(ref["seed_spots"])
+    spots = seed_spot_counts()
     for (name,) in db.session.query(FloodSpot.barangay):
         spots[name] = spots.get(name, 0) + 1
     reports = {}
