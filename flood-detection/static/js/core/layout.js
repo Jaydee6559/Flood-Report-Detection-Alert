@@ -24,7 +24,17 @@
 
   function signOut(e) {
     if (e) e.preventDefault();
-    FDA.auth.logout().then(function () { location.href = FDA.ui.url("auth/login.html"); });
+    var who = FDA.auth.current();
+    FDA.ui.dialog({
+      title: "Sign out?",
+      text: who ? "You are signed in as " + who.name + ". You will need to sign in again to report floods, see notifications or use saved routes." : "",
+      confirm: "Sign out",
+      cancel: "Stay signed in",
+      danger: true
+    }).then(function (ok) {
+      if (!ok) return;
+      FDA.auth.logout().then(function () { location.href = FDA.ui.url("auth/login.html"); });
+    });
   }
 
   function refresh() {
