@@ -56,6 +56,21 @@
   color: var(--color-primary);
 }
 
+/* Red: delete, remove, sign out (moved here from pages/moderation.css so every page has them) */
+.btn--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+.btn--danger:hover { background: #9d2219; border-color: #9d2219; }
+
+.btn--danger-outline {
+  background: var(--color-surface);
+  border-color: #e3a39d;
+  color: var(--color-danger-text);
+}
+.btn--danger-outline:hover { background: #fff7f6; }
+
 .btn--sm { min-height: 34px; padding: 0 var(--space-3); font-size: var(--font-size-sm); }
 .btn--lg { min-height: 48px; padding: 0 var(--space-6); }
 .btn--block { width: 100%; }

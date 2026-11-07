@@ -8,6 +8,7 @@ reports (newest first), plus any report asked for with ?id=<number>.
 
     POST /api/reports                    (signed in)  a new report: form field "photo" + form field "data" (JSON)
     POST /api/reports/<id>/review        (moderator)  {action: approve|duplicate|later|remove, reason}
+    POST /api/reports/<id>/delete        (its owner)  deletes the report, its photo, comments, confirmations and flags
     GET  /uploads/<file>                              report photos
 
 The photo check (MobileNetV2) and the agent's Rule 1 run in the page first, so the
@@ -31,7 +32,7 @@ import accounts
 import agent
 import limits
 import notifications_api
-from database import STATUSES, AgentDecision, Confirmation, Flag, Report, db, utcnow
+from database import STATUSES, AgentDecision, Comment, Confirmation, Flag, Notification, Report, db, utcnow
 
 bp = Blueprint("reports_api", __name__)
 
@@ -353,6 +354,34 @@ def _remove_photo(name):
         os.remove(os.path.join(current_app.config["UPLOAD_FOLDER"], name))
     except OSError:
         pass
+
+
+# ---- Deleting your own report -----------------------------------------------------------
+@bp.post("/api/reports/<int:report_id>/delete")
+@login_required
+def delete_report(report_id):
+    """The reporter deletes their own report: the row, its photo, comments, confirmations and flags, and the
+    notifications about it. The agent's decision log keeps the decision (report_id becomes empty), as it is
+    the record of what the agent did."""
+    r = db.session.get(Report, report_id)
+    if r is None:
+        return jsonify(ok=False, error="There is no report with that number."), 404
+    if r.user_id != current_user.id:
+        return jsonify(ok=False, error="You can only delete your own reports."), 403
+    comment_ids = [c.id for c in Comment.query.filter_by(report_id=r.id).with_entities(Comment.id)]
+    Flag.query.filter(Flag.target == "report", Flag.target_id == r.id).delete(synchronize_session=False)
+    if comment_ids:
+        Flag.query.filter(Flag.target == "comment", Flag.target_id.in_(comment_ids)).delete(synchronize_session=False)
+    # other reports that point at this one as their (possible) original
+    Report.query.filter(Report.dup_candidate_id == r.id).update({"dup_candidate_id": None}, synchronize_session=False)
+    Report.query.filter(Report.dup_of_id == r.id).update({"dup_of_id": None}, synchronize_session=False)
+    Notification.query.filter(db.or_(Notification.link == "report-details.html?id=%d" % r.id,
+                                     Notification.dedupe_key.like("route:%d:%%" % r.id))).delete(synchronize_session=False)
+    photo_file = r.photo_file
+    db.session.delete(r)          # comments and confirmations go with it (ON DELETE CASCADE)
+    db.session.commit()
+    _remove_photo(photo_file)
+    return jsonify(ok=True, id=report_id)
 
 
 # ---- Moderation -------------------------------------------------------------------

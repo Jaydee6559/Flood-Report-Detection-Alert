@@ -93,6 +93,7 @@ Flood reports, their photos and moderator review go through `reports_api.py` and
 | `GET /api/reports` | The same as JSON |
 | `POST /api/reports` | Signed in. Form field `photo` (the image) and `data` (JSON: place, P, model, Rule 1 status, note, reasons, inputs). Every value is checked: a barangay from `locations.json`, a pin inside Quezon City, P from 0 to 1, a known status. Also writes a `photo` row to `agent_decisions` |
 | `POST /api/reports/<id>/review` | Moderators. `{action: "approve" \| "duplicate" \| "later" \| "remove", reason}`; remove needs a reason |
+| `POST /api/reports/<id>/delete` | The reporter only. Deletes the report, its photo, comments, confirmations, flags and the notifications about it. The `agent_decisions` row stays, with `report_id` empty |
 | `GET /uploads/<file>` | Report photos |
 
 - Photos are re-saved as JPEG (at most 1280 px), which also drops EXIF data such as GPS, under a random file name.

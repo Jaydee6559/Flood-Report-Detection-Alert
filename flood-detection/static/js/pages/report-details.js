@@ -118,6 +118,30 @@
   btnStill.addEventListener("click", function () { vote("still"); });
   btnNot.addEventListener("click", function () { vote("not"); });
 
+  /* ---------- Delete my report (only the person who sent it) ---------- */
+  if (voter && r.ownerId === voter) {
+    var delBtn = document.createElement("button");
+    delBtn.type = "button"; delBtn.className = "btn btn--danger-outline btn--sm btn--block"; delBtn.style.marginTop = "12px";
+    delBtn.innerHTML = '<svg class="icon icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/></svg> Delete my report';
+    $(".confirm-card__last").insertAdjacentElement("afterend", delBtn);
+    delBtn.addEventListener("click", function () {
+      FDA.ui.dialog({
+        title: "Delete report #" + r.id + "?",
+        text: "The report and its photo, comments and confirmations will be deleted for everyone. This can't be undone.",
+        confirm: "Delete report", cancel: "Keep it", danger: true
+      }).then(function (ok) {
+        if (!ok) return;
+        delBtn.disabled = true;
+        FDA.api.post("/api/reports/" + r.id + "/delete", {}).then(function (res) {
+          if (!res.ok) { delBtn.disabled = false; return FDA.ui.toast(res.data.error || "The report could not be deleted. Please try again.", "error"); }
+          FDA.store.db().reports = FDA.store.db().reports.filter(function (x) { return x.id !== r.id; });
+          FDA.ui.toast("Report #" + r.id + " was deleted.", "success");
+          setTimeout(function () { location.href = "reports.html"; }, 900);
+        }, function () { delBtn.disabled = false; FDA.ui.toast("The server can't be reached, so the report was not deleted.", "error"); });
+      });
+    });
+  }
+
   /* ---------- Report a problem with this report (goes to the moderators' queue) ---------- */
   var flagBtn = document.createElement("button");
   flagBtn.type = "button"; flagBtn.className = "link-button"; flagBtn.style.marginTop = "8px";

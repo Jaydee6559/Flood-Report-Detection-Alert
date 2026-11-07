@@ -173,20 +173,6 @@
 .comment-item__meta .icon { width: 12px; height: 12px; }
 .comment-item__actions { display: flex; gap: var(--space-2); flex: none; }
 
-.btn--danger {
-  background: var(--color-danger);
-  border-color: var(--color-danger);
-  color: #fff;
-}
-.btn--danger:hover { background: #9d2219; border-color: #9d2219; }
-
-.btn--danger-outline {
-  background: var(--color-surface);
-  border-color: #e3a39d;
-  color: var(--color-danger-text);
-}
-.btn--danger-outline:hover { background: #fff7f6; }
-
 /* ---------- Review panel ---------- */
 .review {
   padding: var(--space-5) var(--space-4);
